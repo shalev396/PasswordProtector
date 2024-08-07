@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional: Add custom base styles below or keep existing ones if needed */
+body {
+  margin: 0;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif; /* Example font stack */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f0f2f5; /* Example light background */
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1a1a1a; /* Example dark background */
+    color: rgba(255, 255, 255, 0.87);
+  }
+}
