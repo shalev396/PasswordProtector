@@ -201,7 +201,7 @@ footer {
 #signup {
   padding: 100px 0;
   text-align: center;
-  background-image: url("/PasswordProtector/Web/images/hero-image.png"); /* Main page background applied */
+  background-image: url("/images/hero-image.png"); /* Main page background applied */
   background-size: cover;
   background-position: center;
 }

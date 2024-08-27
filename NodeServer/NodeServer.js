@@ -1,10 +1,12 @@
 const express = require("express");
 const sql = require("mssql");
 require("dotenv").config();
-
+const path = require("path");
+const webPath = path.join(__dirname, "../Web");
 const app = express();
 const port = 3000;
 
+app.use(express.static(webPath));
 // Database configuration
 const dbConfig = {
   server: process.env.DB_SERVER,
@@ -22,19 +24,29 @@ const dbConfig = {
     connectTimeout: 30000, // Increase connection timeout to 30 seconds
   },
 };
+// Route to get data Main page
+app.get("/main", async function (req, res) {
+  try {
+    res.sendFile(path.join(webPath, "MainPage", "index.html"));
+  } catch (err) {
+    console.error("Server Error", err);
+    res.status(500).send("Server Error");
+  }
+});
 
 // Route to get data query1
-app.get("/data/query1", async (req, res) => {
+app.get("/SignUp", async (req, res) => {
   try {
     // Await the connection to ensure it's established before running the query
     await sql.connect(dbConfig);
-
+    res.sendFile(path.join(webPath, "SignUp", "SignUp.html"));
     console.log("Connected successfully!");
 
     // Query (Stored Procedure) the database
     const result = await sql.query(
       `EXEC SignUp 'John', 'Doe', '1234567890', 'john.doe@example.com', 0, 'UserKey123', 'JsonKey123', 'BackupUID123';`
     );
+    console.log(result);
 
     // Send the results as JSON
     res.json(result.recordset);
