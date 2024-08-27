@@ -50,5 +50,5 @@ document
 
 // Function to navigate back to the main page
 function goBack() {
-  window.location.href = "index.html";
+  window.location.href = "/PasswordProtector/Web/Main Page/index.html";
 }
