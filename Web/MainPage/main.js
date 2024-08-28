@@ -3,7 +3,8 @@ document
   .addEventListener("submit", function (event) {
     event.preventDefault();
     let email = document.getElementById("email").value;
-    let twoFactorCode = document.getElementById("2fa").value;
+    let firstName = document.getElementById(`last-name`).value;
+    console.log(firstName);
 
     if (validateForm(email, twoFactorCode)) {
       alert("Login successful!");

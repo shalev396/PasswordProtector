@@ -1,6 +1,6 @@
+// Function to generate a random key
 let keyGenerated = false; // Track if the key was generated
 
-// Function to generate a random key
 function generateKey() {
   const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -20,13 +20,12 @@ function generateKey() {
   );
 }
 
-// Function to handle form submission
+// Function to handle form submission and send data to the server
 document
   .getElementById("signup-form")
   .addEventListener("submit", function (event) {
     event.preventDefault();
 
-    // Capture user input values
     const user = {
       firstName: document.getElementById("first-name").value,
       lastName: document.getElementById("last-name").value,
@@ -35,17 +34,35 @@ document
       key: document.getElementById("key").value,
     };
 
-    // If the key was not generated, show the pop-up when submitting
-    if (!keyGenerated) {
-      alert(
-        "The key is the most important part. To keep it secure, avoid copying or saving it on your computer. Instead, write it down on paper where hackers can't access it."
-      );
-    }
+    // Log the user object to check if the data is captured correctly
+    console.log("Sending user data:", user);
 
-    // Output captured values (for demonstration; you can save this data as needed)
-    console.log("User Details:", user);
-
-    alert("Sign Up Successful!");
+    // Send the data to the server using a POST request
+    fetch("/SignUp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(user),
+    })
+      .then((response) => {
+        // Check if the response is OK (200–299 range)
+        if (response.ok) {
+          return response.json(); // Parse JSON if response is OK
+        } else {
+          // If the response is not OK, throw an error
+          return response.json().then((data) => {
+            throw new Error(data.error || "Unknown error occurred");
+          });
+        }
+      })
+      .then((data) => {
+        alert(data.success); // Show success message
+        window.location.href = "/main"; // Redirect to the main page on success
+      })
+      .catch((error) => {
+        alert(error.message); // Show the error message
+      });
   });
 
 // Function to navigate back to the main page

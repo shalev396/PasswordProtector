@@ -7,6 +7,7 @@ const app = express();
 const port = 3000;
 
 app.use(express.static(webPath));
+
 // Database configuration
 const dbConfig = {
   server: process.env.DB_SERVER,
@@ -19,11 +20,12 @@ const dbConfig = {
     idleTimeoutMillis: 30000,
   },
   options: {
-    trustServerCertificate: true, // Bypass SSL certificate validation
+    trustServerCertificate: true,
     trustedConnection: true,
-    connectTimeout: 30000, // Increase connection timeout to 30 seconds
+    connectTimeout: 30000,
   },
 };
+
 // Route to get data Main page
 app.get("/main", async function (req, res) {
   try {
@@ -34,29 +36,64 @@ app.get("/main", async function (req, res) {
   }
 });
 
-// Route to get data query1
-app.get("/SignUp", async (req, res) => {
-  try {
-    // Await the connection to ensure it's established before running the query
-    await sql.connect(dbConfig);
-    res.sendFile(path.join(webPath, "SignUp", "SignUp.html"));
-    console.log("Connected successfully!");
+// Route to serve the SignUp page
+app.get("/SignUp", (req, res) => {
+  res.sendFile(path.join(webPath, "SignUp", "SignUp.html"));
+});
 
-    // Query (Stored Procedure) the database
-    const result = await sql.query(
-      `EXEC SignUp 'John', 'Doe', '1234567890', 'john.doe@example.com', 0, 'UserKey123', 'JsonKey123', 'BackupUID123';`
-    );
-    console.log(result);
+// Route to handle form submission (SignUp)
+app.post("/SignUp", (req, res) => {
+  console.log("POST /SignUp route hit");
 
-    // Send the results as JSON
-    res.json(result.recordset);
-  } catch (err) {
-    console.error("SQL error", err);
-    res.status(500).send("Server Error");
-  }
+  let body = "";
+
+  req.on("data", (chunk) => {
+    body += chunk.toString();
+  });
+
+  req.on("end", async () => {
+    try {
+      await sql.connect(dbConfig);
+      console.log("Connected to the database!");
+
+      const user = JSON.parse(body);
+      console.log("User Data:", user);
+
+      const request = new sql.Request();
+      request.input("VarFirstName", sql.VarChar(255), user.firstName);
+      request.input("VarLastName", sql.VarChar(255), user.lastName);
+      request.input("VarPhoneNumber", sql.VarChar(255), user.phoneNumber);
+      request.input("VarEmail", sql.VarChar(255), user.email);
+      request.input("Var2FA", sql.Bit, 0);
+      request.input("VarUserKey", sql.VarChar(64), user.key);
+      request.input("VarJsonKey", sql.VarChar(64), "JsonKey123");
+      request.input("VarBackupUID", sql.VarChar(64), "BackupUID123");
+
+      // Define the output parameter for the message
+      request.output("Message", sql.VarChar(255));
+
+      // Execute the stored procedure
+      const result = await request.execute("SignUp");
+      console.log("SQL Query Result:", result);
+
+      const message = result.output.Message;
+      console.log("SignUp Message:", message);
+
+      // Send response based on the message
+      if (message.includes("already exists")) {
+        res.status(400).json({ error: message });
+      } else {
+        res.status(200).json({ success: "Sign Up Successful" });
+      }
+    } catch (err) {
+      console.error("SQL error:", err);
+      // Send error response as JSON
+      res.status(500).json({ error: "Server Error" });
+    }
+  });
 });
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  console.log(`Server is running on http://localhost:${port}/main`);
 });

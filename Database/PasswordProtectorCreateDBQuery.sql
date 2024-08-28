@@ -62,25 +62,24 @@ SELECT dbo.IsPhoneExist('1234567890');
 SELECT dbo.IsMailExist('example@example.com');
 -------------
 CREATE PROCEDURE SignUp(
-	@VarFirstName VARCHAR(255),
-	@VarLastName VARCHAR(255),
-	@VarPhoneNumber VARCHAR(255),
-	@VarEmail VARCHAR(255),
-	@Var2FA bit,
-	@VarUserKey VARCHAR(64),
-	@VarJsonKey VARCHAR(64),
-	@VarBackupUID VARCHAR(64)
+    @VarFirstName VARCHAR(255),
+    @VarLastName VARCHAR(255),
+    @VarPhoneNumber VARCHAR(255),
+    @VarEmail VARCHAR(255),
+    @Var2FA bit,
+    @VarUserKey VARCHAR(64),
+    @VarJsonKey VARCHAR(64),
+    @VarBackupUID VARCHAR(64),
+    @Message VARCHAR(255) OUTPUT -- Add OUTPUT parameter for status message
 ) 
 AS
 BEGIN
-    DECLARE @Message VARCHAR(255);
     DECLARE @NewUID INT;
-
+	PRINT 'Stored Procedure Called'; -- Debugging: Check if the procedure is called
     -- Check if the email already exists
     IF dbo.IsMailExist(@VarEmail) = 1
     BEGIN
         SET @Message = 'Email already exists. Sign-up failed.';
-        PRINT @Message;
         RETURN;
     END
 
@@ -88,7 +87,6 @@ BEGIN
     IF dbo.IsPhoneExist(@VarPhoneNumber) = 1
     BEGIN
         SET @Message = 'Phone number already exists. Sign-up failed.';
-        PRINT @Message;
         RETURN;
     END
 
@@ -100,10 +98,9 @@ BEGIN
     VALUES (@NewUID, @VarFirstName, @VarLastName, @VarPhoneNumber, @VarEmail, @Var2FA, @VarUserKey, @VarJsonKey, @VarBackupUID, NULL);
     
     SET @Message = 'Customer signed up successfully.';
-    PRINT @Message; -- Print success message
 END;
-
 -- Example of calling the function to sign up a new customer
 EXEC SignUp 'John', 'Doe', '1234567890', 'john.doe@example.com', 0, 'UserKey123', 'JsonKey123', 'BackupUID123';
 select * from Customers
 DELETE from Customers;
+SELECT * FROM sys.database_permissions WHERE grantee_principal_id = USER_ID('NodeJsServer');
