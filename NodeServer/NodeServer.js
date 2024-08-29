@@ -93,6 +93,56 @@ app.post("/SignUp", (req, res) => {
   });
 });
 
+app.get("/Login", (req, res) => {
+  res.sendFile(path.join(webPath, "LoginPage", "LoginPage.html"));
+});
+
+app.post("/Login", (req, res) => {
+  console.log("POST /Login route hit");
+
+  let body = "";
+
+  req.on("data", (chunk) => {
+    body += chunk.toString();
+  });
+
+  req.on("end", async () => {
+    try {
+      await sql.connect(dbConfig);
+      console.log("Connected to the database!");
+
+      const user = JSON.parse(body);
+      console.log("User Data:", user);
+
+      const request = new sql.Request();
+      request.input("Email", sql.VarChar(255), user.email);
+
+      // Output parameters should be declared without an initial value
+      request.output("LoginToken", sql.VarChar(36));
+      request.output("Message", sql.VarChar(255));
+
+      // Execute the stored procedure
+      const result = await request.execute("LoginWithEmail");
+      console.log("SQL Query Result:", result);
+
+      const loginToken = result.output.LoginToken;
+      const message = result.output.Message;
+      console.log("Login Message:", message);
+
+      // Send response based on the result
+      if (loginToken) {
+        res.status(200).json({ success: true, token: loginToken });
+      } else {
+        res.status(400).json({ success: false, message });
+      }
+    } catch (err) {
+      console.error("SQL error:", err);
+      // Send error response as JSON
+      res.status(500).json({ error: "Server Error" });
+    }
+  });
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}/main`);

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Password Protector</title>
+    <link rel="stylesheet" href="/Styles/styles.css" />
+  </head>
+  <body>
+    <header>
+      <nav>
+        <div class="logo">PASSWORD PROTECTOR</div>
+        <ul>
+          <li>
+            <a href="/Main">Home</a>
+          </li>
+          <li><a href="/Main">About</a></li>
+          <li>
+            <a href="/Login" class="cta">Login</a>
+          </li>
+        </ul>
+      </nav>
+    </header>
+
+    <section id="login">
+      <div class="login-container">
+        <h1>Login</h1>
+        <form id="login-form">
+          <label for="email">Email:</label>
+          <input type="email" id="email" name="email" required />
+
+          <label for="phone-number">Phone Number:</label>
+          <input type="tel" id="phone-number" name="phone-number" required />
+
+          <label for="2fa">2FA Code:</label>
+          <input type="text" id="2fa" name="2fa" required />
+
+          <button type="submit">Login</button>
+        </form>
+
+        <button id="go-back" onclick="goBack()">Go Back</button>
+      </div>
+    </section>
+
+    <script src="/LoginPage/LoginPage.js"></script>
+  </body>
+</html>
