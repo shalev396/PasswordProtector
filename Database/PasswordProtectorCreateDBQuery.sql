@@ -25,7 +25,7 @@ CREATE TABLE Customers (
     [2FA] bit, -- If 2FA is enabled
     UserKey VARCHAR(64), -- User-entered value that is the root for encryption (avoid using "Key")
     JsonKey VARCHAR(64), -- Key for decryption of JSON files
-    BackupUID VARCHAR(64), -- UID that can be shared with the user
+    BackupUID VARCHAR(36), -- UID that can be shared with the user
     TokenID INT, -- Foreign Key UID number for Tokens
     FOREIGN KEY (TokenID) REFERENCES Tokens(ID) -- Foreign key references Tokens table
 );
@@ -69,11 +69,12 @@ CREATE PROCEDURE SignUp(
     @Var2FA bit,
     @VarUserKey VARCHAR(64),
     @VarJsonKey VARCHAR(64),
-    @VarBackupUID VARCHAR(64),
+    --@VarBackupUID VARCHAR(64),
     @Message VARCHAR(255) OUTPUT -- Add OUTPUT parameter for status message
 ) 
 AS
 BEGIN
+	DECLARE @BackupUID VARCHAR(36);
     DECLARE @NewUID INT;
 	PRINT 'Stored Procedure Called'; -- Debugging: Check if the procedure is called
     -- Check if the email already exists
@@ -92,15 +93,29 @@ BEGIN
 
     -- Get a new unique ID for the customer
     SET @NewUID = dbo.GetUIDCustomer(); -- Call the function to get the new UID
-
+	EXEC GetNewBackupUID @BackupUID OUTPUT;
     -- Insert new customer if email and phone number don't exist
     INSERT INTO Customers (ID, FirstName, LastName, PhoneNumber, Email, [2FA], UserKey, JsonKey, BackupUID, TokenID)
-    VALUES (@NewUID, @VarFirstName, @VarLastName, @VarPhoneNumber, @VarEmail, @Var2FA, @VarUserKey, @VarJsonKey, @VarBackupUID, NULL);
+    VALUES (@NewUID, @VarFirstName, @VarLastName, @VarPhoneNumber, @VarEmail, @Var2FA, @VarUserKey, @VarJsonKey,@BackupUID, NULL);
     
     SET @Message = 'Customer signed up successfully.';
 END;
 -- Example of calling the function to sign up a new customer
-EXEC SignUp 'John', 'Doe', '1234567890', 'john.doe@example.com', 0, 'UserKey123', 'JsonKey123', 'BackupUID123';
+EXEC SignUp 'John', 'Doe', '1234567890', 'john.doe@example.com', 0, 'UserKey123', 'JsonKey123',null;
 select * from Customers
 DELETE from Customers;
 SELECT * FROM sys.database_permissions WHERE grantee_principal_id = USER_ID('NodeJsServer');
+
+---------------
+CREATE PROCEDURE GetNewBackupUID
+    @NewUIDString VARCHAR(36) OUTPUT -- Define the output parameter
+AS
+BEGIN
+    SET @NewUIDString = CONVERT(VARCHAR(64), NEWID());
+END;
+GO
+
+--Example of calling the function to get new uid
+DECLARE @BackupUID VARCHAR(36);
+EXEC GetNewBackupUID @BackupUID OUTPUT;
+SELECT @BackupUID;
