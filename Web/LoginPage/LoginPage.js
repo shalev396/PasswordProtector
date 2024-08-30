@@ -22,6 +22,8 @@ document
         .then((response) => response.json())
         .then((data) => {
           if (data.success) {
+            console.log(data);
+
             // Store the login token in the browser's local storage
             localStorage.setItem("loginToken", data.token);
             alert("Login successful!");

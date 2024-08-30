@@ -1,75 +1,5 @@
-CREATE DATABASE PasswordProtectorDB;
----------------------------------------create tables
-CREATE TABLE Tokens (
-    ID INT NOT NULL PRIMARY KEY, -- UID number for tokens
-    Token VARCHAR(64), -- The Token
-    BackupUID VARCHAR(64) -- Uid that can be shared with the user
-);
-CREATE TABLE Passwords(
-    ID INT NOT NULL PRIMARY KEY, -- UID number for Passwords
-    Website VARCHAR(255), -- URL to the login page of the website
-    ChangedCount INT, -- Counter of the amount of times that the password is changed
-    UsedCount INT, -- Counter of the amount of times that the password is used
-    TokenID INT, -- Foreign Key UID number for Tokens
-    [Password] VARCHAR(64), -- The password
-    WebsiteLoginText VARCHAR(255), -- Stores email/phone number/username, whatever the website needs for login
-    BackupUID VARCHAR(64), -- Uid that can be shared with the user
-    FOREIGN KEY (TokenID) REFERENCES Tokens(ID) -- Foreign key references Tokens table
-);
-CREATE TABLE Customers (
-    ID INT NOT NULL PRIMARY KEY, -- UID number for customers
-    FirstName VARCHAR(255), -- First name
-    LastName VARCHAR(255), -- Last name
-    PhoneNumber VARCHAR(255), -- Phone number
-    Email VARCHAR(255), -- Email
-    [2FA] bit, -- If 2FA is enabled
-    UserKey VARCHAR(64), -- User-entered value that is the root for encryption (avoid using "Key")
-    JsonKey VARCHAR(64), -- Key for decryption of JSON files
-    BackupUID VARCHAR(36), -- UID that can be shared with the user
-    TokenID INT, -- Foreign Key UID number for Tokens
-    FOREIGN KEY (TokenID) REFERENCES Tokens(ID) -- Foreign key references Tokens table
-);
-CREATE TABLE LastLogin(
-CustomerID INT NOT NULL PRIMARY KEY, -- UID number for customers
-LastToken VarChar(36),
-ExpiredDate Date,
-LastIP Varchar(15),
-LastOperatingSystem VarChar(64),
-LastLocation VarChar(64),
-FOREIGN KEY (CustomerID) REFERENCES Customers(ID)
-);
----------------------------------------Function
-CREATE FUNCTION GetUIDCustomer() 
-RETURNS INT
-AS 
-BEGIN
-    DECLARE @NewUID INT;
-    SELECT @NewUID = ISNULL(MAX(ID), 0) + 1 FROM Customers; 
-    RETURN @NewUID; -- Return the new UID
-END;
-CREATE Function IsPhoneExist(@VarPhoneNumber VARCHAR(255)) --check if Email already exist
-Returns BIt
-AS BEGIN
-    IF EXISTS (SELECT 1 FROM Customers WHERE PhoneNumber = @VarPhoneNumber)
-        RETURN 1; 
-
-        RETURN 0; 
-END
-CREATE Function IsMailExist(@VarEmail VARCHAR(255)) --check if phone already exist
-Returns BIt
-AS BEGIN
-    IF EXISTS (SELECT 1 FROM Customers WHERE Email = @VarEmail)
-        RETURN 1; 
-    
-        RETURN 0; 
-END
--- Get a new customer UID
-SELECT dbo.GetUIDCustomer();
--- Check if a phone number exists
-SELECT dbo.IsPhoneExist('1234567890');
--- Check if an email exists
-SELECT dbo.IsMailExist('example@example.com');
--------------
+--Creates Stored Procedures
+--handle sign up
 CREATE PROCEDURE SignUp(
     @VarFirstName VARCHAR(255),
     @VarLastName VARCHAR(255),
@@ -122,14 +52,8 @@ BEGIN
 
     SET @Message = 'Customer signed up successfully.';
 END;
--- Example of calling the function to sign up a new customer
-EXEC SignUp 'John', 'Doe', '1234567890', 'john.doe@example.com', 0, 'UserKey123', 'JsonKey123',null;
-select * from Customers
-select * from LastLogin
-DELETE from Customers;
-SELECT * FROM sys.database_permissions WHERE grantee_principal_id = USER_ID('NodeJsServer');
-
----------------
+go;
+--handle Creation of new uid
 CREATE PROCEDURE GetNewUID
     @NewUIDString VARCHAR(36) OUTPUT -- Define the output parameter
 AS
@@ -137,14 +61,10 @@ BEGIN
     SET @NewUIDString = CONVERT(VARCHAR(64), NEWID());
 END;
 GO
---Example of calling the function to get new uid
-DECLARE @BackupUID VARCHAR(36);
-EXEC GetNewUID @BackupUID OUTPUT;
-SELECT @BackupUID;
-
+--handle Login with Token
 CREATE PROCEDURE loginWithToken
     @LoginToken VARCHAR(36),
-    @BackupUID VARCHAR(36) OUTPUT,
+    @FirstName VARCHAR(255) OUTPUT,
     @Message VARCHAR(255) OUTPUT
 AS
 BEGIN
@@ -155,7 +75,7 @@ BEGIN
     SET @CurrentDate = GETDATE();
 
     -- Check if the LoginToken exists and retrieve the associated CustomerID and ExpiredDate
-    SELECT @CustomerID = CustomerID, @BackupUID = Customers.BackupUID
+    SELECT @CustomerID = CustomerID, @FirstName = Customers.FirstName
     FROM LastLogin 
     INNER JOIN Customers ON LastLogin.CustomerID = Customers.ID
     WHERE LastLogin.LastToken = @LoginToken;
@@ -175,19 +95,10 @@ BEGIN
     END
 
     -- If everything is okay, return the BackupUID
-    SET @Message = 'Login successful. BackupUID returned.';
+    SET @Message = 'Login successful. FirstName returned.';
 END;
 GO
-
-DECLARE @ReturnedBackupUID VARCHAR(36);
-DECLARE @LoginMessage VARCHAR(255);
-
--- Call the procedure with a sample token
-EXEC loginWithToken 'F76BA6D4-A043-4924-BAE8-09B1D988F208', @ReturnedBackupUID OUTPUT, @LoginMessage OUTPUT;
-
--- Output the results
-SELECT @ReturnedBackupUID AS BackupUID, @LoginMessage AS Message;
-
+--handle Login with email
 CREATE PROCEDURE LoginWithEmail
     @Email VARCHAR(255),
     @LoginToken VARCHAR(36) OUTPUT,
@@ -236,12 +147,71 @@ BEGIN
     SET @Message = 'Login successful. LoginToken generated and returned.';
 END;
 GO
+--handle updatingUser
+CREATE PROCEDURE UpdateCustomer(
+	@VarToken VARCHAR(36),
+    @VarFirstName VARCHAR(255),
+    @VarLastName VARCHAR(255),
+    @VarPhoneNumber VARCHAR(255),
+    @VarEmail VARCHAR(255),
+    @Var2FA bit,
+    @VarUserKey VARCHAR(64),
+    @VarJsonKey VARCHAR(64),
+    --@VarBackupUID VARCHAR(64),
+	@VarUID INT,
+    @Message VARCHAR(255) OUTPUT, -- Add OUTPUT parameter for status message
+	@OutFirstName VARCHAR(255) OUTPUT,
+    @OutLastName VARCHAR(255) OUTPUT,
+    @OutPhoneNumber VARCHAR(255) OUTPUT,
+    @OutEmail VARCHAR(255) OUTPUT,
+    @Out2FA bit OUTPUT,
+    @OutUserKey VARCHAR(64) OUTPUT,
+    @OutJsonKey VARCHAR(64) OUTPUT,
+    --@VarBackupUID VARCHAR(64) OUTPUT,
+	@OutUID INT OUTPUT
+) 
+AS
+BEGIN
+	PRINT 'Stored Procedure Called'; -- Debugging: Check if the procedure is called
+    -- Check if the email already exists
+    IF dbo.IsMailExist(@VarEmail) = 1
+    BEGIN
+        SET @Message = 'Email already exists. Sign-up failed.';
+        RETURN;
+    END
 
-DECLARE @GeneratedLoginToken VARCHAR(36);
-DECLARE @LoginMessage VARCHAR(255);
+    -- Check if the phone number already exists
+	-- if his keep
+	-- if exiests (not his) not
+	-- if new keep 
+	--1 0 =0* 'stop' true V
+	--0 0 =1* 'keep' false V
+	--1 1 =0* 'keep' false V
+	--0 1 =0* 'stop?' false
+	---------------exeists-------------------------------------------his
+    IF ( dbo.IsPhoneExist(@VarPhoneNumber) = 1  and dbo.IsPhoneExistWithID(@VarPhoneNumber,@ID)=0)
+    BEGIN
+        SET @Message = 'Phone number already exists. Sign-up failed.';
+        RETURN;
+    END
+    -- update customer if email and phone number don't exist
+	
+    Update Customers
+	set FirstName=@VarFirstName, LastName=@VarLastName, PhoneNumber=@VarPhoneNumber, Email =@VarEmail, UserKey=@VarUserKey
+	from Customers
+	join LastLogin on LastLogin.CustomerID=Customers.ID
+    where LastToken=@VarToken
+    
+    
+	SET @OutFirstName=@VarFirstName
+	SET @OutLastName=@VarLastName
+	SET @OutPhoneNumber=@VarPhoneNumber
+	SET @OutEmail=@VarEmail
+	SET @Out2FA=@Var2FA
+	SET @OutUserKey=@OutUserKey
+	SET @OutJsonKey=@VarJsonKey
+	SET @OutUID=@VarUID
+	SET @Message = 'Customer Updated successfully.';
 
--- Call the procedure with an email
-EXEC LoginWithEmail 'john.doe@example.com', @GeneratedLoginToken OUTPUT, @LoginMessage OUTPUT;
-
--- Output the results
-SELECT @GeneratedLoginToken AS LoginToken, @LoginMessage AS Message;
+END;
+go;

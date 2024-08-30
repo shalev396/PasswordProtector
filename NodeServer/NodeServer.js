@@ -36,6 +36,52 @@ app.get("/main", async function (req, res) {
   }
 });
 
+app.post("/main", (req, res) => {
+  console.log("POST /main route hit");
+
+  let body = "";
+
+  req.on("data", (chunk) => {
+    body += chunk.toString();
+  });
+
+  req.on("end", async () => {
+    try {
+      await sql.connect(dbConfig);
+      console.log("Connected to the database!");
+
+      const tokenBody = JSON.parse(body);
+      console.log("User Data1:", tokenBody.token);
+
+      const request = new sql.Request();
+      request.input("LoginToken", sql.VarChar(36), tokenBody.token);
+
+      // Output parameters should be declared without an initial value
+      request.output("FirstName", sql.VarChar(225));
+      request.output("Message", sql.VarChar(255));
+
+      // Execute the stored procedure
+      const result = await request.execute("loginWithToken");
+      console.log("SQL Query Result:", result);
+
+      const FirstName = result.output.FirstName;
+      const message = result.output.Message;
+      console.log("Login Message:", message);
+      console.log("Login BackupUID:", FirstName);
+      // Send response based on the result
+      if (FirstName) {
+        res.status(200).json({ success: true, FirstName: FirstName });
+      } else {
+        res.status(400).json({ success: false, message });
+      }
+    } catch (err) {
+      console.error("SQL error:", err);
+      // Send error response as JSON
+      res.status(500).json({ error: "Server Error" });
+    }
+  });
+});
+
 // Route to serve the SignUp page
 app.get("/SignUp", (req, res) => {
   res.sendFile(path.join(webPath, "SignUp", "SignUp.html"));
@@ -67,7 +113,6 @@ app.post("/SignUp", (req, res) => {
       request.input("Var2FA", sql.Bit, 0);
       request.input("VarUserKey", sql.VarChar(64), user.key);
       request.input("VarJsonKey", sql.VarChar(64), "JsonKey123");
-      request.input("VarBackupUID", sql.VarChar(64), "BackupUID123");
 
       // Define the output parameter for the message
       request.output("Message", sql.VarChar(255));
@@ -143,6 +188,14 @@ app.post("/Login", (req, res) => {
   });
 });
 
+app.get("/Settings", async function (req, res) {
+  try {
+    res.sendFile(path.join(webPath, "Settings", "Settings.html"));
+  } catch (err) {
+    console.error("Server Error", err);
+    res.status(500).send("Server Error");
+  }
+});
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}/main`);
