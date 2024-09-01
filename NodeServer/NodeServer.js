@@ -196,6 +196,62 @@ app.get("/Settings", async function (req, res) {
     res.status(500).send("Server Error");
   }
 });
+
+app.post("/Settings", (req, res) => {
+  console.log("POST/settings");
+
+  let body = "";
+
+  req.on("data", (chunk) => {
+    body += chunk.toString();
+  });
+
+  req.on("end", async () => {
+    try {
+      await sql.connect(dbConfig);
+      console.log("Connected to the database!");
+
+      const user = JSON.parse(body);
+      console.log("User Data1:", user);
+
+      const request = new sql.Request();
+      request.input("VarToken", sql.VarChar(36), user.token);
+      request.input("VarFirstName", sql.VarChar(255), user.firstName);
+      request.input("VarLastName", sql.VarChar(255), user.lastName);
+      request.input("VarPhoneNumber", sql.VarChar(255), user.phoneNumber);
+      request.input("VarEmail", sql.VarChar(255), user.email);
+      request.input("Var2FA", sql.Bit, 0);
+      request.input("VarUserKey", sql.VarChar(64), user.key);
+      request.input("VarJsonKey", sql.VarChar(64), "example");
+
+      // Output parameters should be declared without an initial value
+      request.output("OutFirstName", sql.VarChar(255));
+      request.output("OutLastName", sql.VarChar(255));
+      request.output("OutPhoneNumber", sql.VarChar(255));
+      request.output("OutEmail", sql.VarChar(255));
+      request.output("Out2FA", sql.Bit);
+      request.output("OutUserKey", sql.VarChar(64));
+      request.output("OutJsonKey", sql.VarChar(64));
+      request.output("Message", sql.VarChar(255));
+      request.output("OutUID", sql.Int);
+
+      // Execute the stored procedure
+      const result = await request.execute("UpdateCustomer");
+      console.log("SQL Query Result:", result);
+
+      // Send response based on the result
+      if (user) {
+        res.status(200).json({ success: true, user });
+      } else {
+        res.status(400).json({ success: false, message });
+      }
+    } catch (err) {
+      console.error("SQL error:", err);
+      // Send error response as JSON
+      res.status(500).json({ error: "Server Error" });
+    }
+  });
+});
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}/main`);

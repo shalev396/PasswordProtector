@@ -23,4 +23,48 @@ DECLARE @GeneratedLoginToken VARCHAR(36);
 DECLARE @LoginMessage VARCHAR(255);
 EXEC LoginWithEmail 'john.doe@example.com', @GeneratedLoginToken OUTPUT, @LoginMessage OUTPUT;
 SELECT @GeneratedLoginToken AS LoginToken, @LoginMessage AS Message;
----test
+---testGetUidByLoginToken
+DECLARE @UID INT;
+EXEC GetUidByLoginToken '7DBEFF04-8D0E-45E1-9074-576B26A07EC5',@UID OUTPUT
+SELECT @UID; 
+-- test UpdateCustomer
+DECLARE @Message VARCHAR(255);
+DECLARE @OutFirstName VARCHAR(255);
+DECLARE @OutLastName VARCHAR(255);
+DECLARE @OutPhoneNumber VARCHAR(255);
+DECLARE @OutEmail VARCHAR(255);
+DECLARE @Out2FA BIT;
+DECLARE @OutUserKey VARCHAR(64);
+DECLARE @OutJsonKey VARCHAR(64);
+DECLARE @OutUID INT;
+-- Call the procedure
+EXEC UpdateCustomer 
+    @VarToken = '19E1E6BD-FA51-436D-81D2-2C503B51CF65',  -- Use the sample token inserted earlier
+    @VarFirstName = 'Jane',
+    @VarLastName = 'Smith',
+    @VarPhoneNumber = '0987654321',
+    @VarEmail = 'jane.smith@example.com',
+    @Var2FA = 0,
+    @VarUserKey = 'NewUserKey456',
+    @VarJsonKey = 'NewJsonKey456',
+    @Message = @Message OUTPUT,
+    @OutFirstName = @OutFirstName OUTPUT,
+    @OutLastName = @OutLastName OUTPUT,
+    @OutPhoneNumber = @OutPhoneNumber OUTPUT,
+    @OutEmail = @OutEmail OUTPUT,
+    @Out2FA = @Out2FA OUTPUT,
+    @OutUserKey = @OutUserKey OUTPUT,
+    @OutJsonKey = @OutJsonKey OUTPUT,
+    @OutUID = @OutUID OUTPUT;
+
+-- Check the results
+SELECT 
+    @Message AS Message,
+    @OutFirstName AS FirstName,
+    @OutLastName AS LastName,
+    @OutPhoneNumber AS PhoneNumber,
+    @OutEmail AS Email,
+    @Out2FA AS TwoFactorAuth,
+    @OutUserKey AS UserKey,
+    @OutJsonKey AS JsonKey,
+    @OutUID AS UID;

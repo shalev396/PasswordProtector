@@ -158,7 +158,7 @@ CREATE PROCEDURE UpdateCustomer(
     @VarUserKey VARCHAR(64),
     @VarJsonKey VARCHAR(64),
     --@VarBackupUID VARCHAR(64),
-	@VarUID INT,
+	
     @Message VARCHAR(255) OUTPUT, -- Add OUTPUT parameter for status message
 	@OutFirstName VARCHAR(255) OUTPUT,
     @OutLastName VARCHAR(255) OUTPUT,
@@ -172,9 +172,12 @@ CREATE PROCEDURE UpdateCustomer(
 ) 
 AS
 BEGIN
+	DECLARE @VarUID INT;
+	EXEC GetUidByLoginToken @VarToken,@VarUID OUTPUT
+	
 	PRINT 'Stored Procedure Called'; -- Debugging: Check if the procedure is called
     -- Check if the email already exists
-    IF dbo.IsMailExist(@VarEmail) = 1
+    IF (dbo.IsMailExist(@VarEmail) = 1 and dbo.IsMailExistWithID(@varEmail,@VarUID)=0)
     BEGIN
         SET @Message = 'Email already exists. Sign-up failed.';
         RETURN;
@@ -187,9 +190,9 @@ BEGIN
 	--1 0 =0* 'stop' true V
 	--0 0 =1* 'keep' false V
 	--1 1 =0* 'keep' false V
-	--0 1 =0* 'stop?' false
+	--0 1 =0* 'stop?' false idk
 	---------------exeists-------------------------------------------his
-    IF ( dbo.IsPhoneExist(@VarPhoneNumber) = 1  and dbo.IsPhoneExistWithID(@VarPhoneNumber,@ID)=0)
+    IF ( dbo.IsPhoneExist(@VarPhoneNumber) = 1  and dbo.IsPhoneExistWithID(@VarPhoneNumber,@VarUID)=0)
     BEGIN
         SET @Message = 'Phone number already exists. Sign-up failed.';
         RETURN;
@@ -215,3 +218,12 @@ BEGIN
 
 END;
 go;
+CREATE PROCEDURE GetUidByLoginToken(@Token VARCHAR(36),@ReturnedUID int OUTPUT)
+AS BEGIN
+	IF EXISTS (select 1 from Customers join LastLogin on LastLogin.CustomerID=Customers.ID where LastLogin.LastToken=@Token)
+	select @ReturnedUID=ID from Customers join LastLogin on LastLogin.CustomerID=Customers.ID where LastLogin.LastToken=@Token
+	END
+	go
+
+
+
