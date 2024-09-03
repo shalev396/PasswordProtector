@@ -6,6 +6,7 @@ const webPath = path.join(__dirname, "../Web");
 const app = express();
 const port = 3000;
 
+app.set("view engine", "ejs"); // Use EJS as the template engine
 app.use(express.static(webPath));
 
 // Database configuration
@@ -251,6 +252,27 @@ app.post("/Settings", (req, res) => {
       res.status(500).json({ error: "Server Error" });
     }
   });
+});
+
+app.get("/OverView", (req, res) => {
+  try {
+    res.sendFile(path.join(webPath, "OverViewPage", "OverView.html"));
+  } catch (err) {
+    console.error("Server Error", err);
+    res.status(500).send("Server Error");
+  }
+});
+
+// API route to get passwords data
+app.get("/api/passwords", async (req, res) => {
+  try {
+    await sql.connect(dbConfig);
+    const result = await sql.query("SELECT * FROM Passwords");
+    res.json(result.recordset); // Send the data as JSON
+  } catch (err) {
+    console.error("Server Error", err);
+    res.status(500).send("Server Error");
+  }
 });
 // Start the server
 app.listen(port, () => {

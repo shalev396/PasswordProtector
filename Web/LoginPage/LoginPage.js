@@ -25,7 +25,7 @@ document
             console.log(data);
 
             // Store the login token in the browser's local storage
-            localStorage.setItem("loginToken", data.token);
+            sessionStorage.setItem("loginToken", data.token);
             alert("Login successful!");
 
             // Optionally, redirect the user to the main page or dashboard

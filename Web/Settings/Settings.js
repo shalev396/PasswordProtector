@@ -35,7 +35,7 @@ document
       phoneNumber: document.getElementById("phone-number").value,
       email: document.getElementById("email").value,
       key: document.getElementById("key").value,
-      token: localStorage.getItem("loginToken"),
+      token: sessionStorage.getItem("loginToken"),
     };
 
     // Log the user object to check if the data is captured correctly

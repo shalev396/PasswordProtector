@@ -1,7 +1,8 @@
+let isLoggedIn = false;
 document.addEventListener("DOMContentLoaded", function () {
   const signUpButton = document.querySelector(".cta-button");
   if (signUpButton) {
-    if (localStorage.getItem("loginToken")) {
+    if (sessionStorage.getItem("loginToken")) {
       signUpButton.textContent = "Logout";
       signUpButton.href = "/main";
     } else signUpButton.textContent = "SignUp";
@@ -9,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     signUpButton.addEventListener("click", function (event) {
       event.preventDefault(); // Prevent the default navigation behavior
-      if (localStorage.getItem("loginToken")) {
+      if (sessionStorage.getItem("loginToken")) {
         del();
         window.location.href = "/main";
       } else window.location.href = "/SignUp";
@@ -19,14 +20,14 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-if (localStorage.getItem("loginToken")) {
+if (sessionStorage.getItem("loginToken")) {
   fetch("/main", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      token: localStorage.getItem("loginToken"),
+      token: sessionStorage.getItem("loginToken"),
     }),
   })
     .then((response) => response.json())
@@ -37,7 +38,8 @@ if (localStorage.getItem("loginToken")) {
 
         alert("Login successful!");
         sessionStorage.setItem("FirstName", data.FirstName); //need to get name
-
+        isLoggedIn = true;
+        document.getElementById("OverView").hidden = false;
         document.getElementById("loginButton").textContent = sessionStorage
           .getItem("FirstName")
           .toString();
@@ -69,7 +71,7 @@ function getByUID() {
       if (data.success) {
         // Store the login token in the browser's local storage
         alert("got the data successful!");
-        localStorage.setItem("user", data.user);
+        sessionStorage.setItem("user", data.user);
       } else {
         alert(data.message || "no data");
       }
@@ -81,6 +83,12 @@ function getByUID() {
 }
 
 function del() {
-  localStorage.removeItem("loginToken");
+  sessionStorage.removeItem("loginToken");
   sessionStorage.removeItem("FirstName");
+  isLoggedIn = false;
+}
+function goOverview() {
+  if (isLoggedIn) {
+    document.getElementById("OverView").href = "/OverView";
+  } else document.getElementById("OverView").href = "null";
 }
