@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Plus, Search, Trash, Edit, Copy } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Plus,
+  Search,
+  Trash,
+  Edit,
+  Copy,
+  KeyRound,
+} from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { calculatePasswordStrength } from "../lib/passwordGenerator";
@@ -195,6 +204,13 @@ export default function DashboardPage() {
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Password
+            </Link>
+            <Link
+              to="/password-generator"
+              className="bg-secondary hover:bg-secondary-dark text-secondary-foreground rounded-lg px-4 py-2 flex items-center justify-center"
+            >
+              <KeyRound className="h-4 w-4 mr-2" />
+              Password Generator
             </Link>
           </div>
         </div>

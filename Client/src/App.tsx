@@ -8,6 +8,8 @@ import LandingPage from "./pages/LandingPage.tsx"; // Import LandingPage
 import LoginPage from "./pages/LoginPage.tsx";
 import RegisterPage from "./pages/RegisterPage.tsx";
 import DashboardPage from "./pages/DashboardPage.tsx";
+import AddItemPage from "./pages/AddItemPage.tsx"; // Import AddItemPage
+import PasswordGeneratorPage from "./pages/PasswordGeneratorPage.tsx"; // Import PasswordGeneratorPage
 import PrivateRoute from "./components/PrivateRoute.tsx"; // Import the placeholder
 
 function App() {
@@ -32,6 +34,22 @@ function App() {
           element={
             <PrivateRoute>
               <DashboardPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/add"
+          element={
+            <PrivateRoute>
+              <AddItemPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/password-generator"
+          element={
+            <PrivateRoute>
+              <PasswordGeneratorPage />
             </PrivateRoute>
           }
         />
