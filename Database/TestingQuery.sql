@@ -68,3 +68,28 @@ SELECT
     @OutUserKey AS UserKey,
     @OutJsonKey AS JsonKey,
     @OutUID AS UID;
+select * from LastLogin
+
+select *from Tokens
+select *from Passwords
+select *from Customers
+select *from LastLogin
+
+INSERT INTO Tokens (ID, Token, BackupUID)
+VALUES
+(1, 'TOKEN-1', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
+(2, 'TOKEN-2', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
+(3, 'TOKEN-3', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
+(4, 'TOKEN-4', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
+(5, 'TOKEN-5', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD');
+
+INSERT INTO Passwords (ID, Website, ChangedCount, UsedCount, TokenID, [Password], WebsiteLoginText, BackupUID)
+VALUES
+(1, 'https://example1.com', 0, 0, 1, 'password123', 'john.doe@example.com', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
+(2, 'https://example2.com', 0, 0, 2, 'password456', 'jane.smith@example.com', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
+(3, 'https://example3.com', 0, 0, 3, 'password789', 'shalev@example.com', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
+(4, 'https://example4.com', 0, 0, 4, 'passwordabc', 'amit@example.com', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
+(5, 'https://example5.com', 0, 0, 5, 'passwordxyz', 'shoval@example.com', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD');
+
+SELECT * FROM Passwords;
+SELECT * FROM Tokens;

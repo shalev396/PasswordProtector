@@ -264,16 +264,78 @@ app.get("/OverView", (req, res) => {
 });
 
 // API route to get passwords data
-app.get("/api/passwords", async (req, res) => {
-  try {
-    await sql.connect(dbConfig);
-    const result = await sql.query("SELECT * FROM Passwords");
-    res.json(result.recordset); // Send the data as JSON
-  } catch (err) {
-    console.error("Server Error", err);
-    res.status(500).send("Server Error");
-  }
+app.post("/api/passwords", async (req, res) => {
+  console.log("called");
+
+  let body = "";
+
+  req.on("data", (chunk) => {
+    body += chunk.toString();
+  });
+
+  req.on("end", async () => {
+    try {
+      console.log("happened");
+
+      await sql.connect(dbConfig);
+      console.log("Connected to the database!");
+      console.log(body);
+      const parsedBody = JSON.parse(body);
+      const token = parsedBody.token;
+      console.log("User Data:", token);
+      const request = new sql.Request();
+      request.input("Token", sql.VarChar(36), token);
+      // Execute the stored procedure
+      const result = await request.execute("PasswordsByLoginToken");
+      console.log("SQL Query Result:", result);
+      const passwords = result.recordset;
+      // Send the passwords data back to the client
+      res.status(200).json(passwords);
+    } catch (err) {
+      console.error("SQL error:", err);
+      // Send error response as JSON
+      res.status(500).json({ error: "Server Error" });
+    }
+  });
 });
+
+app.post("/api/password", async (req, res) => {
+  console.log("called");
+
+  let body = "";
+
+  req.on("data", (chunk) => {
+    body += chunk.toString();
+  });
+
+  req.on("end", async () => {
+    try {
+      console.log("happened");
+
+      await sql.connect(dbConfig);
+      console.log("Connected to the database!");
+      console.log(body);
+      const parsedBody = JSON.parse(body);
+      const token = parsedBody.token;
+      const id = parsedBody.id;
+      console.log("User Data:", token);
+      const request = new sql.Request();
+      request.input("LoginToken", sql.VarChar(36), token);
+      request.input("Tokenid", sql.Int, id);
+      // Execute the stored procedure
+      const result = await request.execute("PasswordByToken");
+      console.log("SQL Query Result:", result);
+      const password = result.recordset;
+      // Send the passwords data back to the client
+      res.status(200).json(password);
+    } catch (err) {
+      console.error("SQL error:", err);
+      // Send error response as JSON
+      res.status(500).json({ error: "Server Error" });
+    }
+  });
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}/main`);

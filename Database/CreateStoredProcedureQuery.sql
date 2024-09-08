@@ -223,7 +223,28 @@ AS BEGIN
 	IF EXISTS (select 1 from Customers join LastLogin on LastLogin.CustomerID=Customers.ID where LastLogin.LastToken=@Token)
 	select @ReturnedUID=ID from Customers join LastLogin on LastLogin.CustomerID=Customers.ID where LastLogin.LastToken=@Token
 	END
-	go
+go
 
+CREATE PROCEDURE PasswordsByLoginToken(@Token VARCHAR(36))
+AS BEGIN
+DECLARE @id int;
+	IF EXISTS (select 1 from Customers join LastLogin on LastLogin.CustomerID=Customers.ID where LastLogin.LastToken=@Token)
+	begin
+	select @id=ID from Customers join LastLogin on LastLogin.CustomerID=Customers.ID where LastLogin.LastToken=@Token
+	end
+	select Passwords.TokenID,Website,WebsiteLoginText,ChangedCount,UsedCount from Passwords join  Tokens on Passwords.TokenID=Tokens.ID join Customers on Tokens.BackupUID=Customers.BackupUID where @id=Customers.ID
+end
+go;
+DECLARE @Token VARCHAR(36);
+ set @Token='B8CF1DB0-7958-4CAE-9D45-2425CD2CA639'
+exec PasswordsByToken @Token
 
-
+CREATE PROCEDURE PasswordByToken(@Token VARCHAR(36))
+AS BEGIN
+DECLARE @id int;
+	IF EXISTS (select 1 from Customers join LastLogin on LastLogin.CustomerID=Customers.ID where LastLogin.LastToken=@Token)
+	begin
+	select @id=ID from Customers join LastLogin on LastLogin.CustomerID=Customers.ID where LastLogin.LastToken=@Token
+	end
+	select Website,WebsiteLoginText,ChangedCount,UsedCount from Passwords join  Tokens on Passwords.TokenID=Tokens.ID join Customers on Tokens.BackupUID=Customers.BackupUID where @id=Customers.ID
+end

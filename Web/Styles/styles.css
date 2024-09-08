@@ -319,3 +319,81 @@ footer p {
   margin: 0;
   font-size: 14px;
 }
+.btn {
+  background-color: #ffffff; /* Green background */
+  color: rgb(0, 0, 0); /* White text */
+
+  text-align: center; /* Center the text */
+  text-decoration: none; /* Remove underline */
+  display: inline-block; /* Inline-block element */
+  font-size: 16px; /* Font size */
+  margin: 4px 2px; /* Margin */
+  cursor: pointer; /* Cursor pointer */
+  border-radius: 4px; /* Rounded corners */
+  padding: 10px 20px;
+  border: 2px solid black;
+  border-radius: 5px;
+}
+
+.btn:hover {
+  background-color: #afafaf; /* Darker green when hovered */
+}
+
+#overview {
+  padding: 100px 0;
+  text-align: center;
+  background-image: url("/images/hero-image.png"); /* Background image */
+  background-size: cover;
+  background-position: center;
+}
+
+.overview-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.9
+  ); /* Slightly transparent white background */
+  padding: 50px 40px;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); /* Add some depth with shadow */
+}
+
+.overview-container h1 {
+  font-size: 40px;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.overview-container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.overview-container table,
+.overview-container th,
+.overview-container td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.overview-container th {
+  background-color: #f2f2f2;
+  color: #333;
+  text-align: left;
+}
+
+.overview-container tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.overview-container tr:hover {
+  background-color: #f1f1f1;
+}
+
+.overview-container td {
+  text-align: center;
+}
