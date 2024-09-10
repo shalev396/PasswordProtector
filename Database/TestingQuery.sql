@@ -81,7 +81,10 @@ VALUES
 (2, 'TOKEN-2', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
 (3, 'TOKEN-3', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
 (4, 'TOKEN-4', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
-(5, 'TOKEN-5', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD');
+(5, 'TOKEN-5', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
+(6, 'TOKEN-6', 'D97CBDF5-AF16-432C-9A29-3B342C7FC4BB'),
+(7, 'TOKEN-7', 'D97CBDF5-AF16-432C-9A29-3B342C7FC4BB'),
+(8, 'TOKEN-8', 'D97CBDF5-AF16-432C-9A29-3B342C7FC4BB');
 
 INSERT INTO Passwords (ID, Website, ChangedCount, UsedCount, TokenID, [Password], WebsiteLoginText, BackupUID)
 VALUES
@@ -89,7 +92,12 @@ VALUES
 (2, 'https://example2.com', 0, 0, 2, 'password456', 'jane.smith@example.com', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
 (3, 'https://example3.com', 0, 0, 3, 'password789', 'shalev@example.com', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
 (4, 'https://example4.com', 0, 0, 4, 'passwordabc', 'amit@example.com', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
-(5, 'https://example5.com', 0, 0, 5, 'passwordxyz', 'shoval@example.com', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD');
+(5, 'https://example5.com', 0, 0, 5, 'passwordxyz', 'shoval@example.com', '223BCFE7-408A-4D07-8B0E-DC0E65A066CD'),
+(6, 'https://example3.com', 5, 10, 6, 'password789', 'shalev@example.com', 'D97CBDF5-AF16-432C-9A29-3B342C7FC4BB'),
+(7, 'https://example4.com', 1, 22, 7, 'passwordabc', 'amit@example.com', 'D97CBDF5-AF16-432C-9A29-3B342C7FC4BB'),
+(8, 'https://example5.com', 3, 44, 8, 'passwordxyz', 'shoval@example.com', 'D97CBDF5-AF16-432C-9A29-3B342C7FC4BB');
 
 SELECT * FROM Passwords;
 SELECT * FROM Tokens;
+select *from Customers
+select *from LastLogin

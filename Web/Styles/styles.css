@@ -339,26 +339,29 @@ footer p {
   background-color: #afafaf; /* Darker green when hovered */
 }
 
+/* Styles for the Overview Page */
 #overview {
   padding: 100px 0;
   text-align: center;
-  background-image: url("/images/hero-image.png"); /* Background image */
+  background-image: url("/images/hero-image.png");
   background-size: cover;
   background-position: center;
 }
-
 .overview-container {
-  max-width: 800px;
+  width: 140%; /* Use a percentage to expand the white box */
+  max-width: 1200px; /* Add a max-width for better control */
   margin: 0 auto;
   background-color: rgba(
     255,
     255,
     255,
     0.9
-  ); /* Slightly transparent white background */
+  ); /* White box with slight transparency */
   padding: 50px 40px;
   border-radius: 8px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); /* Add some depth with shadow */
+  text-align: center;
+  margin: 0 auto; /* Ensure the container is centered */
 }
 
 .overview-container h1 {
@@ -369,21 +372,21 @@ footer p {
 
 .overview-container table {
   width: 100%;
+  margin: 0 auto;
   border-collapse: collapse;
   margin-top: 20px;
 }
 
-.overview-container table,
 .overview-container th,
 .overview-container td {
   border: 1px solid #ddd;
-  padding: 8px;
+  padding: 10px;
+  text-align: center;
 }
 
 .overview-container th {
   background-color: #f2f2f2;
   color: #333;
-  text-align: left;
 }
 
 .overview-container tr:nth-child(even) {

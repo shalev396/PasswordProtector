@@ -236,15 +236,20 @@ DECLARE @id int;
 end
 go;
 DECLARE @Token VARCHAR(36);
- set @Token='B8CF1DB0-7958-4CAE-9D45-2425CD2CA639'
-exec PasswordsByToken @Token
+ set @Token='3FFA24A8-4CA9-4BA9-9590-9E9C26B6BA85'
+exec PasswordsByLoginToken @Token
 
-CREATE PROCEDURE PasswordByToken(@Token VARCHAR(36))
+CREATE PROCEDURE PasswordByToken(@LoginToken VARCHAR(36),@Tokenid int)
 AS BEGIN
 DECLARE @id int;
-	IF EXISTS (select 1 from Customers join LastLogin on LastLogin.CustomerID=Customers.ID where LastLogin.LastToken=@Token)
+	IF EXISTS (select 1 from Customers join LastLogin on LastLogin.CustomerID=Customers.ID where LastLogin.LastToken=@LoginToken)
 	begin
-	select @id=ID from Customers join LastLogin on LastLogin.CustomerID=Customers.ID where LastLogin.LastToken=@Token
+	select @id=ID from Customers join LastLogin on LastLogin.CustomerID=Customers.ID where LastLogin.LastToken=@LoginToken
 	end
-	select Website,WebsiteLoginText,ChangedCount,UsedCount from Passwords join  Tokens on Passwords.TokenID=Tokens.ID join Customers on Tokens.BackupUID=Customers.BackupUID where @id=Customers.ID
+	select [Password] from Passwords join Tokens on Tokens.ID=Passwords.TokenID where Tokens.ID=@Tokenid
 end
+go;
+
+DECLARE @Token VARCHAR(36);
+ set @Token='B8CF1DB0-7958-4CAE-9D45-2425CD2CA639'
+exec PasswordByToken @Token,4
