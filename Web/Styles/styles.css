@@ -1,17 +1,34 @@
 /* General Styles */
+:root {
+  --width: 100%;
+  --font-size: 20px;
+  --title-size: 24px;
+  --h1-size: 64px;
+}
+* {
+  box-sizing: border-box;
+}
+
 body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
   font-family: "Poppins", sans-serif;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   background-color: #f4f4f9;
+  width: var(--width);
 }
 
 header {
   background: white;
   color: black;
   padding: 20px 0;
+
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: var(--width);
 }
 
 nav {
@@ -19,10 +36,11 @@ nav {
   justify-content: space-between;
   align-items: center;
   padding: 0 50px;
+  width: var(--width);
 }
 
 nav .logo {
-  font-size: 24px;
+  font-size: var(--title-size);
   font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -38,12 +56,14 @@ nav a {
   color: black;
   text-decoration: none;
   font-weight: bold;
+  font-size: var(--font-size);
 }
 
 nav .cta {
   padding: 10px 20px;
   border: 2px solid black;
   border-radius: 5px;
+  font-size: var(--font-size);
 }
 
 /* Hero Section */
@@ -53,6 +73,7 @@ nav .cta {
   display: flex;
   justify-content: center;
   align-items: center;
+  width: var(--width);
 }
 
 .hero-bg {
@@ -64,6 +85,7 @@ nav .cta {
   object-fit: cover;
   z-index: -1;
   filter: brightness(100%);
+  width: var(--width);
 }
 
 .hero .content {
@@ -73,13 +95,13 @@ nav .cta {
 }
 
 h1 {
-  font-size: 64px;
+  font-size: var(--h1-size);
   font-weight: 600;
   margin: 0 0 10px;
 }
 
 p {
-  font-size: 20px;
+  font-size: var(--font-size);
   margin: 20px 0;
 }
 
@@ -88,7 +110,7 @@ p {
   padding: 15px 30px;
   color: white;
   text-decoration: none;
-  font-size: 18px;
+  font-size: var(--font-size);
   font-weight: bold;
   border-radius: 5px;
 }
@@ -146,7 +168,7 @@ p {
 }
 
 .image-content img {
-  max-width: 500px;
+  max-width: 400px;
   border-radius: 8px;
 }
 
@@ -195,6 +217,97 @@ footer {
   color: white;
   text-align: center;
   padding: 20px 0;
+}
+@media (max-width: 425px) {
+  header nav {
+    padding-left: 10px;
+  }
+  nav .logo {
+    font-size: 16px;
+  }
+  .image-content img {
+    margin-top: 5rem;
+    /* width: 170px; */
+  }
+  #features {
+    padding: 60px 10px;
+  }
+}
+@media (max-width: 768px) {
+  :root {
+    --font-size: 15px;
+    --title-size: 18px;
+    --h1-size: 52px;
+  }
+  section#about-section div.container {
+    flex-direction: column;
+  }
+  .image-content img {
+    margin-top: 5rem;
+    width: 300px;
+  }
+  #about-section {
+    padding-top: 2rem;
+    padding-inline: 0rem;
+  }
+  .text-content {
+    max-width: 100%;
+    width: 80%;
+  }
+  .features-container {
+    flex-direction: column;
+  }
+  .feature-item {
+    padding: 20px;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    max-width: 100%;
+  }
+  .feature-item:first-child {
+    margin-top: 0rem;
+  }
+  nav {
+    padding-left: 20px;
+  }
+  nav ul {
+    gap: 8px;
+    padding-left: 10px;
+  }
+
+  nav .cta {
+    padding: 10px 10px;
+    border: 2px solid black;
+  }
+  .hero {
+    height: 500px;
+  }
+  .text-content {
+    padding: 40px;
+  }
+}
+
+@media (max-width: 1080px) {
+  nav :last-child {
+    font-size: 10px;
+  }
+  #features {
+    padding: 60px 8px;
+  }
+  .image-content img {
+    margin-top: 5rem;
+    max-width: 500px;
+  }
+  .container {
+    justify-content: space-between;
+  }
+  .text-content {
+    max-width: 100%;
+    width: 100%;
+  }
+  .text-content h2 {
+    font-size: 24px;
+  }
 }
 
 /* Styles for the Sign Up Page */
