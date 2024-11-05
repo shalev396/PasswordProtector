@@ -3,6 +3,7 @@ import express, { Express, Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import { connectDB } from "./config/sequelize"; // Import the Sequelize connection function
+import authRoutes from "./routes/authRoutes"; // Import the auth routes
 
 dotenv.config();
 
@@ -22,7 +23,8 @@ const startServer = async () => {
     res.send("Password Protector API Running!");
   });
 
-  // TODO: Add Routers (e.g., app.use('/api/auth', authRoutes);)
+  // Mount API Routes
+  app.use("/api/auth", authRoutes);
 
   // Basic Error Handling Middleware
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

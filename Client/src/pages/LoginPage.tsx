@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AlertCircle, ArrowLeft, Eye, EyeOff, LockIcon } from "lucide-react";
 
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { generateEncryptionKey, hashPassword } from "@/lib/crypto";
+import { login, isAuthenticated } from "@/services/authService";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -26,54 +26,52 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Check if user is already authenticated
+  useEffect(() => {
+    if (isAuthenticated()) {
+      navigate("/dashboard");
+    }
+  }, [navigate]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
+    if (!email || !password) {
+      setError("Please enter both email and password");
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const storedEmail = localStorage.getItem("userEmail");
-      const storedHashedPassword = localStorage.getItem("hashedPassword");
+      // Call the login service
+      await login(email, password);
 
-      if (!storedEmail || !storedHashedPassword) {
-        setError("No account found for this email. Please register first.");
-        setLoading(false);
-        return;
-      }
-
-      if (email !== storedEmail) {
-        setError("Invalid email or password.");
-        setLoading(false);
-        return;
-      }
-
-      const enteredHashedPassword = await hashPassword(password, email);
-
-      if (enteredHashedPassword !== storedHashedPassword) {
-        setError("Invalid email or password.");
-        setLoading(false);
-        return;
-      }
-
-      // Store user data in the format expected by DashboardPage
-      localStorage.setItem(
-        "userData",
-        JSON.stringify({
-          email: email,
-          masterKey: password, // The masterKey is the raw password used for encryption
-        })
-      );
-
-      // Also maintain the session authentication
-      sessionStorage.setItem("isAuthenticated", "true");
-
+      // If login successful, navigate to dashboard
       navigate("/dashboard");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login Error:", err);
-      setError(
-        "Failed to log in. Please check your credentials or try again later."
-      );
+
+      // Handle different error scenarios
+      if (err.response) {
+        // Server responded with an error status
+        if (err.response.status === 401) {
+          setError("Invalid email or password");
+        } else if (err.response.data && err.response.data.message) {
+          setError(err.response.data.message);
+        } else {
+          setError("Failed to log in. Please try again later.");
+        }
+      } else if (err.request) {
+        // Request was made but no response received - network error
+        setError(
+          "Cannot connect to server. Please check your internet connection."
+        );
+      } else {
+        // Something else happened in setting up the request
+        setError("Failed to log in. Please try again later.");
+      }
     } finally {
       setLoading(false);
     }

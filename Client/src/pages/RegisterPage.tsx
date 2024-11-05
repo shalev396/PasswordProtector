@@ -1,6 +1,6 @@
 "use client"; // Remove if not using Next.js App Router
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AlertCircle, ArrowLeft, Eye, EyeOff, LockIcon } from "lucide-react";
 
@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
-import { generateEncryptionKey, hashPassword } from "@/lib/crypto";
+import { register, isAuthenticated } from "@/services/authService";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -27,6 +27,13 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Check if user is already authenticated
+  useEffect(() => {
+    if (isAuthenticated()) {
+      navigate("/dashboard");
+    }
+  }, [navigate]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,42 +45,46 @@ export default function RegisterPage() {
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email address.");
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    // Check password strength
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long");
       return;
     }
 
     try {
       setLoading(true);
 
-      if (localStorage.getItem("userEmail") === email) {
-        setError("An account with this email already exists. Please log in.");
-        setLoading(false);
-        return;
-      }
+      // Call the register service
+      await register(email, password);
 
-      const encryptionKey = await generateEncryptionKey(password, email);
-      const hashedPassword = await hashPassword(password, email);
-
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("hashedPassword", hashedPassword);
-      localStorage.setItem("vault", JSON.stringify([]));
-
-      // Store user data in the format expected by DashboardPage
-      localStorage.setItem(
-        "userData",
-        JSON.stringify({
-          email: email,
-          masterKey: password, // The masterKey is the raw password used for encryption
-        })
-      );
-
-      // Also maintain the session authentication
-      sessionStorage.setItem("isAuthenticated", "true");
-
+      // If registration successful, navigate to dashboard
       navigate("/dashboard");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Registration error:", err);
-      setError("Failed to create account. Please try again.");
+
+      // Handle different error scenarios
+      if (err.response) {
+        // Server responded with an error status
+        if (err.response.status === 409) {
+          setError("An account with this email already exists");
+        } else if (err.response.data && err.response.data.message) {
+          setError(err.response.data.message);
+        } else {
+          setError("Failed to create account. Please try again later.");
+        }
+      } else if (err.request) {
+        // Request was made but no response received - network error
+        setError(
+          "Cannot connect to server. Please check your internet connection."
+        );
+      } else {
+        // Something else happened in setting up the request
+        setError("Failed to create account. Please try again later.");
+      }
     } finally {
       setLoading(false);
     }
