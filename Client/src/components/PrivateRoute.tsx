@@ -1,6 +1,7 @@
-import React, { useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
-import { isAuthenticated } from "@/services/authService";
+import React from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 // Placeholder PrivateRoute component
 // In the future, this will check for authentication status
@@ -10,22 +11,27 @@ interface PrivateRouteProps {
 }
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
-  const navigate = useNavigate();
-  const authenticated = isAuthenticated();
+  const location = useLocation();
+  const { isAuthenticated, isLoading } = useSelector(
+    (state: RootState) => state.session
+  );
+  const { token } = useSelector((state: RootState) => state.token);
 
-  useEffect(() => {
-    // Check authentication when component mounts
-    if (!authenticated) {
-      navigate("/login", { replace: true });
-    }
-  }, [authenticated, navigate]);
-
-  // If not authenticated, redirect to login page
-  if (!authenticated) {
-    return <Navigate to="/login" replace />;
+  // Show loading indicator while checking authentication status
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
+      </div>
+    );
   }
 
-  // If authenticated, render the children components
+  // Redirect to login if not authenticated
+  if (!isAuthenticated || !token) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Render children if authenticated
   return <>{children}</>;
 };
 

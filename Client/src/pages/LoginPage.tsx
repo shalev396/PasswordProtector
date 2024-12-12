@@ -2,21 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AlertCircle, ArrowLeft, Eye, EyeOff, LockIcon } from "lucide-react";
-
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { login, isAuthenticated } from "@/services/authService";
+import { useAuth } from "@/hooks/useAuth";
+import { AlertCircle, ArrowLeft, Eye, EyeOff, LockIcon } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { RootState } from "@/redux/store";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -25,13 +19,17 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+
+  // Get auth state from Redux
+  const { isAuthenticated } = useSelector((state: RootState) => state.session);
 
   // Check if user is already authenticated
   useEffect(() => {
-    if (isAuthenticated()) {
+    if (isAuthenticated) {
       navigate("/dashboard");
     }
-  }, [navigate]);
+  }, [navigate, isAuthenticated]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +43,7 @@ export default function LoginPage() {
     try {
       setLoading(true);
 
-      // Call the login service
+      // Call the login function from the useAuth hook
       await login(email, password);
 
       // If login successful, navigate to dashboard

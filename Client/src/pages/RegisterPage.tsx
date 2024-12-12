@@ -2,22 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AlertCircle, ArrowLeft, Eye, EyeOff, LockIcon } from "lucide-react";
-
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
-import { register, isAuthenticated } from "@/services/authService";
+import { useAuth } from "@/hooks/useAuth";
+import { AlertCircle, ArrowLeft, Eye, EyeOff, UserPlus } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { RootState } from "@/redux/store";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -27,29 +20,33 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const { register } = useAuth();
+
+  // Get auth state from Redux
+  const { isAuthenticated } = useSelector((state: RootState) => state.session);
 
   // Check if user is already authenticated
   useEffect(() => {
-    if (isAuthenticated()) {
+    if (isAuthenticated) {
       navigate("/dashboard");
     }
-  }, [navigate]);
+  }, [navigate, isAuthenticated]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Basic validation
+    if (!email || !password || !confirmPassword) {
+      setError("Please enter all fields");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email address");
-      return;
-    }
-
-    // Check password strength
     if (password.length < 8) {
       setError("Password must be at least 8 characters long");
       return;
@@ -58,23 +55,23 @@ export default function RegisterPage() {
     try {
       setLoading(true);
 
-      // Call the register service
+      // Call the register function from the useAuth hook
       await register(email, password);
 
       // If registration successful, navigate to dashboard
       navigate("/dashboard");
     } catch (err: any) {
-      console.error("Registration error:", err);
+      console.error("Registration Error:", err);
 
       // Handle different error scenarios
       if (err.response) {
         // Server responded with an error status
         if (err.response.status === 409) {
-          setError("An account with this email already exists");
+          setError("This email is already registered");
         } else if (err.response.data && err.response.data.message) {
           setError(err.response.data.message);
         } else {
-          setError("Failed to create account. Please try again later.");
+          setError("Failed to register. Please try again later.");
         }
       } else if (err.request) {
         // Request was made but no response received - network error
@@ -83,7 +80,7 @@ export default function RegisterPage() {
         );
       } else {
         // Something else happened in setting up the request
-        setError("Failed to create account. Please try again later.");
+        setError("Failed to register. Please try again later.");
       }
     } finally {
       setLoading(false);
@@ -98,16 +95,17 @@ export default function RegisterPage() {
           Back
         </Button>
       </Link>
+
       <div className="flex w-full flex-col justify-center space-y-6 sm:w-[380px]">
         <div className="flex flex-col space-y-2 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <LockIcon className="h-6 w-6 text-primary" />
+            <UserPlus className="h-6 w-6 text-primary" />
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Create an account
+            Create an Account
           </h1>
           <p className="text-sm text-muted-foreground">
-            Enter your email and create a master password
+            Enter your email to create a new account
           </p>
         </div>
         <Card className="border border-border/40 shadow-md">
@@ -116,7 +114,9 @@ export default function RegisterPage() {
               {error && (
                 <Alert variant="destructive" className="bg-destructive/10">
                   <AlertCircle className="h-4 w-4 text-destructive" />
-                  <AlertTitle className="text-destructive">Error</AlertTitle>
+                  <AlertTitle className="text-destructive">
+                    Registration Error
+                  </AlertTitle>
                   <AlertDescription className="text-destructive/90">
                     {error}
                   </AlertDescription>
@@ -163,7 +163,10 @@ export default function RegisterPage() {
                     <span className="sr-only">Toggle password visibility</span>
                   </Button>
                 </div>
-                {password && <PasswordStrengthMeter password={password} />}
+                <p className="text-xs text-muted-foreground">
+                  This will be used to encrypt your vault - it cannot be
+                  recovered
+                </p>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="confirmPassword">Confirm Master Password</Label>
@@ -182,7 +185,7 @@ export default function RegisterPage() {
             </CardContent>
             <CardFooter>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Creating Account..." : "Create Account"}
+                {loading ? "Creating account..." : "Create account"}
               </Button>
             </CardFooter>
           </form>

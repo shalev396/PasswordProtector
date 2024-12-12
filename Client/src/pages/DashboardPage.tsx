@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import {
   Eye,
   EyeOff,
@@ -13,7 +14,8 @@ import {
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { calculatePasswordStrength } from "../lib/passwordGenerator";
-import { decrypt } from "../lib/encryption";
+import { usePasswords } from "../hooks/usePasswords";
+import { RootState } from "../redux/store";
 
 interface PasswordItem {
   id: string;
@@ -28,10 +30,15 @@ interface PasswordItem {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { fetchPasswords, deletePassword: deletePasswordFromAPI } =
+    usePasswords();
+  const { isAuthenticated } = useSelector((state: RootState) => state.session);
+  const { user } = useSelector((state: RootState) => state.user);
+  const passwordsState = useSelector((state: RootState) => state.passwords);
+
   const [loading, setLoading] = useState(true);
   const [passwords, setPasswords] = useState<PasswordItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [masterKey, setMasterKey] = useState<string>("");
   const [decryptedPasswords, setDecryptedPasswords] = useState<
     Record<string, string>
   >({});
@@ -40,35 +47,41 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Check if user is logged in
-    const userData = localStorage.getItem("userData");
-    if (!userData) {
+    if (!isAuthenticated || !user) {
       navigate("/login");
       return;
     }
 
-    try {
-      const { masterKey } = JSON.parse(userData);
-      setMasterKey(masterKey);
+    const loadPasswords = async () => {
+      try {
+        setLoading(true);
+        // Load passwords from API via the hook
+        if (passwordsState.items.length === 0) {
+          await fetchPasswords();
+        }
 
-      // Load passwords from localStorage for now
-      // In a real app, this would be an API call
-      const storedPasswords = localStorage.getItem("passwords");
-      if (storedPasswords) {
-        const passwordData = JSON.parse(storedPasswords) as PasswordItem[];
-        setPasswords(
-          passwordData.map((pw) => ({
-            ...pw,
-            visible: false,
-          }))
-        );
+        // Convert to the format expected by the component
+        const formattedPasswords = passwordsState.items.map((item) => ({
+          id: item.id,
+          website: item.url || item.title, // Use url or title as website
+          username: item.username,
+          password: item.password,
+          notes: item.category, // Map category to notes temporarily
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          visible: false,
+        }));
+
+        setPasswords(formattedPasswords);
+      } catch (error) {
+        console.error("Failed to load passwords:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to load user data:", error);
-      navigate("/login");
-    } finally {
-      setLoading(false);
-    }
-  }, [navigate]);
+    };
+
+    loadPasswords();
+  }, [navigate, isAuthenticated, user, fetchPasswords, passwordsState.items]);
 
   // Filter passwords based on search term
   const filteredPasswords = passwords
@@ -100,10 +113,10 @@ export default function DashboardPage() {
     try {
       // Only decrypt if becoming visible and not already decrypted
       if (!password.visible && !decryptedPasswords[id]) {
-        const decrypted = await decrypt(password.password, masterKey);
+        // The password is already decrypted from the API
         setDecryptedPasswords((prev) => ({
           ...prev,
-          [id]: decrypted,
+          [id]: password.password,
         }));
       }
 
@@ -119,18 +132,23 @@ export default function DashboardPage() {
   };
 
   // Delete password
-  const deletePassword = (id: string) => {
+  const deletePassword = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this password?")) {
-      const updatedPasswords = passwords.filter((pw) => pw.id !== id);
-      setPasswords(updatedPasswords);
+      try {
+        await deletePasswordFromAPI(id);
 
-      // Remove from decrypted cache
-      const newDecrypted = { ...decryptedPasswords };
-      delete newDecrypted[id];
-      setDecryptedPasswords(newDecrypted);
+        // Update local state to reflect the deletion
+        const updatedPasswords = passwords.filter((pw) => pw.id !== id);
+        setPasswords(updatedPasswords);
 
-      // Save updated passwords to localStorage
-      localStorage.setItem("passwords", JSON.stringify(updatedPasswords));
+        // Remove from decrypted cache
+        const newDecrypted = { ...decryptedPasswords };
+        delete newDecrypted[id];
+        setDecryptedPasswords(newDecrypted);
+      } catch (error) {
+        console.error("Failed to delete password:", error);
+        alert("Failed to delete password. Please try again.");
+      }
     }
   };
 
@@ -144,15 +162,16 @@ export default function DashboardPage() {
         const passwordItem = passwords.find((pw) => pw.id === id);
         if (!passwordItem) return;
 
-        const decrypted = await decrypt(passwordItem.password, masterKey);
+        // The password is already decrypted from the API
+        const decryptedPassword = passwordItem.password;
 
         // Store decrypted password for future use
         setDecryptedPasswords((prev) => ({
           ...prev,
-          [id]: decrypted,
+          [id]: decryptedPassword,
         }));
 
-        await navigator.clipboard.writeText(decrypted);
+        await navigator.clipboard.writeText(decryptedPassword);
       }
 
       // Show toast notification (simplified)
@@ -173,7 +192,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (loading) {
+  if (loading || passwordsState.isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-xl font-medium">Loading your password vault...</p>

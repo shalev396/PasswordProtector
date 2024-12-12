@@ -124,3 +124,46 @@ export async function decryptData(
   const decoder = new TextDecoder();
   return decoder.decode(decryptedBuffer);
 }
+
+/**
+ * Encrypts a password using the master password
+ */
+export async function encryptPassword(
+  password: string,
+  masterPassword: string
+): Promise<string> {
+  const saltBuffer = window.crypto.getRandomValues(new Uint8Array(16));
+  const salt = Array.from(saltBuffer)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  // Generate encryption key from master password
+  const encryptionKey = await generateEncryptionKey(masterPassword, salt);
+
+  // Encrypt the password
+  const encryptedData = await encryptData(password, encryptionKey);
+
+  // Combine salt and encrypted data for storage
+  return `${salt}:${encryptedData}`;
+}
+
+/**
+ * Decrypts a password using the master password
+ */
+export async function decryptPassword(
+  encryptedPassword: string,
+  masterPassword: string
+): Promise<string> {
+  // Split the salt and encrypted data
+  const [salt, encryptedData] = encryptedPassword.split(":");
+
+  if (!salt || !encryptedData) {
+    throw new Error("Invalid encrypted password format");
+  }
+
+  // Generate encryption key from master password and salt
+  const encryptionKey = await generateEncryptionKey(masterPassword, salt);
+
+  // Decrypt the password
+  return await decryptData(encryptedData, encryptionKey);
+}

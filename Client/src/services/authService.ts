@@ -1,5 +1,5 @@
 import axios from "axios";
-import { generateEncryptionKey, hashPassword } from "@/lib/crypto";
+import { hashPassword } from "@/lib/crypto";
 
 // Define the base API URL
 const API_URL = "http://localhost:5000/api";
@@ -13,16 +13,6 @@ const api = axios.create({
 });
 
 // Interfaces for authentication
-interface RegisterRequest {
-  email: string;
-  password: string;
-}
-
-interface LoginRequest {
-  email: string;
-  password: string;
-}
-
 interface AuthResponse {
   token: string;
   user: {
@@ -31,13 +21,25 @@ interface AuthResponse {
   };
 }
 
+// In-memory storage for auth data - this will be lost on page reload
+// but that's appropriate for sensitive data
+let authData = {
+  token: null as string | null,
+  userData: null as {
+    id: number;
+    email: string;
+    masterKey: string;
+  } | null,
+  isAuthenticated: false,
+};
+
 /**
  * Register a new user
  */
 export const register = async (
   email: string,
   password: string
-): Promise<void> => {
+): Promise<AuthResponse> => {
   try {
     // Hash the password before sending to server
     const hashedPassword = await hashPassword(password, email);
@@ -47,21 +49,16 @@ export const register = async (
       password: hashedPassword,
     });
 
-    // Save auth token in localStorage
-    localStorage.setItem("token", response.data.token);
-
-    // Store user data for encryption/decryption operations
-    localStorage.setItem(
-      "userData",
-      JSON.stringify({
+    // Store auth data in memory (will be lost on refresh, which is safer)
+    authData = {
+      token: response.data.token,
+      userData: {
         id: response.data.user.id,
         email: response.data.user.email,
         masterKey: password, // The masterKey is the raw password used for encryption
-      })
-    );
-
-    // Set authentication status
-    sessionStorage.setItem("isAuthenticated", "true");
+      },
+      isAuthenticated: true,
+    };
 
     return response.data;
   } catch (error) {
@@ -73,7 +70,10 @@ export const register = async (
 /**
  * Login a user
  */
-export const login = async (email: string, password: string): Promise<void> => {
+export const login = async (
+  email: string,
+  password: string
+): Promise<AuthResponse> => {
   try {
     // Hash the password before sending to server
     const hashedPassword = await hashPassword(password, email);
@@ -83,21 +83,16 @@ export const login = async (email: string, password: string): Promise<void> => {
       password: hashedPassword,
     });
 
-    // Save auth token in localStorage
-    localStorage.setItem("token", response.data.token);
-
-    // Store user data for encryption/decryption operations
-    localStorage.setItem(
-      "userData",
-      JSON.stringify({
+    // Store auth data in memory (will be lost on refresh, which is safer)
+    authData = {
+      token: response.data.token,
+      userData: {
         id: response.data.user.id,
         email: response.data.user.email,
         masterKey: password, // The masterKey is the raw password used for encryption
-      })
-    );
-
-    // Set authentication status
-    sessionStorage.setItem("isAuthenticated", "true");
+      },
+      isAuthenticated: true,
+    };
 
     return response.data;
   } catch (error) {
@@ -110,33 +105,40 @@ export const login = async (email: string, password: string): Promise<void> => {
  * Logout the current user
  */
 export const logout = (): void => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("userData");
-  sessionStorage.removeItem("isAuthenticated");
+  // Clear in-memory auth data
+  authData = {
+    token: null,
+    userData: null,
+    isAuthenticated: false,
+  };
 };
 
 /**
  * Check if user is authenticated
  */
 export const isAuthenticated = (): boolean => {
-  const token = localStorage.getItem("token");
-  const isAuth = sessionStorage.getItem("isAuthenticated") === "true";
-  return !!token && isAuth;
+  return authData.isAuthenticated && !!authData.token;
 };
 
 /**
  * Get the current authenticated user's information
  */
 export const getCurrentUser = () => {
-  const userData = localStorage.getItem("userData");
-  return userData ? JSON.parse(userData) : null;
+  return authData.userData;
 };
 
 /**
  * Get auth token for API requests
  */
 export const getToken = (): string | null => {
-  return localStorage.getItem("token");
+  return authData.token;
+};
+
+/**
+ * Get the master password for encryption/decryption
+ */
+export const getMasterPassword = (): string | null => {
+  return authData.userData?.masterKey || null;
 };
 
 // Add auth token to all requests
@@ -160,4 +162,5 @@ export default {
   isAuthenticated,
   getCurrentUser,
   getToken,
+  getMasterPassword,
 };
