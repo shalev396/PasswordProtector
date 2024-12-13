@@ -4,6 +4,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
+  masterKey?: string; // Used for encryption/decryption of passwords
 }
 
 export interface UserState {
@@ -24,9 +25,15 @@ export const userSlice = createSlice({
     clearUser: (state) => {
       state.user = null;
     },
+    // Add ability to set master key separately
+    setMasterKey: (state, action: PayloadAction<string>) => {
+      if (state.user) {
+        state.user.masterKey = action.payload;
+      }
+    },
   },
 });
 
-export const { setUser, clearUser } = userSlice.actions;
+export const { setUser, clearUser, setMasterKey } = userSlice.actions;
 
 export default userSlice.reducer;

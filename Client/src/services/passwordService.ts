@@ -1,31 +1,6 @@
-import axios from "axios";
+import api from "@/api/api";
 import { encryptPassword, decryptPassword } from "@/lib/crypto";
 import { getToken, getMasterPassword } from "./authService";
-
-// API base URL - should match the one in authService
-const API_URL = "http://localhost:5000/api";
-
-// Create axios instance with default configs
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// Add auth token to all requests
-api.interceptors.request.use(
-  (config) => {
-    const token = getToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
 
 // Define the password interface
 export interface Password {

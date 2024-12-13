@@ -1,30 +1,49 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 
-interface SessionState {
+export interface SessionState {
   isAuthenticated: boolean;
-  isLoading: boolean;
+  loading: boolean;
+  error: string | null;
 }
 
 const initialState: SessionState = {
   isAuthenticated: false,
-  isLoading: true,
+  loading: false,
+  error: null,
 };
 
-const sessionSlice = createSlice({
+export const sessionSlice = createSlice({
   name: "session",
   initialState,
   reducers: {
-    setAuthenticated: (state, action: PayloadAction<boolean>) => {
-      state.isAuthenticated = action.payload;
+    setAuthenticated: (state) => {
+      state.isAuthenticated = true;
+      state.error = null;
     },
-    setLoading: (state, action: PayloadAction<boolean>) => {
-      state.isLoading = action.payload;
-    },
-    logout: (state) => {
+    setUnauthenticated: (state) => {
       state.isAuthenticated = false;
+    },
+    setLoading: (state, action) => {
+      state.loading = action.payload;
+    },
+    setError: (state, action) => {
+      state.error = action.payload;
+      state.loading = false;
+    },
+    clearSession: (state) => {
+      state.isAuthenticated = false;
+      state.loading = false;
+      state.error = null;
     },
   },
 });
 
-export const { setAuthenticated, setLoading, logout } = sessionSlice.actions;
+export const {
+  setAuthenticated,
+  setUnauthenticated,
+  setLoading,
+  setError,
+  clearSession,
+} = sessionSlice.actions;
+
 export default sessionSlice.reducer;

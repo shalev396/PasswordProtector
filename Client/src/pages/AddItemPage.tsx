@@ -22,8 +22,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { encrypt } from "@/lib/encryption";
 import { PasswordGenerator } from "@/components/PasswordGenerator";
+import { useAuth } from "@/hooks/useAuth";
+import { usePasswords } from "@/hooks/usePasswords";
 
 // Define PasswordItem interface
 interface PasswordItem {
@@ -40,6 +41,9 @@ interface PasswordItem {
 
 export default function AddItemPage() {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
+  const { addPassword, isLoading } = usePasswords();
+
   const [type, setType] = useState<"login" | "card" | "note">("login");
   const [title, setTitle] = useState("");
   const [username, setUsername] = useState("");
@@ -51,12 +55,10 @@ export default function AddItemPage() {
 
   // Check if user is authenticated
   useEffect(() => {
-    const isAuthenticated =
-      sessionStorage.getItem("isAuthenticated") === "true";
     if (!isAuthenticated) {
       navigate("/login");
     }
-  }, [navigate]);
+  }, [isAuthenticated, navigate]);
 
   const handleGeneratedPassword = (generatedPassword: string) => {
     setPassword(generatedPassword);
@@ -67,41 +69,20 @@ export default function AddItemPage() {
     setLoading(true);
 
     try {
-      // Get the master key from userData
-      const userData = localStorage.getItem("userData");
-      if (!userData) {
-        throw new Error("User data not found");
-      }
+      // Create password category based on item type
+      const category =
+        type === "login" ? "Login" : type === "card" ? "Card" : "Secure Note";
 
-      const { masterKey } = JSON.parse(userData);
-
-      // Encrypt sensitive data
-      const encryptedPassword = password
-        ? await encrypt(password, masterKey)
-        : "";
-
-      // Create new item
-      const newItem: PasswordItem = {
-        id: crypto.randomUUID(),
-        type,
+      // Add the new password to the store
+      await addPassword({
         title,
         username,
-        password: encryptedPassword,
-        website: type === "login" ? website : "",
-        notes,
+        password,
+        url: type === "login" ? website : "",
+        category,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      };
-
-      // Get current passwords
-      const storedPasswords = localStorage.getItem("passwords");
-      const passwords = storedPasswords ? JSON.parse(storedPasswords) : [];
-
-      // Add new item to vault
-      passwords.push(newItem);
-
-      // Save updated vault
-      localStorage.setItem("passwords", JSON.stringify(passwords));
+      });
 
       // Redirect to dashboard
       navigate("/dashboard");
@@ -248,6 +229,7 @@ export default function AddItemPage() {
                   <Label htmlFor="website">Website</Label>
                   <Input
                     id="website"
+                    type="url"
                     value={website}
                     onChange={(e) => setWebsite(e.target.value)}
                     placeholder="https://example.com"
@@ -262,19 +244,75 @@ export default function AddItemPage() {
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                rows={4}
+                placeholder="Add any additional information here..."
+                className="min-h-[120px]"
               />
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Saving..." : "Save Item"}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading || isLoading}
+            >
+              {loading || isLoading ? "Saving..." : "Save Item"}
             </Button>
           </CardFooter>
         </form>
       </Card>
 
-      <PasswordGenerator onPasswordGenerated={handleGeneratedPassword} />
+      {/* Password Generator Dialog */}
+      <dialog
+        id="password-generator-dialog"
+        className="rounded-lg shadow-lg p-0"
+      >
+        <div className="p-4 bg-card">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Password Generator</h3>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                const dialog = document.getElementById(
+                  "password-generator-dialog"
+                );
+                if (dialog instanceof HTMLDialogElement) {
+                  dialog.close();
+                }
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span className="sr-only">Close</span>
+            </Button>
+          </div>
+          <PasswordGenerator
+            onPasswordGenerated={handleGeneratedPassword}
+            onClose={() => {
+              const dialog = document.getElementById(
+                "password-generator-dialog"
+              );
+              if (dialog instanceof HTMLDialogElement) {
+                dialog.close();
+              }
+            }}
+          />
+        </div>
+      </dialog>
     </div>
   );
 }
