@@ -90,7 +90,7 @@ export default function DashboardPage() {
 
   // Navigate to add new password page
   const goToAddPassword = () => {
-    navigate("/add-item");
+    navigate("/add");
   };
 
   // Navigate to edit password page
