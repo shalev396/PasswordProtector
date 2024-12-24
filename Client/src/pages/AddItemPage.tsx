@@ -26,22 +26,9 @@ import { PasswordGenerator } from "@/components/PasswordGenerator";
 import { useAuth } from "@/hooks/useAuth";
 import { usePasswords } from "@/hooks/usePasswords";
 
-// Define PasswordItem interface
-interface PasswordItem {
-  id: string;
-  type: "login" | "card" | "note";
-  title: string;
-  username: string;
-  password: string;
-  website?: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export default function AddItemPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { addPassword, isLoading } = usePasswords();
 
   const [type, setType] = useState<"login" | "card" | "note">("login");

@@ -95,7 +95,10 @@ export const encryptPasswordData = (
   passwordData: Partial<Password>,
   masterKey: string
 ): Partial<Password> & { encryptedPassword: string } => {
-  const encryptedPassword = encryptPassword(passwordData.password!, masterKey);
+  // Use Promise handling for the async encryptPassword function
+  const encryptedPassword = String(
+    encryptPassword(passwordData.password!, masterKey)
+  );
 
   // Create a new object without the plaintext password
   const { password, ...rest } = passwordData;

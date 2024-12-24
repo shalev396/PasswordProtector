@@ -13,7 +13,7 @@ export const useAuth = () => {
   const dispatch = useDispatch<AppDispatch>();
   const token = useSelector((state: RootState) => state.token.token);
   const user = useSelector((state: RootState) => state.user.user);
-  const { isAuthenticated, loading, error } = useSelector(
+  const { isAuthenticated, isLoading, error } = useSelector(
     (state: RootState) => state.session
   );
 
@@ -41,7 +41,7 @@ export const useAuth = () => {
 
   return {
     isAuthenticated,
-    loading,
+    isLoading,
     error,
     token,
     user,

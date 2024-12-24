@@ -9,7 +9,7 @@ import {
   Unique,
   AllowNull,
 } from "sequelize-typescript";
-import { Password } from "./Password"; // Import the Password model
+import Password from "./Password"; // Import the Password model
 
 @Table({
   tableName: "Users",
@@ -41,3 +41,6 @@ export class User extends Model<User> {
   // createdAt!: Date;
   // updatedAt!: Date;
 }
+
+// Export the model as default
+export default User;

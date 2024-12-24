@@ -15,10 +15,12 @@ import { generateRandomPassword } from "@/lib/passwordGenerator";
 
 interface PasswordGeneratorProps {
   onPasswordGenerated: (password: string) => void;
+  onClose?: () => void;
 }
 
 export function PasswordGenerator({
   onPasswordGenerated,
+  onClose,
 }: PasswordGeneratorProps) {
   const [open, setOpen] = useState(false);
   const [length, setLength] = useState(16);
@@ -41,6 +43,7 @@ export function PasswordGenerator({
   const handleApply = () => {
     onPasswordGenerated(generatedPassword);
     setOpen(false);
+    onClose?.();
   };
 
   const handleCopy = async () => {

@@ -1,8 +1,8 @@
 import { Sequelize } from "sequelize-typescript";
 import dotenv from "dotenv";
 import path from "path";
-import { User } from "../models/User"; // Adjust path as needed
-import { Password } from "../models/Password"; // Adjust path as needed
+import User from "../models/User"; // Import the User model
+import Password from "../models/Password"; // Import the Password model
 
 dotenv.config();
 

@@ -9,7 +9,7 @@ import {
   AutoIncrement,
   AllowNull,
 } from "sequelize-typescript";
-import { User } from "./User"; // Import the User model
+import User from "./User"; // Import the User model
 
 @Table({
   tableName: "Passwords",
@@ -46,10 +46,9 @@ export class Password extends Model<Password> {
 
   @AllowNull(false)
   @Column({
-    type: DataType.TEXT, // Use TEXT for potentially long encrypted strings
-    field: "encrypted_password",
+    type: DataType.TEXT, // Use TEXT for potentially long passwords
   })
-  encryptedPassword!: string;
+  password!: string;
 
   @Column(DataType.TEXT) // Use TEXT for potentially long notes
   notes?: string; // Optional field
@@ -61,3 +60,6 @@ export class Password extends Model<Password> {
   // createdAt!: Date;
   // updatedAt!: Date;
 }
+
+// Export the model as default
+export default Password;

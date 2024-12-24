@@ -2,13 +2,13 @@ import { createSlice } from "@reduxjs/toolkit";
 
 export interface SessionState {
   isAuthenticated: boolean;
-  loading: boolean;
+  isLoading: boolean;
   error: string | null;
 }
 
 const initialState: SessionState = {
   isAuthenticated: false,
-  loading: false,
+  isLoading: false,
   error: null,
 };
 
@@ -24,15 +24,15 @@ export const sessionSlice = createSlice({
       state.isAuthenticated = false;
     },
     setLoading: (state, action) => {
-      state.loading = action.payload;
+      state.isLoading = action.payload;
     },
     setError: (state, action) => {
       state.error = action.payload;
-      state.loading = false;
+      state.isLoading = false;
     },
     clearSession: (state) => {
       state.isAuthenticated = false;
-      state.loading = false;
+      state.isLoading = false;
       state.error = null;
     },
   },

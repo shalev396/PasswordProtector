@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import { connectDB } from "./config/sequelize"; // Import the Sequelize connection function
 import authRoutes from "./routes/authRoutes"; // Import the auth routes
+import passwordRoutes from "./routes/passwordRoutes"; // Import the password routes
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ const startServer = async () => {
 
   // Mount API Routes
   app.use("/api/auth", authRoutes);
+  app.use("/api/passwords", passwordRoutes);
 
   // Basic Error Handling Middleware
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

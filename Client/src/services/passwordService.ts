@@ -1,6 +1,6 @@
 import api from "@/api/api";
 import { encryptPassword, decryptPassword } from "@/lib/crypto";
-import { getToken, getMasterPassword } from "./authService";
+import { getMasterPassword } from "./authService";
 
 // Define the password interface
 export interface Password {

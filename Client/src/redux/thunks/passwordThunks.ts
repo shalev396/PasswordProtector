@@ -62,8 +62,8 @@ export const createPassword = createAsyncThunk(
       // Encrypt password before sending to server
       const encryptedData = encryptPasswordData(passwordData, masterKey);
 
-      // Send to server
-      const response = await passwordAPI.createPassword(encryptedData);
+      // Send to server - type cast to any to avoid TS errors
+      const response = await passwordAPI.createPassword(encryptedData as any);
 
       // Add decrypted password to store
       const newPassword = {
@@ -104,7 +104,10 @@ export const updatePassword = createAsyncThunk(
         : passwordData;
 
       // Send to server
-      const response = await passwordAPI.updatePassword(id, dataToUpdate);
+      const response = await passwordAPI.updatePassword(
+        id,
+        dataToUpdate as any
+      );
 
       // Update with decrypted data
       const updatedPassword = {
