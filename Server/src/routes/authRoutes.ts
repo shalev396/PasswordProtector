@@ -1,5 +1,10 @@
 import express from "express";
-import { register, login, getProfile } from "../controllers/authController";
+import {
+  register,
+  login,
+  getProfile,
+  refreshToken,
+} from "../controllers/authController";
 import { authenticate } from "../middleware/authMiddleware";
 import { body } from "express-validator";
 
@@ -19,6 +24,10 @@ const loginValidation = [
   body("password").exists().withMessage("Password is required"),
 ];
 
+const refreshTokenValidation = [
+  body("refreshToken").exists().withMessage("Refresh token is required"),
+];
+
 // Public routes
 router.post(
   "/register",
@@ -26,6 +35,11 @@ router.post(
   register as express.RequestHandler
 );
 router.post("/login", loginValidation, login as express.RequestHandler);
+router.post(
+  "/refresh",
+  refreshTokenValidation,
+  refreshToken as express.RequestHandler
+);
 
 // Protected routes
 router.get(

@@ -60,15 +60,19 @@ export default function AddItemPage() {
       const category =
         type === "login" ? "Login" : type === "card" ? "Card" : "Secure Note";
 
+      const now = new Date().toISOString();
+
       // Add the new password to the store
       await addPassword({
         title,
         username,
         password,
-        url: type === "login" ? website : "",
+        website: type === "login" ? website : "",
+        notes: notes || undefined,
         category,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: now,
+        updatedAt: now,
+        userId: 0, // This will be set by the server
       });
 
       // Redirect to dashboard

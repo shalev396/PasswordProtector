@@ -1,5 +1,5 @@
 import api from "@/api/api";
-import { Password } from "@/redux/slices/passwordSlice";
+import { Password } from "@/types";
 import { encryptPassword, decryptPassword } from "@/lib/crypto";
 import { RootState } from "@/redux/store";
 import { store } from "@/redux/store";
@@ -122,3 +122,6 @@ export const getMasterKey = (): string | null => {
   const state = store.getState() as RootState;
   return state.user?.user?.masterKey || null;
 };
+
+// Export a placeholder API version
+export const VERSION = "1.0.0";

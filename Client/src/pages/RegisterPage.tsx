@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { AlertCircle, ArrowLeft, Eye, EyeOff, UserPlus } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { RootState } from "@/redux/store";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -18,12 +16,11 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const [localError, setLocalError] = useState("");
+  const [localLoading, setLocalLoading] = useState(false);
 
-  // Get auth state from Redux
-  const { isAuthenticated } = useSelector((state: RootState) => state.session);
+  // Use our auth hook
+  const { register, isAuthenticated, isLoading, error } = useAuth();
 
   // Check if user is already authenticated
   useEffect(() => {
@@ -34,31 +31,31 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setLocalError("");
 
     // Basic validation
     if (!email || !password || !confirmPassword) {
-      setError("Please enter all fields");
+      setLocalError("Please enter all fields");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setLocalError("Passwords do not match");
       return;
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters long");
+      setLocalError("Password must be at least 8 characters long");
       return;
     }
 
     try {
-      setLoading(true);
+      setLocalLoading(true);
 
-      // Call the register function from the useAuth hook
-      await register(email, password);
+      // We use the master password (raw password) for both authentication and encryption
+      await register(email, password, password);
 
-      // If registration successful, navigate to dashboard
+      // Navigate to dashboard directly
       navigate("/dashboard");
     } catch (err: any) {
       console.error("Registration Error:", err);
@@ -67,25 +64,30 @@ export default function RegisterPage() {
       if (err.response) {
         // Server responded with an error status
         if (err.response.status === 409) {
-          setError("This email is already registered");
+          setLocalError("This email is already registered");
         } else if (err.response.data && err.response.data.message) {
-          setError(err.response.data.message);
+          setLocalError(err.response.data.message);
         } else {
-          setError("Failed to register. Please try again later.");
+          setLocalError("Failed to register. Please try again later.");
         }
       } else if (err.request) {
         // Request was made but no response received - network error
-        setError(
+        setLocalError(
           "Cannot connect to server. Please check your internet connection."
         );
       } else {
         // Something else happened in setting up the request
-        setError("Failed to register. Please try again later.");
+        setLocalError("Failed to register. Please try again later.");
       }
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   };
+
+  // Show either local error or global error from Redux
+  const displayError = localError || error;
+  // Use either local loading state or global loading state
+  const loading = localLoading || isLoading;
 
   return (
     <div className="relative flex min-h-screen items-center justify-center p-4">
@@ -111,14 +113,14 @@ export default function RegisterPage() {
         <Card className="border border-border/40 shadow-md">
           <form onSubmit={handleRegister}>
             <CardContent className="grid gap-4 pt-6">
-              {error && (
+              {displayError && (
                 <Alert variant="destructive" className="bg-destructive/10">
                   <AlertCircle className="h-4 w-4 text-destructive" />
                   <AlertTitle className="text-destructive">
                     Registration Error
                   </AlertTitle>
                   <AlertDescription className="text-destructive/90">
-                    {error}
+                    {displayError}
                   </AlertDescription>
                 </Alert>
               )}

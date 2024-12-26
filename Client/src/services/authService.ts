@@ -1,141 +1,84 @@
-import api from "@/api/api";
-import { hashPassword } from "@/lib/crypto";
-
-// Interfaces for authentication
-interface AuthResponse {
-  token: string;
-  user: {
-    id: number;
-    email: string;
-  };
-}
-
-// In-memory storage for auth data - this will be lost on page reload
-// but that's appropriate for sensitive data
-let authData = {
-  token: null as string | null,
-  userData: null as {
-    id: number;
-    email: string;
-    masterKey: string;
-  } | null,
-  isAuthenticated: false,
-};
+import apiClient from "@/api/api";
+import { AuthResponse, LoginCredentials, RegisterCredentials } from "@/types";
 
 /**
- * Register a new user
+ * Service for authentication-related API operations
  */
-export const register = async (
-  email: string,
-  password: string
-): Promise<AuthResponse> => {
-  try {
-    // Hash the password before sending to server
-    const hashedPassword = await hashPassword(password, email);
+const authService = {
+  /**
+   * Set the auth header for API requests
+   */
+  setAuthHeader(token: string | null): void {
+    if (token) {
+      apiClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    } else {
+      delete apiClient.defaults.headers.common["Authorization"];
+    }
+  },
 
-    const response = await api.post<AuthResponse>("/auth/register", {
-      email,
-      password: hashedPassword,
-    });
+  /**
+   * Log in a user
+   */
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    try {
+      const response = await apiClient.post("/auth/login", credentials);
+      return response.data;
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
+    }
+  },
 
-    // Store auth data in memory (will be lost on refresh, which is safer)
-    authData = {
-      token: response.data.token,
-      userData: {
-        id: response.data.user.id,
-        email: response.data.user.email,
-        masterKey: password, // The masterKey is the raw password used for encryption
-      },
-      isAuthenticated: true,
-    };
+  /**
+   * Register a new user
+   */
+  async register(credentials: RegisterCredentials): Promise<AuthResponse> {
+    try {
+      const response = await apiClient.post("/auth/register", credentials);
+      return response.data;
+    } catch (error) {
+      console.error("Registration error:", error);
+      throw error;
+    }
+  },
 
-    return response.data;
-  } catch (error) {
-    console.error("Registration error:", error);
-    throw error;
-  }
+  /**
+   * Refresh an access token using a refresh token
+   */
+  async refreshToken(token: string): Promise<AuthResponse> {
+    try {
+      const response = await apiClient.post("/auth/refresh-token", { token });
+      return response.data;
+    } catch (error) {
+      console.error("Token refresh error:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Log out the current user
+   */
+  async logout(): Promise<void> {
+    try {
+      await apiClient.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // We still want to clear local state even if the API call fails
+    }
+  },
+
+  /**
+   * Get the current user's profile
+   */
+  async getUserProfile(): Promise<any> {
+    try {
+      const response = await apiClient.get("/auth/profile");
+      return response.data;
+    } catch (error) {
+      console.error("Get profile error:", error);
+      throw error;
+    }
+  },
 };
 
-/**
- * Login a user
- */
-export const login = async (
-  email: string,
-  password: string
-): Promise<AuthResponse> => {
-  try {
-    // Hash the password before sending to server
-    const hashedPassword = await hashPassword(password, email);
-
-    const response = await api.post<AuthResponse>("/auth/login", {
-      email,
-      password: hashedPassword,
-    });
-
-    // Store auth data in memory (will be lost on refresh, which is safer)
-    authData = {
-      token: response.data.token,
-      userData: {
-        id: response.data.user.id,
-        email: response.data.user.email,
-        masterKey: password, // The masterKey is the raw password used for encryption
-      },
-      isAuthenticated: true,
-    };
-
-    return response.data;
-  } catch (error) {
-    console.error("Login error:", error);
-    throw error;
-  }
-};
-
-/**
- * Logout the current user
- */
-export const logout = (): void => {
-  // Clear in-memory auth data
-  authData = {
-    token: null,
-    userData: null,
-    isAuthenticated: false,
-  };
-};
-
-/**
- * Check if user is authenticated
- */
-export const isAuthenticated = (): boolean => {
-  return authData.isAuthenticated && !!authData.token;
-};
-
-/**
- * Get the current authenticated user's information
- */
-export const getCurrentUser = () => {
-  return authData.userData;
-};
-
-/**
- * Get auth token for API requests
- */
-export const getToken = (): string | null => {
-  return authData.token;
-};
-
-/**
- * Get the master password for encryption/decryption
- */
-export const getMasterPassword = (): string | null => {
-  return authData.userData?.masterKey || null;
-};
-
-export default {
-  register,
-  login,
-  logout,
-  isAuthenticated,
-  getCurrentUser,
-  getToken,
-  getMasterPassword,
-};
+export default authService;

@@ -1,10 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import {
-  passwordAPI,
-  encryptPasswordData,
-  decryptPasswordData,
-  getMasterKey,
-} from "@/services/api.service";
+import { Password } from "../../types";
+import passwordService from "../../services/passwordService";
 import {
   setPasswords,
   addPassword,
@@ -12,8 +8,8 @@ import {
   deletePassword as deletePasswordAction,
   setLoading,
   setError,
-} from "@/redux/slices/passwordSlice";
-import { Password } from "@/redux/slices/passwordSlice";
+  setCurrentPassword,
+} from "../slices/passwordSlice";
 
 // Fetch all passwords
 export const fetchPasswords = createAsyncThunk(
@@ -21,132 +17,210 @@ export const fetchPasswords = createAsyncThunk(
   async (_, { dispatch }) => {
     try {
       dispatch(setLoading(true));
+      dispatch(setError(null));
 
-      const masterKey = getMasterKey();
-      if (!masterKey) {
-        throw new Error("Master key not found");
-      }
+      const response = await passwordService.getAllPasswords();
 
-      const encryptedPasswords = await passwordAPI.getAllPasswords();
+      // Ensure the response matches our Password type
+      const typedPasswords: Password[] = response.map((pwd) => ({
+        id: Number(pwd.id),
+        title: pwd.title,
+        username: pwd.username,
+        password: pwd.password,
+        website: pwd.website || "",
+        category: pwd.category || "",
+        notes: pwd.notes,
+        createdAt: pwd.createdAt || new Date().toISOString(),
+        updatedAt: pwd.updatedAt || new Date().toISOString(),
+        userId: Number(pwd.userId) || 0,
+      }));
 
-      // Decrypt passwords
-      const decryptedPasswords = encryptedPasswords.map(
-        (encryptedPassword: any) =>
-          decryptPasswordData(encryptedPassword, masterKey)
-      );
-
-      dispatch(setPasswords(decryptedPasswords));
-      dispatch(setLoading(false));
-
-      return decryptedPasswords;
+      dispatch(setPasswords(typedPasswords));
+      return typedPasswords;
     } catch (error: any) {
-      dispatch(setError(error.message));
-      dispatch(setLoading(false));
+      const errorMessage =
+        error.response?.data?.message || "Failed to fetch passwords";
+      dispatch(setError(errorMessage));
       throw error;
+    } finally {
+      dispatch(setLoading(false));
     }
   }
 );
 
-// Create new password
-export const createPassword = createAsyncThunk(
-  "passwords/create",
-  async (passwordData: Omit<Password, "id">, { dispatch }) => {
+// Fetch a single password by ID
+export const fetchPasswordById = createAsyncThunk(
+  "passwords/fetchById",
+  async (id: number, { dispatch }) => {
     try {
       dispatch(setLoading(true));
+      dispatch(setError(null));
 
-      const masterKey = getMasterKey();
-      if (!masterKey) {
-        throw new Error("Master key not found");
-      }
+      const pwd = await passwordService.getPasswordById(id);
 
-      // Encrypt password before sending to server
-      const encryptedData = encryptPasswordData(passwordData, masterKey);
-
-      // Send to server - type cast to any to avoid TS errors
-      const response = await passwordAPI.createPassword(encryptedData as any);
-
-      // Add decrypted password to store
-      const newPassword = {
-        ...response,
-        password: passwordData.password, // Keep the original unencrypted password
+      // Ensure the response matches our Password type
+      const typedPassword: Password = {
+        id: Number(pwd.id),
+        title: pwd.title,
+        username: pwd.username,
+        password: pwd.password,
+        website: pwd.website || "",
+        category: pwd.category || "",
+        notes: pwd.notes,
+        createdAt: pwd.createdAt || new Date().toISOString(),
+        updatedAt: pwd.updatedAt || new Date().toISOString(),
+        userId: Number(pwd.userId) || 0,
       };
 
-      dispatch(addPassword(newPassword));
-      dispatch(setLoading(false));
-
-      return newPassword;
+      dispatch(setCurrentPassword(typedPassword));
+      return typedPassword;
     } catch (error: any) {
-      dispatch(setError(error.message));
-      dispatch(setLoading(false));
+      const errorMessage =
+        error.response?.data?.message ||
+        `Failed to fetch password with ID: ${id}`;
+      dispatch(setError(errorMessage));
       throw error;
+    } finally {
+      dispatch(setLoading(false));
     }
   }
 );
 
-// Update existing password
+// Create a new password
+export const createPassword = createAsyncThunk(
+  "passwords/create",
+  async (password: Omit<Password, "id">, { dispatch }) => {
+    try {
+      dispatch(setLoading(true));
+      dispatch(setError(null));
+
+      const response = await passwordService.createPassword(password);
+
+      // Ensure the response matches our Password type
+      const typedPassword: Password = {
+        id: Number(response.id),
+        title: response.title,
+        username: response.username,
+        password: response.password,
+        website: response.website || "",
+        category: response.category || "",
+        notes: response.notes,
+        createdAt: response.createdAt || new Date().toISOString(),
+        updatedAt: response.updatedAt || new Date().toISOString(),
+        userId: Number(response.userId) || 0,
+      };
+
+      dispatch(addPassword(typedPassword));
+      return typedPassword;
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message || "Failed to create password";
+      dispatch(setError(errorMessage));
+      throw error;
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }
+);
+
+// Update an existing password
 export const updatePassword = createAsyncThunk(
   "passwords/update",
   async (
-    { id, passwordData }: { id: string; passwordData: Partial<Password> },
+    { id, password }: { id: number; password: Partial<Password> },
     { dispatch }
   ) => {
     try {
       dispatch(setLoading(true));
+      dispatch(setError(null));
 
-      const masterKey = getMasterKey();
-      if (!masterKey) {
-        throw new Error("Master key not found");
-      }
+      const response = await passwordService.updatePassword(id, password);
 
-      // Encrypt password if it's included in the update
-      const dataToUpdate = passwordData.password
-        ? encryptPasswordData(passwordData, masterKey)
-        : passwordData;
-
-      // Send to server
-      const response = await passwordAPI.updatePassword(
-        id,
-        dataToUpdate as any
-      );
-
-      // Update with decrypted data
-      const updatedPassword = {
-        ...response,
-        id,
-        ...(passwordData.password && { password: passwordData.password }),
+      // Ensure the response matches our Password type
+      const typedPassword: Password = {
+        id: Number(response.id),
+        title: response.title,
+        username: response.username,
+        password: response.password,
+        website: response.website || "",
+        category: response.category || "",
+        notes: response.notes,
+        createdAt: response.createdAt || new Date().toISOString(),
+        updatedAt: response.updatedAt || new Date().toISOString(),
+        userId: Number(response.userId) || 0,
       };
 
-      dispatch(updatePasswordAction(updatedPassword));
-      dispatch(setLoading(false));
-
-      return updatedPassword;
+      dispatch(updatePasswordAction(typedPassword));
+      return typedPassword;
     } catch (error: any) {
-      dispatch(setError(error.message));
-      dispatch(setLoading(false));
+      const errorMessage =
+        error.response?.data?.message ||
+        `Failed to update password with ID: ${id}`;
+      dispatch(setError(errorMessage));
       throw error;
+    } finally {
+      dispatch(setLoading(false));
     }
   }
 );
 
-// Delete password
+// Delete a password
 export const deletePassword = createAsyncThunk(
   "passwords/delete",
-  async (id: string, { dispatch }) => {
+  async (id: number, { dispatch }) => {
     try {
       dispatch(setLoading(true));
+      dispatch(setError(null));
 
-      // Delete from server
-      await passwordAPI.deletePassword(id);
+      await passwordService.deletePassword(id);
 
-      // Remove from store
       dispatch(deletePasswordAction(id));
-      dispatch(setLoading(false));
-
       return id;
     } catch (error: any) {
-      dispatch(setError(error.message));
-      dispatch(setLoading(false));
+      const errorMessage =
+        error.response?.data?.message ||
+        `Failed to delete password with ID: ${id}`;
+      dispatch(setError(errorMessage));
       throw error;
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }
+);
+
+// Search passwords
+export const searchPasswords = createAsyncThunk(
+  "passwords/search",
+  async (query: string, { dispatch }) => {
+    try {
+      dispatch(setLoading(true));
+      dispatch(setError(null));
+
+      const response = await passwordService.searchPasswords(query);
+
+      // Ensure the response matches our Password type
+      const typedPasswords: Password[] = response.map((pwd) => ({
+        id: Number(pwd.id),
+        title: pwd.title,
+        username: pwd.username,
+        password: pwd.password,
+        website: pwd.website || "",
+        category: pwd.category || "",
+        notes: pwd.notes,
+        createdAt: pwd.createdAt || new Date().toISOString(),
+        updatedAt: pwd.updatedAt || new Date().toISOString(),
+        userId: Number(pwd.userId) || 0,
+      }));
+
+      dispatch(setPasswords(typedPasswords));
+      return typedPasswords;
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message || "Failed to search passwords";
+      dispatch(setError(errorMessage));
+      throw error;
+    } finally {
+      dispatch(setLoading(false));
     }
   }
 );

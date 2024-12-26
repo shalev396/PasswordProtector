@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,19 +9,17 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { AlertCircle, ArrowLeft, Eye, EyeOff, LockIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { RootState } from "@/redux/store";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [localError, setLocalError] = useState("");
+  const [localLoading, setLocalLoading] = useState(false);
 
-  // Get auth state from Redux
-  const { isAuthenticated } = useSelector((state: RootState) => state.session);
+  // Use our auth hook
+  const { login, isAuthenticated, isLoading, error } = useAuth();
 
   // Check if user is already authenticated
   useEffect(() => {
@@ -33,21 +30,22 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setLocalError("");
 
     if (!email || !password) {
-      setError("Please enter both email and password");
+      setLocalError("Please enter both email and password");
       return;
     }
 
     try {
-      setLoading(true);
+      setLocalLoading(true);
 
-      // Call the login function from the useAuth hook
+      // We use the login function with just email and password
       await login(email, password);
-
-      // If login successful, navigate to dashboard
+      
+      // Successfully logged in, navigate to dashboard
       navigate("/dashboard");
+      
     } catch (err: any) {
       console.error("Login Error:", err);
 
@@ -55,25 +53,30 @@ export default function LoginPage() {
       if (err.response) {
         // Server responded with an error status
         if (err.response.status === 401) {
-          setError("Invalid email or password");
+          setLocalError("Invalid email or password");
         } else if (err.response.data && err.response.data.message) {
-          setError(err.response.data.message);
+          setLocalError(err.response.data.message);
         } else {
-          setError("Failed to log in. Please try again later.");
+          setLocalError("Failed to log in. Please try again later.");
         }
       } else if (err.request) {
         // Request was made but no response received - network error
-        setError(
+        setLocalError(
           "Cannot connect to server. Please check your internet connection."
         );
       } else {
         // Something else happened in setting up the request
-        setError("Failed to log in. Please try again later.");
+        setLocalError("Failed to log in. Please try again later.");
       }
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   };
+
+  // Show either local error or global error from Redux
+  const displayError = localError || error;
+  // Use either local loading state or global loading state
+  const loading = localLoading || isLoading;
 
   return (
     <div className="relative flex min-h-screen items-center justify-center p-4">
@@ -99,14 +102,14 @@ export default function LoginPage() {
         <Card className="border border-border/40 shadow-md">
           <form onSubmit={handleLogin}>
             <CardContent className="grid gap-4 pt-6">
-              {error && (
+              {displayError && (
                 <Alert variant="destructive" className="bg-destructive/10">
                   <AlertCircle className="h-4 w-4 text-destructive" />
                   <AlertTitle className="text-destructive">
                     Login Error
                   </AlertTitle>
                   <AlertDescription className="text-destructive/90">
-                    {error}
+                    {displayError}
                   </AlertDescription>
                 </Alert>
               )}

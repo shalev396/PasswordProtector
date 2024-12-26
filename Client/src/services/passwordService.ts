@@ -1,123 +1,102 @@
-import api from "@/api/api";
-import { encryptPassword, decryptPassword } from "@/lib/crypto";
-import { getMasterPassword } from "./authService";
-
-// Define the password interface
-export interface Password {
-  id?: string;
-  title: string;
-  username?: string;
-  password: string;
-  url?: string;
-  category?: string;
-  notes?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
+import apiClient from "@/api/api";
+import { Password } from "@/types";
 
 /**
- * Get all passwords for the authenticated user
+ * Service for handling password-related API operations
  */
-export const getPasswords = async (): Promise<Password[]> => {
-  try {
-    const response = await api.get("/passwords");
-    const passwords = response.data;
-
-    // Decrypt the passwords
-    const masterPassword = getMasterPassword();
-    if (!masterPassword) throw new Error("Master password not found");
-
-    return passwords.map((encryptedPwd: any) => ({
-      ...encryptedPwd,
-      password: decryptPassword(encryptedPwd.encryptedPassword, masterPassword),
-    }));
-  } catch (error) {
-    console.error("Error fetching passwords:", error);
-    throw error;
-  }
-};
-
-/**
- * Create a new password
- */
-export const createPassword = async (password: Password): Promise<Password> => {
-  try {
-    // Encrypt the password before sending to server
-    const masterPassword = getMasterPassword();
-    if (!masterPassword) throw new Error("Master password not found");
-
-    const encryptedPassword = encryptPassword(
-      password.password,
-      masterPassword
-    );
-
-    const response = await api.post("/passwords", {
-      ...password,
-      encryptedPassword,
-      // Don't send the plaintext password to the server
-      password: undefined,
-    });
-
-    return {
-      ...response.data,
-      password: password.password,
-    };
-  } catch (error) {
-    console.error("Error creating password:", error);
-    throw error;
-  }
-};
-
-/**
- * Update an existing password
- */
-export const updatePassword = async (password: Password): Promise<Password> => {
-  try {
-    if (!password.id) {
-      throw new Error("Password ID is required for update");
+const passwordService = {
+  /**
+   * Set the auth header for API requests
+   */
+  setAuthHeader(token: string | null): void {
+    if (token) {
+      apiClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    } else {
+      delete apiClient.defaults.headers.common["Authorization"];
     }
+  },
 
-    // Encrypt the password before sending to server
-    const masterPassword = getMasterPassword();
-    if (!masterPassword) throw new Error("Master password not found");
+  /**
+   * Get all passwords for the authenticated user
+   */
+  async getAllPasswords(): Promise<Password[]> {
+    try {
+      const response = await apiClient.get("/passwords");
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching all passwords:", error);
+      throw error;
+    }
+  },
 
-    const encryptedPassword = encryptPassword(
-      password.password,
-      masterPassword
-    );
+  /**
+   * Get a single password by its ID
+   */
+  async getPasswordById(id: number): Promise<Password> {
+    try {
+      const response = await apiClient.get(`/passwords/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching password with ID ${id}:`, error);
+      throw error;
+    }
+  },
 
-    const response = await api.put(`/passwords/${password.id}`, {
-      ...password,
-      encryptedPassword,
-      // Don't send the plaintext password to the server
-      password: undefined,
-    });
+  /**
+   * Create a new password
+   */
+  async createPassword(password: Omit<Password, "id">): Promise<Password> {
+    try {
+      const response = await apiClient.post("/passwords", password);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating password:", error);
+      throw error;
+    }
+  },
 
-    return {
-      ...response.data,
-      password: password.password,
-    };
-  } catch (error) {
-    console.error("Error updating password:", error);
-    throw error;
-  }
+  /**
+   * Update an existing password
+   */
+  async updatePassword(
+    id: number,
+    password: Partial<Password>
+  ): Promise<Password> {
+    try {
+      const response = await apiClient.put(`/passwords/${id}`, password);
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating password with ID ${id}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete a password
+   */
+  async deletePassword(id: number): Promise<void> {
+    try {
+      await apiClient.delete(`/passwords/${id}`);
+    } catch (error) {
+      console.error(`Error deleting password with ID ${id}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Search for passwords using a query string
+   */
+  async searchPasswords(query: string): Promise<Password[]> {
+    try {
+      const response = await apiClient.get(
+        `/passwords/search?q=${encodeURIComponent(query)}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`Error searching passwords with query "${query}":`, error);
+      throw error;
+    }
+  },
 };
 
-/**
- * Delete a password
- */
-export const deletePassword = async (id: string): Promise<void> => {
-  try {
-    await api.delete(`/passwords/${id}`);
-  } catch (error) {
-    console.error("Error deleting password:", error);
-    throw error;
-  }
-};
-
-export default {
-  getPasswords,
-  createPassword,
-  updatePassword,
-  deletePassword,
-};
+export default passwordService;

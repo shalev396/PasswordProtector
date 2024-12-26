@@ -1,65 +1,162 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-
-export interface Password {
-  id: string;
-  title: string;
-  username: string;
-  password: string;
-  url: string;
-  category: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface PasswordState {
-  items: Password[];
-  isLoading: boolean;
-  error: string | null;
-}
+import { Password, PasswordState } from "../../types";
 
 const initialState: PasswordState = {
-  items: [],
+  passwords: [],
+  filteredPasswords: [],
   isLoading: false,
   error: null,
+  searchTerm: "",
+  selectedCategory: "All",
+  sortOption: "newest",
 };
 
 const passwordSlice = createSlice({
   name: "passwords",
   initialState,
   reducers: {
-    setPasswords: (state, action: PayloadAction<Password[]>) => {
-      state.items = action.payload;
-    },
-    addPassword: (state, action: PayloadAction<Password>) => {
-      state.items.push(action.payload);
-    },
-    updatePassword: (state, action: PayloadAction<Password>) => {
-      const index = state.items.findIndex(
-        (item) => item.id === action.payload.id
-      );
-      if (index !== -1) {
-        state.items[index] = action.payload;
-      }
-    },
-    deletePassword: (state, action: PayloadAction<string>) => {
-      state.items = state.items.filter((item) => item.id !== action.payload);
-    },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
+    setPasswords: (state, action: PayloadAction<Password[]>) => {
+      state.passwords = action.payload;
+      state.filteredPasswords = filterAndSortPasswords(
+        action.payload,
+        state.searchTerm,
+        state.selectedCategory,
+        state.sortOption
+      );
+    },
+    addPassword: (state, action: PayloadAction<Password>) => {
+      state.passwords.push(action.payload);
+      state.filteredPasswords = filterAndSortPasswords(
+        state.passwords,
+        state.searchTerm,
+        state.selectedCategory,
+        state.sortOption
+      );
+    },
+    updatePassword: (state, action: PayloadAction<Password>) => {
+      const index = state.passwords.findIndex(
+        (p) => p.id === action.payload.id
+      );
+      if (index !== -1) {
+        state.passwords[index] = action.payload;
+      }
+      state.filteredPasswords = filterAndSortPasswords(
+        state.passwords,
+        state.searchTerm,
+        state.selectedCategory,
+        state.sortOption
+      );
+    },
+    deletePassword: (state, action: PayloadAction<number>) => {
+      state.passwords = state.passwords.filter((p) => p.id !== action.payload);
+      state.filteredPasswords = filterAndSortPasswords(
+        state.passwords,
+        state.searchTerm,
+        state.selectedCategory,
+        state.sortOption
+      );
+    },
+    setSearchTerm: (state, action: PayloadAction<string>) => {
+      state.searchTerm = action.payload;
+      state.filteredPasswords = filterAndSortPasswords(
+        state.passwords,
+        action.payload,
+        state.selectedCategory,
+        state.sortOption
+      );
+    },
+    setSelectedCategory: (state, action: PayloadAction<string>) => {
+      state.selectedCategory = action.payload;
+      state.filteredPasswords = filterAndSortPasswords(
+        state.passwords,
+        state.searchTerm,
+        action.payload,
+        state.sortOption
+      );
+    },
+    setSortOption: (
+      state,
+      action: PayloadAction<"newest" | "oldest" | "alphabetical">
+    ) => {
+      state.sortOption = action.payload;
+      state.filteredPasswords = filterAndSortPasswords(
+        state.passwords,
+        state.searchTerm,
+        state.selectedCategory,
+        action.payload
+      );
+    },
+    clearPasswords: (state) => {
+      state.passwords = [];
+      state.filteredPasswords = [];
+      state.searchTerm = "";
+      state.selectedCategory = "All";
+      state.sortOption = "newest";
+    },
   },
 });
 
+// Helper function to filter and sort passwords
+const filterAndSortPasswords = (
+  passwords: Password[],
+  searchTerm: string,
+  category: string,
+  sortOption: string
+): Password[] => {
+  // First filter by category if not "All"
+  let filtered =
+    category === "All"
+      ? [...passwords]
+      : passwords.filter((p) => p.category === category);
+
+  // Then filter by search term
+  if (searchTerm) {
+    const term = searchTerm.toLowerCase();
+    filtered = filtered.filter(
+      (p) =>
+        p.title.toLowerCase().includes(term) ||
+        p.username.toLowerCase().includes(term) ||
+        p.website.toLowerCase().includes(term)
+    );
+  }
+
+  // Finally sort according to sort option
+  return filtered.sort((a, b) => {
+    if (sortOption === "newest") {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    } else if (sortOption === "oldest") {
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    } else if (sortOption === "alphabetical") {
+      return a.title.localeCompare(b.title);
+    }
+    return 0;
+  });
+};
+
 export const {
+  setLoading,
+  setError,
   setPasswords,
   addPassword,
   updatePassword,
   deletePassword,
-  setLoading,
-  setError,
+  setSearchTerm,
+  setSelectedCategory,
+  setSortOption,
+  clearPasswords,
 } = passwordSlice.actions;
+
+// For backward compatibility
+export const setCurrentPassword = (password: Password | null) => {
+  // This is a stub to maintain API compatibility
+  // It doesn't need to do anything as we don't use currentPassword anymore
+  return { type: "passwords/setCurrentPassword", payload: password };
+};
 
 export default passwordSlice.reducer;

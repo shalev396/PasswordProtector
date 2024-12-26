@@ -1,7 +1,6 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
+import { useAuth } from "@/hooks/useAuth";
 
 // Placeholder PrivateRoute component
 // In the future, this will check for authentication status
@@ -12,10 +11,7 @@ interface PrivateRouteProps {
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
   const location = useLocation();
-  const { isAuthenticated, isLoading } = useSelector(
-    (state: RootState) => state.session
-  );
-  const { token } = useSelector((state: RootState) => state.token);
+  const { isAuthenticated, isLoading } = useAuth();
 
   // Show loading indicator while checking authentication status
   if (isLoading) {
@@ -27,7 +23,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
   }
 
   // Redirect to login if not authenticated
-  if (!isAuthenticated || !token) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

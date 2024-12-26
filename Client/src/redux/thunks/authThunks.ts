@@ -1,119 +1,196 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { authAPI } from "@/services/api.service";
-import { setToken, clearToken } from "@/redux/slices/tokenSlice";
-import { setUser, clearUser } from "@/redux/slices/userSlice";
+import {
+  LoginCredentials,
+  RegisterCredentials,
+  AuthResponse,
+  User,
+} from "../../types";
+import authService from "../../services/authService";
+import { setUser, clearUser } from "../slices/userSlice";
 import {
   setAuthenticated,
-  setUnauthenticated,
-} from "@/redux/slices/sessionSlice";
-import { hashPassword } from "@/lib/crypto";
+  setLoading,
+  setError,
+  clearSession,
+} from "../slices/sessionSlice";
+import { setAccessToken, clearAccessToken } from "../slices/tokenSlice";
+import {
+  setRefreshToken,
+  clearRefreshToken,
+} from "../slices/refreshTokenSlice";
+import { clearPasswords } from "../slices/passwordSlice";
+import passwordService from "../../services/passwordService";
 
-// Login thunk
-export const loginUser = createAsyncThunk(
-  "auth/login",
-  async (
-    { email, password }: { email: string; password: string },
-    { dispatch }
-  ) => {
-    try {
-      // Hash the password before sending to server
-      const hashedPassword = await hashPassword(password, email);
+// Calculate token expiration time (in milliseconds since epoch)
+const calculateExpirationTime = (expiresIn: number): number => {
+  return Date.now() + expiresIn * 1000;
+};
 
-      // Send login request
-      const response = await authAPI.login(email, hashedPassword);
-
-      // Save token and user data in store
-      dispatch(setToken(response.token));
-      dispatch(
-        setUser({
-          ...response.user,
-          masterKey: password, // Store raw password as master key for encryption
-        })
-      );
-      dispatch(setAuthenticated());
-
-      return response;
-    } catch (error) {
-      // Handle login error
-      dispatch(setUnauthenticated());
-      throw error;
-    }
-  }
-);
-
-// Register thunk
-export const registerUser = createAsyncThunk(
+// Register a new user
+export const register = createAsyncThunk(
   "auth/register",
   async (
-    { email, password }: { email: string; password: string },
+    {
+      credentials,
+      masterKey,
+    }: { credentials: RegisterCredentials; masterKey: string },
     { dispatch }
   ) => {
     try {
-      // Hash the password before sending to server
-      const hashedPassword = await hashPassword(password, email);
+      dispatch(setLoading(true));
+      dispatch(setError(null));
 
-      // Send register request
-      const response = await authAPI.register(email, hashedPassword);
+      const response: AuthResponse = await authService.register(credentials);
 
-      // Save token and user data in store
-      dispatch(setToken(response.token));
+      // Set up auth headers for subsequent requests
+      authService.setAuthHeader(response.accessToken);
+      passwordService.setAuthHeader(response.accessToken);
+
+      // Store tokens and user data in Redux
       dispatch(
-        setUser({
-          ...response.user,
-          masterKey: password, // Store raw password as master key for encryption
+        setAccessToken({
+          token: response.accessToken,
+          expiresAt: calculateExpirationTime(3600), // Assuming 1 hour expiry
         })
       );
+
+      dispatch(
+        setRefreshToken({
+          token: response.refreshToken,
+          expiresAt: calculateExpirationTime(604800), // Assuming 1 week expiry
+        })
+      );
+
+      // Store master key with user data for encryption/decryption
+      const userData: User = {
+        ...response.user,
+        masterKey,
+      };
+
+      dispatch(setUser(userData));
       dispatch(setAuthenticated());
 
       return response;
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message || "Registration failed";
+      dispatch(setError(errorMessage));
+      throw error;
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }
+);
+
+// Login user
+export const login = createAsyncThunk(
+  "auth/login",
+  async (
+    {
+      credentials,
+      masterKey,
+    }: { credentials: LoginCredentials; masterKey: string },
+    { dispatch }
+  ) => {
+    try {
+      dispatch(setLoading(true));
+      dispatch(setError(null));
+
+      const response: AuthResponse = await authService.login(credentials);
+
+      // Set up auth headers for subsequent requests
+      authService.setAuthHeader(response.accessToken);
+      passwordService.setAuthHeader(response.accessToken);
+
+      // Store tokens and user data in Redux
+      dispatch(
+        setAccessToken({
+          token: response.accessToken,
+          expiresAt: calculateExpirationTime(3600), // Assuming 1 hour expiry
+        })
+      );
+
+      dispatch(
+        setRefreshToken({
+          token: response.refreshToken,
+          expiresAt: calculateExpirationTime(604800), // Assuming 1 week expiry
+        })
+      );
+
+      // Store master key with user data for encryption/decryption
+      const userData: User = {
+        ...response.user,
+        masterKey,
+      };
+
+      dispatch(setUser(userData));
+      dispatch(setAuthenticated());
+
+      return response;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Login failed";
+      dispatch(setError(errorMessage));
+      throw error;
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }
+);
+
+// Refresh auth token
+export const refreshToken = createAsyncThunk(
+  "auth/refreshToken",
+  async (token: string, { dispatch }) => {
+    try {
+      const response = await authService.refreshToken(token);
+
+      // Update auth header with new token
+      authService.setAuthHeader(response.accessToken);
+      passwordService.setAuthHeader(response.accessToken);
+
+      // Update tokens in Redux
+      dispatch(
+        setAccessToken({
+          token: response.accessToken,
+          expiresAt: calculateExpirationTime(3600), // Assuming 1 hour expiry
+        })
+      );
+
+      dispatch(
+        setRefreshToken({
+          token: response.refreshToken,
+          expiresAt: calculateExpirationTime(604800), // Assuming 1 week expiry
+        })
+      );
+
+      return response;
     } catch (error) {
-      // Handle registration error
-      dispatch(setUnauthenticated());
+      // If refresh fails, log the user out
+      dispatch(logout());
       throw error;
     }
   }
 );
 
-// Logout thunk
-export const logoutUser = createAsyncThunk(
+// Logout user
+export const logout = createAsyncThunk(
   "auth/logout",
   async (_, { dispatch }) => {
     try {
-      // Clear auth data from store
-      dispatch(clearToken());
-      dispatch(clearUser());
-      dispatch(setUnauthenticated());
+      await authService.logout();
     } catch (error) {
-      console.error("Logout error:", error);
-      throw error;
-    }
-  }
-);
+      console.error("Error during logout:", error);
+    } finally {
+      // Clear auth header
+      authService.setAuthHeader(null);
+      passwordService.setAuthHeader(null);
 
-// Check auth status thunk
-export const checkAuthStatus = createAsyncThunk(
-  "auth/checkStatus",
-  async (_, { dispatch, getState }) => {
-    try {
-      const state = getState() as { token: { token: string | null } };
-
-      if (!state.token.token) {
-        dispatch(setUnauthenticated());
-        return null;
-      }
-
-      // Get user profile from server
-      const userProfile = await authAPI.getProfile();
-      dispatch(setAuthenticated());
-      dispatch(setUser(userProfile));
-
-      return userProfile;
-    } catch (error) {
-      dispatch(clearToken());
+      // Clear all auth-related state
+      dispatch(clearAccessToken());
+      dispatch(clearRefreshToken());
       dispatch(clearUser());
-      dispatch(setUnauthenticated());
-      console.error("Auth check error:", error);
-      return null;
+      dispatch(clearSession());
+      dispatch(clearPasswords());
     }
   }
 );

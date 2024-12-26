@@ -1,16 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import User from "../models/User";
+import { User } from "../models/User";
 
-// JWT secret from environment variable or fallback
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || "access_secret";
 
-// Define a type for the JWT payload
+// Define the structure of the JWT payload
 interface JwtPayload {
   id: number;
 }
 
-// Extend Express Request interface to include user property
+// Extend the Express Request interface to include user
 declare global {
   namespace Express {
     interface Request {
@@ -28,65 +27,43 @@ export const authenticate = async (
   next: NextFunction
 ) => {
   try {
-    // Get token from Authorization header
+    // Get token from header
     const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required. No token provided.",
-      });
-    }
-
-    // Get the token part
-    const token = authHeader.split(" ")[1];
+    const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
 
     if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required. Invalid token format.",
-      });
+      return res.status(401).json({ message: "Authentication required" });
     }
 
     // Verify token
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, ACCESS_TOKEN_SECRET) as JwtPayload;
 
     // Find user by id
     const user = await User.findByPk(decoded.id, {
-      attributes: { exclude: ["passwordHash"] }, // Exclude password
+      attributes: { exclude: ["passwordHash"] },
     });
 
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "User not found or token is invalid.",
-      });
+      return res.status(401).json({ message: "User not found" });
     }
 
-    // Add user to request object
+    // Set user in request object
     req.user = user;
     next();
   } catch (error) {
-    console.error("Auth middleware error:", error);
-
-    if (error instanceof jwt.JsonWebTokenError) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid token.",
-      });
-    }
-
     if (error instanceof jwt.TokenExpiredError) {
       return res.status(401).json({
-        success: false,
-        message: "Token expired.",
+        message: "Token expired",
+        code: "TOKEN_EXPIRED",
+      });
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({
+        message: "Invalid token",
+        code: "INVALID_TOKEN",
       });
     }
 
-    return res.status(500).json({
-      success: false,
-      message: "Server error during authentication.",
-    });
+    return res.status(401).json({ message: "Authentication failed" });
   }
 };
 
@@ -99,21 +76,8 @@ export const checkUserExists = async (
   res: Response,
   next: NextFunction
 ) => {
-  try {
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-
-    // Check if user exists in database
-    const user = await User.findByPk(req.user.id);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    next();
-  } catch (error) {
-    console.error("User check error:", error);
-    return res.status(500).json({ message: "Error validating user" });
+  if (!req.user) {
+    return res.status(401).json({ message: "User not found" });
   }
+  next();
 };
