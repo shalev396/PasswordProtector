@@ -1,10 +1,10 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
 import {
-  setLoading,
-  setAuthenticated,
-  setError,
+  setSessionAuthenticated,
+  setSessionLoading,
+  setSessionError,
   clearSession,
 } from "@/redux/slices/sessionSlice";
 import { setUser, clearUser } from "@/redux/slices/userSlice";
@@ -16,61 +16,127 @@ import {
   setAccessToken,
   clearAccessToken,
 } from "@/redux/slices/accessTokenSlice";
+import { hashPassword } from "@/lib/crypto";
 import authService from "@/services/authService";
 import { AuthResponse } from "@/types";
+import { useNavigate } from "react-router-dom";
 
 /**
  * Custom hook for authentication functionality
  */
 export const useAuth = () => {
   const dispatch = useDispatch();
-  const refreshToken = useSelector(
-    (state: RootState) => state.refreshToken.token
-  );
+  const navigate = useNavigate();
+
+  // Get authentication state from Redux
   const user = useSelector((state: RootState) => state.user.user);
-  const { isAuthenticated, isLoading, error } = useSelector(
-    (state: RootState) => state.session
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.session.isAuthenticated
+  );
+  const isLoading = useSelector((state: RootState) => state.session.isLoading);
+  const error = useSelector((state: RootState) => state.session.error);
+  const accessToken = useSelector(
+    (state: RootState) => state.accessToken?.token
+  );
+  const accessTokenExpiresAt = useSelector(
+    (state: RootState) => state.accessToken?.expiresAt
+  );
+  const refreshToken = useSelector(
+    (state: RootState) => state.refreshToken?.token
   );
 
-  /**
-   * Login with email and password
-   */
+  // Clear authentication state and redirect to login
+  const logout = useCallback(() => {
+    try {
+      authService.logout();
+    } catch (err) {
+      console.error("Logout API error:", err);
+    } finally {
+      // Clear Redux state regardless of API success
+      dispatch(clearSession());
+      dispatch(clearUser());
+      dispatch(clearRefreshToken());
+      dispatch(clearAccessToken());
+
+      // Clear auth header
+      authService.setAuthHeader(null);
+
+      // Redirect to login page
+      navigate("/login");
+    }
+  }, [dispatch, navigate]);
+
+  // Check if token has expired
+  const isTokenExpired = useCallback(() => {
+    if (!accessTokenExpiresAt) return true;
+    // Add a 10-second buffer to account for timing differences
+    return Date.now() > accessTokenExpiresAt - 10000;
+  }, [accessTokenExpiresAt]);
+
+  // Check token validity - both presence and expiration
+  const isTokenValid = useCallback(() => {
+    return !!accessToken && !isTokenExpired();
+  }, [accessToken, isTokenExpired]);
+
+  // Login with email and password
   const login = useCallback(
-    async (email: string, password: string): Promise<AuthResponse> => {
+    async (email: string, password: string) => {
       try {
-        dispatch(setLoading(true));
+        dispatch(setSessionLoading(true));
+        dispatch(setSessionError(null));
+
+        // Get auth response from API
         const response = await authService.login({ email, password });
 
-        // Store tokens and user data in Redux
-        if (response.accessToken) {
-          dispatch(
-            setAccessToken({
-              token: response.accessToken,
-              expiresAt: response.accessTokenExpiresAt || Date.now() + 3600000, // Default 1 hour
-            })
-          );
+        // Validate response
+        if (!response || !response.accessToken) {
+          throw new Error("Invalid authentication response");
         }
 
-        if (response.refreshToken) {
+        // Set auth data in Redux
+        const { user, accessToken, refreshToken, accessTokenExpiresAt } =
+          response;
+
+        // Set master key using email and password
+        const masterKey = await hashPassword(password, email);
+
+        // Update user with master key
+        const updatedUser = { ...user, masterKey };
+
+        // Set auth header
+        authService.setAuthHeader(accessToken);
+
+        // Update Redux state
+        dispatch(setUser(updatedUser));
+        dispatch(
+          setAccessToken({
+            token: accessToken,
+            expiresAt: accessTokenExpiresAt || Date.now() + 3600000,
+          })
+        );
+        if (refreshToken) {
           dispatch(
             setRefreshToken({
-              token: response.refreshToken,
-              expiresAt:
-                response.refreshTokenExpiresAt || Date.now() + 86400000, // Default 24 hours
+              token: refreshToken,
+              expiresAt: response.refreshTokenExpiresAt || null,
             })
           );
         }
+        dispatch(setSessionAuthenticated(true));
 
-        dispatch(setUser(response.user));
-        dispatch(setAuthenticated());
-        dispatch(setLoading(false));
-        dispatch(setError(null));
-
-        return response;
-      } catch (error: any) {
-        dispatch(setLoading(false));
-        dispatch(setError(error.message || "Login failed"));
-        throw error;
+        return true;
+      } catch (err: any) {
+        console.error("Login error:", err);
+        const errorMessage =
+          err.response?.data?.message || err.message || "Login failed";
+        dispatch(setSessionError(errorMessage));
+        dispatch(setSessionAuthenticated(false));
+        // Clear any existing tokens to prevent redirect loops
+        dispatch(clearAccessToken());
+        dispatch(clearRefreshToken());
+        return false;
+      } finally {
+        dispatch(setSessionLoading(false));
       }
     },
     [dispatch]
@@ -86,7 +152,7 @@ export const useAuth = () => {
       name?: string
     ): Promise<AuthResponse> => {
       try {
-        dispatch(setLoading(true));
+        dispatch(setSessionLoading(true));
         const response = await authService.register({
           name: name || email.split("@")[0],
           email,
@@ -113,34 +179,26 @@ export const useAuth = () => {
           );
         }
 
-        dispatch(setUser(response.user));
-        dispatch(setAuthenticated());
-        dispatch(setLoading(false));
-        dispatch(setError(null));
+        // Set the user data in Redux with master key
+        const userWithMasterKey = {
+          ...response.user,
+          masterKey: password, // Store the password as the master key for encryption
+        };
+
+        dispatch(setUser(userWithMasterKey));
+        dispatch(setSessionAuthenticated(true));
+        dispatch(setSessionLoading(false));
+        dispatch(setSessionError(null));
 
         return response;
       } catch (error: any) {
-        dispatch(setLoading(false));
-        dispatch(setError(error.message || "Registration failed"));
+        dispatch(setSessionLoading(false));
+        dispatch(setSessionError(error.message || "Registration failed"));
         throw error;
       }
     },
     [dispatch]
   );
-
-  /**
-   * Logout the current user
-   */
-  const logout = useCallback(() => {
-    // Call API to logout
-    authService.logout().finally(() => {
-      // Clear all auth-related state
-      dispatch(clearSession());
-      dispatch(clearUser());
-      dispatch(clearRefreshToken());
-      dispatch(clearAccessToken());
-    });
-  }, [dispatch]);
 
   /**
    * Get user profile
@@ -192,13 +250,24 @@ export const useAuth = () => {
     return user?.masterKey || null;
   }, [user]);
 
+  // On component mount, validate token status
+  useEffect(() => {
+    // If not loading and has token but token is expired
+    if (!isLoading && accessToken && isTokenExpired()) {
+      console.warn("Access token has expired, logging out");
+      // Token is expired but still in Redux - force logout to prevent redirect loops
+      logout();
+    }
+  }, [isLoading, accessToken, isTokenExpired, logout]);
+
   return {
     // State
-    isAuthenticated,
+    user,
+    isAuthenticated: isAuthenticated && isTokenValid(),
     isLoading,
     error,
-    token: refreshToken,
-    user,
+    accessToken,
+    refreshToken,
 
     // Actions
     login,
@@ -207,6 +276,7 @@ export const useAuth = () => {
     getProfile,
     refreshToken: refreshTokenManually,
     getMasterPassword,
+    isTokenValid,
   };
 };
 

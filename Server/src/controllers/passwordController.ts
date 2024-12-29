@@ -105,6 +105,22 @@ export const createPassword = async (req: Request, res: Response) => {
   }
 
   try {
+    // Log the received data for debugging
+    console.log("Creating password with data:", {
+      title: req.body.title,
+      username: req.body.username,
+      hasEncryptedPassword: !!req.body.encryptedPassword,
+      website: req.body.website,
+      category: req.body.category,
+      userId: req.user?.id,
+    });
+
+    // Ensure user exists in the request
+    if (!req.user || !req.user.id) {
+      console.error("User not found in request");
+      return res.status(401).json({ message: "Unauthorized: User not found" });
+    }
+
     const userId = req.user?.id;
 
     if (!userId) {
@@ -133,7 +149,9 @@ export const createPassword = async (req: Request, res: Response) => {
     return res.status(201).json(newPassword);
   } catch (error) {
     console.error("Error creating password:", error);
-    return res.status(500).json({ message: "Server error" });
+    return res
+      .status(500)
+      .json({ message: "Server error while creating password" });
   }
 };
 

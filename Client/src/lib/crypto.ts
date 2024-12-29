@@ -8,34 +8,54 @@ export async function generateEncryptionKey(
   password: string,
   salt: string
 ): Promise<CryptoKey> {
-  const encoder = new TextEncoder();
-  const passwordBuffer = encoder.encode(password);
-  const saltBuffer = encoder.encode(salt);
+  try {
+    console.log(`Generating encryption key with salt length: ${salt.length}`);
 
-  // Import the password as a base key for PBKDF2
-  const baseKey = await window.crypto.subtle.importKey(
-    "raw",
-    passwordBuffer,
-    { name: "PBKDF2" },
-    false,
-    ["deriveKey"]
-  );
+    if (!password || password.trim() === "") {
+      throw new Error("Empty password provided for key generation");
+    }
 
-  // Derive the actual encryption key using PBKDF2
-  const encryptionKey = await window.crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: saltBuffer,
-      iterations: 100000, // Standard recommendation
-      hash: "SHA-256",
-    },
-    baseKey,
-    { name: "AES-GCM", length: 256 }, // AES-GCM is recommended for authenticated encryption
-    true, // Extractable
-    ["encrypt", "decrypt"] // Key usages
-  );
+    if (!salt || salt.trim() === "") {
+      throw new Error("Empty salt provided for key generation");
+    }
 
-  return encryptionKey;
+    const encoder = new TextEncoder();
+    const passwordBuffer = encoder.encode(password);
+    const saltBuffer = encoder.encode(salt);
+
+    // Import the password as a base key for PBKDF2
+    const baseKey = await window.crypto.subtle.importKey(
+      "raw",
+      passwordBuffer,
+      { name: "PBKDF2" },
+      false,
+      ["deriveKey"]
+    );
+
+    // Derive the actual encryption key using PBKDF2
+    const encryptionKey = await window.crypto.subtle.deriveKey(
+      {
+        name: "PBKDF2",
+        salt: saltBuffer,
+        iterations: 100000, // Standard recommendation
+        hash: "SHA-256",
+      },
+      baseKey,
+      { name: "AES-GCM", length: 256 }, // AES-GCM is recommended for authenticated encryption
+      true, // Extractable
+      ["encrypt", "decrypt"] // Key usages
+    );
+
+    console.log("Encryption key generated successfully");
+    return encryptionKey;
+  } catch (error) {
+    console.error("Error generating encryption key:", error);
+    throw new Error(
+      `Key generation failed: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
+  }
 }
 
 /**
@@ -46,18 +66,38 @@ export async function hashPassword(
   password: string,
   salt: string
 ): Promise<string> {
-  const encoder = new TextEncoder();
-  // Combine password and salt before hashing
-  const data = encoder.encode(password + salt);
+  try {
+    console.log("Hashing password with salt");
 
-  const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
-  // Convert ArrayBuffer to hex string
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+    if (!password || password.trim() === "") {
+      throw new Error("Empty password provided for hashing");
+    }
 
-  return hashHex;
+    if (!salt || salt.trim() === "") {
+      throw new Error("Empty salt provided for hashing");
+    }
+
+    const encoder = new TextEncoder();
+    // Combine password and salt before hashing
+    const data = encoder.encode(password + salt);
+
+    const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
+    // Convert ArrayBuffer to hex string
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    console.log(`Password hashed successfully, length: ${hashHex.length}`);
+    return hashHex;
+  } catch (error) {
+    console.error("Error hashing password:", error);
+    throw new Error(
+      `Password hashing failed: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
+  }
 }
 
 /**
@@ -69,28 +109,50 @@ export async function encryptData(
   data: string,
   encryptionKey: CryptoKey
 ): Promise<string> {
-  const encoder = new TextEncoder();
-  const dataBuffer = encoder.encode(data);
+  try {
+    if (!data) {
+      throw new Error("Empty data provided for encryption");
+    }
 
-  // Generate a random 12-byte IV (recommended size for AES-GCM)
-  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    if (!encryptionKey) {
+      throw new Error("No encryption key provided");
+    }
 
-  const encryptedBuffer = await window.crypto.subtle.encrypt(
-    {
-      name: "AES-GCM",
-      iv: iv,
-    },
-    encryptionKey,
-    dataBuffer
-  );
+    console.log(`Encrypting data (length: ${data.length})`);
+    const encoder = new TextEncoder();
+    const dataBuffer = encoder.encode(data);
 
-  // Combine IV and encrypted data (IV first)
-  const resultBuffer = new Uint8Array(iv.length + encryptedBuffer.byteLength);
-  resultBuffer.set(iv);
-  resultBuffer.set(new Uint8Array(encryptedBuffer), iv.length);
+    // Generate a random 12-byte IV (recommended size for AES-GCM)
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
 
-  // Convert the combined buffer to a base64 string for easier storage
-  return btoa(String.fromCharCode.apply(null, Array.from(resultBuffer)));
+    const encryptedBuffer = await window.crypto.subtle.encrypt(
+      {
+        name: "AES-GCM",
+        iv: iv,
+      },
+      encryptionKey,
+      dataBuffer
+    );
+
+    // Combine IV and encrypted data (IV first)
+    const resultBuffer = new Uint8Array(iv.length + encryptedBuffer.byteLength);
+    resultBuffer.set(iv);
+    resultBuffer.set(new Uint8Array(encryptedBuffer), iv.length);
+
+    // Convert the combined buffer to a base64 string for easier storage
+    const base64Result = btoa(
+      String.fromCharCode.apply(null, Array.from(resultBuffer))
+    );
+    console.log(`Encryption successful, result length: ${base64Result.length}`);
+    return base64Result;
+  } catch (error) {
+    console.error("Error encrypting data:", error);
+    throw new Error(
+      `Encryption failed: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
+  }
 }
 
 /**
@@ -101,28 +163,72 @@ export async function decryptData(
   encryptedDataB64: string,
   encryptionKey: CryptoKey
 ): Promise<string> {
-  // Decode base64 string back to Uint8Array
-  const encryptedBytes = Uint8Array.from(atob(encryptedDataB64), (c) =>
-    c.charCodeAt(0)
-  );
+  try {
+    if (!encryptedDataB64) {
+      throw new Error("Empty data provided for decryption");
+    }
 
-  // Extract the IV (first 12 bytes)
-  const iv = encryptedBytes.slice(0, 12);
-  // Extract the actual ciphertext
-  const ciphertext = encryptedBytes.slice(12);
+    if (!encryptionKey) {
+      throw new Error("No encryption key provided for decryption");
+    }
 
-  const decryptedBuffer = await window.crypto.subtle.decrypt(
-    {
-      name: "AES-GCM",
-      iv: iv,
-    },
-    encryptionKey,
-    ciphertext
-  );
+    console.log(`Decrypting data (length: ${encryptedDataB64.length})`);
 
-  // Convert the decrypted ArrayBuffer back to a string
-  const decoder = new TextDecoder();
-  return decoder.decode(decryptedBuffer);
+    // Decode base64 string back to Uint8Array
+    let encryptedBytes;
+    try {
+      encryptedBytes = Uint8Array.from(atob(encryptedDataB64), (c) =>
+        c.charCodeAt(0)
+      );
+    } catch (e) {
+      throw new Error(
+        `Invalid base64 encoding: ${
+          e instanceof Error ? e.message : "Unknown error"
+        }`
+      );
+    }
+
+    // Check if data is long enough to contain IV and ciphertext
+    if (encryptedBytes.length <= 12) {
+      throw new Error(
+        "Encrypted data is too short to contain IV and ciphertext"
+      );
+    }
+
+    // Extract the IV (first 12 bytes)
+    const iv = encryptedBytes.slice(0, 12);
+    // Extract the actual ciphertext
+    const ciphertext = encryptedBytes.slice(12);
+
+    try {
+      const decryptedBuffer = await window.crypto.subtle.decrypt(
+        {
+          name: "AES-GCM",
+          iv: iv,
+        },
+        encryptionKey,
+        ciphertext
+      );
+
+      // Convert the decrypted ArrayBuffer back to a string
+      const decoder = new TextDecoder();
+      const result = decoder.decode(decryptedBuffer);
+      console.log(`Decryption successful, result length: ${result.length}`);
+      return result;
+    } catch (cryptoError) {
+      console.error("Decryption operation failed:", cryptoError);
+      throw new Error(
+        "Failed to decrypt data. The password may be incorrect or data corrupted."
+      );
+    }
+  } catch (error) {
+    console.error("Error in decryptData:", error);
+    throw new Error(
+      `Decryption failed: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
+  }
 }
 
 /**
@@ -132,19 +238,59 @@ export async function encryptPassword(
   password: string,
   masterPassword: string
 ): Promise<string> {
-  const saltBuffer = window.crypto.getRandomValues(new Uint8Array(16));
-  const salt = Array.from(saltBuffer)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  try {
+    console.log("Starting password encryption process");
 
-  // Generate encryption key from master password
-  const encryptionKey = await generateEncryptionKey(masterPassword, salt);
+    // Validate inputs
+    if (!password || password.trim() === "") {
+      console.error("Empty password provided for encryption");
+      throw new Error("Cannot encrypt empty password");
+    }
 
-  // Encrypt the password
-  const encryptedData = await encryptData(password, encryptionKey);
+    if (!masterPassword || masterPassword.trim() === "") {
+      console.error("Empty master key provided for encryption");
+      throw new Error("Master key is required for encryption");
+    }
 
-  // Combine salt and encrypted data for storage
-  return `${salt}:${encryptedData}`;
+    console.log(
+      `Encrypting password (length: ${password.length}) with master key (length: ${masterPassword.length})`
+    );
+
+    // Generate a random salt for this encryption
+    const saltBuffer = window.crypto.getRandomValues(new Uint8Array(16));
+    const salt = Array.from(saltBuffer)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    console.log("Generated random salt for encryption");
+
+    try {
+      // Generate encryption key from master password
+      const encryptionKey = await generateEncryptionKey(masterPassword, salt);
+      console.log("Generated encryption key successfully");
+
+      // Encrypt the password
+      const encryptedData = await encryptData(password, encryptionKey);
+      console.log("Password encryption successful");
+
+      // Combine salt and encrypted data for storage
+      const result = `${salt}:${encryptedData}`;
+      console.log(`Encryption complete, result length: ${result.length}`);
+      return result;
+    } catch (cryptoError) {
+      console.error("Web Crypto API operation failed:", cryptoError);
+      throw new Error(
+        `Encryption failed: ${
+          cryptoError instanceof Error
+            ? cryptoError.message
+            : "Unknown crypto error"
+        }`
+      );
+    }
+  } catch (error) {
+    console.error("Password encryption failed:", error);
+    throw error;
+  }
 }
 
 /**
@@ -154,16 +300,82 @@ export async function decryptPassword(
   encryptedPassword: string,
   masterPassword: string
 ): Promise<string> {
-  // Split the salt and encrypted data
-  const [salt, encryptedData] = encryptedPassword.split(":");
+  try {
+    console.log("Starting password decryption process");
 
-  if (!salt || !encryptedData) {
-    throw new Error("Invalid encrypted password format");
+    // Validate inputs
+    if (!encryptedPassword || encryptedPassword.trim() === "") {
+      console.error("Empty encrypted password provided for decryption");
+      throw new Error("Cannot decrypt empty data");
+    }
+
+    if (!masterPassword || masterPassword.trim() === "") {
+      console.error("Empty master key provided for decryption");
+      throw new Error("Master key is required for decryption");
+    }
+
+    console.log(
+      `Decrypting data (length: ${encryptedPassword.length}) with master key (length: ${masterPassword.length})`
+    );
+
+    // Split the salt and encrypted data
+    const parts = encryptedPassword.split(":");
+    if (parts.length !== 2) {
+      console.error(
+        "Invalid encrypted password format (incorrect number of parts):",
+        {
+          encryptedPasswordLength: encryptedPassword.length,
+          parts: parts.length,
+        }
+      );
+      throw new Error("Invalid encrypted password format");
+    }
+
+    const [salt, encryptedData] = parts;
+
+    if (!salt || !encryptedData) {
+      console.error(
+        "Invalid encrypted password format (missing salt or data):",
+        {
+          hasSalt: !!salt,
+          hasEncryptedData: !!encryptedData,
+        }
+      );
+      throw new Error("Invalid encrypted password format");
+    }
+
+    try {
+      // Generate encryption key from master password and salt
+      const encryptionKey = await generateEncryptionKey(masterPassword, salt);
+      console.log("Generated decryption key successfully");
+
+      // Decrypt the password
+      const decryptedPassword = await decryptData(encryptedData, encryptionKey);
+      console.log("Password decryption successful");
+      return decryptedPassword;
+    } catch (cryptoError) {
+      console.error("Decryption operation failed:", cryptoError);
+
+      // Provide a more specific error message for authentication issues
+      if (
+        cryptoError instanceof Error &&
+        cryptoError.message.includes("operation failed")
+      ) {
+        throw new Error(
+          "Failed to decrypt password. The master password may be incorrect."
+        );
+      }
+
+      throw new Error(
+        `Decryption failed: ${
+          cryptoError instanceof Error
+            ? cryptoError.message
+            : "Unknown crypto error"
+        }`
+      );
+    }
+  } catch (error) {
+    console.error("Password decryption failed:", error);
+    throw error;
   }
-
-  // Generate encryption key from master password and salt
-  const encryptionKey = await generateEncryptionKey(masterPassword, salt);
-
-  // Decrypt the password
-  return await decryptData(encryptedData, encryptionKey);
 }

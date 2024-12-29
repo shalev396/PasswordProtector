@@ -15,68 +15,64 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [localError, setLocalError] = useState("");
-  const [localLoading, setLocalLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Use our auth hook
-  const { login, isAuthenticated, isLoading, error } = useAuth();
+  const {
+    login,
+    isAuthenticated,
+    isLoading,
+    error: authError,
+    isTokenValid,
+  } = useAuth();
 
-  // Check if user is already authenticated
+  // If already authenticated and has valid token, redirect to dashboard
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && isTokenValid()) {
       navigate("/dashboard");
     }
-  }, [navigate, isAuthenticated]);
+  }, [isAuthenticated, navigate, isTokenValid]);
+
+  // Update local error state when auth error changes
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+    }
+  }, [authError]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLocalError("");
-
-    if (!email || !password) {
-      setLocalError("Please enter both email and password");
-      return;
-    }
+    setLoading(true);
+    setError(null);
 
     try {
-      setLocalLoading(true);
-
-      // We use the login function with just email and password
-      await login(email, password);
-      
-      // Successfully logged in, navigate to dashboard
-      navigate("/dashboard");
-      
-    } catch (err: any) {
-      console.error("Login Error:", err);
-
-      // Handle different error scenarios
-      if (err.response) {
-        // Server responded with an error status
-        if (err.response.status === 401) {
-          setLocalError("Invalid email or password");
-        } else if (err.response.data && err.response.data.message) {
-          setLocalError(err.response.data.message);
-        } else {
-          setLocalError("Failed to log in. Please try again later.");
-        }
-      } else if (err.request) {
-        // Request was made but no response received - network error
-        setLocalError(
-          "Cannot connect to server. Please check your internet connection."
-        );
-      } else {
-        // Something else happened in setting up the request
-        setLocalError("Failed to log in. Please try again later.");
+      // Validate form
+      if (!email) {
+        setError("Email is required");
+        setLoading(false);
+        return;
       }
+
+      if (!password) {
+        setError("Password is required");
+        setLoading(false);
+        return;
+      }
+
+      // Attempt login
+      const success = await login(email, password);
+
+      if (success) {
+        console.log("Login successful, redirecting to dashboard");
+        navigate("/dashboard");
+      }
+    } catch (err: any) {
+      console.error("Login failed:", err);
+      setError(err.message || "Login failed. Please try again.");
     } finally {
-      setLocalLoading(false);
+      setLoading(false);
     }
   };
-
-  // Show either local error or global error from Redux
-  const displayError = localError || error;
-  // Use either local loading state or global loading state
-  const loading = localLoading || isLoading;
 
   return (
     <div className="relative flex min-h-screen items-center justify-center p-4">
@@ -102,14 +98,14 @@ export default function LoginPage() {
         <Card className="border border-border/40 shadow-md">
           <form onSubmit={handleLogin}>
             <CardContent className="grid gap-4 pt-6">
-              {displayError && (
+              {error && (
                 <Alert variant="destructive" className="bg-destructive/10">
                   <AlertCircle className="h-4 w-4 text-destructive" />
                   <AlertTitle className="text-destructive">
                     Login Error
                   </AlertTitle>
                   <AlertDescription className="text-destructive/90">
-                    {displayError}
+                    {error}
                   </AlertDescription>
                 </Alert>
               )}

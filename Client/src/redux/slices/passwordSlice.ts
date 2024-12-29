@@ -15,22 +15,36 @@ const passwordSlice = createSlice({
   name: "passwords",
   initialState,
   reducers: {
-    setLoading: (state, action: PayloadAction<boolean>) => {
+    setPasswordsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
+      console.log(`Password loading state set to: ${action.payload}`);
     },
-    setError: (state, action: PayloadAction<string | null>) => {
+    setPasswordsError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
+      if (action.payload) {
+        console.error(`Password error set: ${action.payload}`);
+      } else {
+        console.log("Password error cleared");
+      }
     },
     setPasswords: (state, action: PayloadAction<Password[]>) => {
       state.passwords = action.payload;
+      console.log(`Setting ${action.payload.length} passwords in store`);
       state.filteredPasswords = filterAndSortPasswords(
         action.payload,
         state.searchTerm,
         state.selectedCategory,
         state.sortOption
       );
+      // Clear any previous errors when successfully setting passwords
+      state.error = null;
     },
-    addPassword: (state, action: PayloadAction<Password>) => {
+    addPasswordToStore: (state, action: PayloadAction<Password>) => {
+      console.log(
+        `Adding password to store with ID: ${
+          action.payload.id || "new"
+        }, title: ${action.payload.title}`
+      );
       state.passwords.push(action.payload);
       state.filteredPasswords = filterAndSortPasswords(
         state.passwords,
@@ -38,13 +52,21 @@ const passwordSlice = createSlice({
         state.selectedCategory,
         state.sortOption
       );
+      // Clear any previous errors
+      state.error = null;
     },
-    updatePassword: (state, action: PayloadAction<Password>) => {
+    updatePasswordInStore: (state, action: PayloadAction<Password>) => {
       const index = state.passwords.findIndex(
         (p) => p.id === action.payload.id
       );
       if (index !== -1) {
+        console.log(`Updating password in store with ID: ${action.payload.id}`);
         state.passwords[index] = action.payload;
+      } else {
+        // Log if we're trying to update a non-existent password
+        console.warn(
+          `Tried to update non-existent password with ID: ${action.payload.id}`
+        );
       }
       state.filteredPasswords = filterAndSortPasswords(
         state.passwords,
@@ -52,8 +74,11 @@ const passwordSlice = createSlice({
         state.selectedCategory,
         state.sortOption
       );
+      // Clear any previous errors
+      state.error = null;
     },
-    deletePassword: (state, action: PayloadAction<number>) => {
+    removePasswordFromStore: (state, action: PayloadAction<number>) => {
+      console.log(`Removing password from store with ID: ${action.payload}`);
       state.passwords = state.passwords.filter((p) => p.id !== action.payload);
       state.filteredPasswords = filterAndSortPasswords(
         state.passwords,
@@ -61,9 +86,12 @@ const passwordSlice = createSlice({
         state.selectedCategory,
         state.sortOption
       );
+      // Clear any previous errors
+      state.error = null;
     },
     setSearchTerm: (state, action: PayloadAction<string>) => {
       state.searchTerm = action.payload;
+      console.log(`Search term set to: "${action.payload}"`);
       state.filteredPasswords = filterAndSortPasswords(
         state.passwords,
         action.payload,
@@ -73,6 +101,7 @@ const passwordSlice = createSlice({
     },
     setSelectedCategory: (state, action: PayloadAction<string>) => {
       state.selectedCategory = action.payload;
+      console.log(`Selected category set to: ${action.payload}`);
       state.filteredPasswords = filterAndSortPasswords(
         state.passwords,
         state.searchTerm,
@@ -85,6 +114,7 @@ const passwordSlice = createSlice({
       action: PayloadAction<"newest" | "oldest" | "alphabetical">
     ) => {
       state.sortOption = action.payload;
+      console.log(`Sort option set to: ${action.payload}`);
       state.filteredPasswords = filterAndSortPasswords(
         state.passwords,
         state.searchTerm,
@@ -93,6 +123,7 @@ const passwordSlice = createSlice({
       );
     },
     clearPasswords: (state) => {
+      console.log("Clearing all passwords from store");
       state.passwords = [];
       state.filteredPasswords = [];
       state.searchTerm = "";
@@ -140,23 +171,23 @@ const filterAndSortPasswords = (
 };
 
 export const {
-  setLoading,
-  setError,
+  setPasswordsLoading,
+  setPasswordsError,
   setPasswords,
-  addPassword,
-  updatePassword,
-  deletePassword,
+  addPasswordToStore,
+  updatePasswordInStore,
+  removePasswordFromStore,
   setSearchTerm,
   setSelectedCategory,
   setSortOption,
   clearPasswords,
 } = passwordSlice.actions;
 
-// For backward compatibility
-export const setCurrentPassword = (password: Password | null) => {
-  // This is a stub to maintain API compatibility
-  // It doesn't need to do anything as we don't use currentPassword anymore
-  return { type: "passwords/setCurrentPassword", payload: password };
-};
+// For backward compatibility with code that might still use the old names
+export const setLoading = setPasswordsLoading;
+export const setError = setPasswordsError;
+export const addPassword = addPasswordToStore;
+export const updatePassword = updatePasswordInStore;
+export const deletePassword = removePasswordFromStore;
 
 export default passwordSlice.reducer;

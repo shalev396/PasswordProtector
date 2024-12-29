@@ -47,8 +47,8 @@ const connectDB = async () => {
     console.log("Sequelize Connection has been established successfully.");
 
     // Sync all models that aren't already in the database.
-    // force: true will drop existing tables and recreate them
-    await sequelize.sync({ force: true });
+    // force: false will NOT drop existing tables
+    await sequelize.sync({ force: false });
     console.log("All models were synchronized successfully.");
   } catch (error) {
     console.error("Unable to connect to the database via Sequelize:", error);

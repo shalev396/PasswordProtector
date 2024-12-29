@@ -11,11 +11,9 @@ export const sessionSlice = createSlice({
   name: "session",
   initialState,
   reducers: {
-    setAuthenticated: (state) => {
-      state.isAuthenticated = true;
-    },
-    setUnauthenticated: (state) => {
-      state.isAuthenticated = false;
+    setAuthenticated: (state, action: PayloadAction<boolean | undefined>) => {
+      state.isAuthenticated =
+        action.payload !== undefined ? action.payload : true;
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
@@ -31,12 +29,12 @@ export const sessionSlice = createSlice({
   },
 });
 
-export const {
-  setAuthenticated,
-  setUnauthenticated,
-  setLoading,
-  setError,
-  clearSession,
-} = sessionSlice.actions;
+export const { setAuthenticated, setLoading, setError, clearSession } =
+  sessionSlice.actions;
+
+// Aliases for backward compatibility
+export const setSessionAuthenticated = setAuthenticated;
+export const setSessionLoading = setLoading;
+export const setSessionError = setError;
 
 export default sessionSlice.reducer;

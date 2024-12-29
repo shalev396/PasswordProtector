@@ -22,100 +22,114 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { encrypt, decrypt } from "@/lib/encryption";
 import { PasswordGenerator } from "@/components/PasswordGenerator";
-
-// Define PasswordItem interface
-interface PasswordItem {
-  id: string;
-  type: "login" | "card" | "note";
-  title: string;
-  username: string;
-  password: string;
-  website?: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { useAuth } from "@/hooks/useAuth";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+import { updatePassword } from "@/redux/slices/passwordSlice";
+import apiClient from "@/api/api";
+import { encryptPassword } from "@/lib/crypto";
+import { Password } from "@/types";
 
 export default function EditItemPage() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { id } = useParams<{ id: string }>();
+  const { isAuthenticated, getMasterPassword } = useAuth();
+
+  const passwords = useSelector(
+    (state: RootState) => state.passwords.passwords
+  );
+  const isLoading = useSelector(
+    (state: RootState) => state.passwords.isLoading
+  );
+
   const [type, setType] = useState<"login" | "card" | "note">("login");
   const [title, setTitle] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [originalPassword, setOriginalPassword] = useState("");
   const [website, setWebsite] = useState("");
   const [notes, setNotes] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [masterKey, setMasterKey] = useState("");
 
   // Check if user is authenticated and load item data
   useEffect(() => {
-    const isAuthenticated =
-      sessionStorage.getItem("isAuthenticated") === "true";
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
 
-    async function loadItemData() {
-      try {
-        // Get user data and master key
-        const userData = localStorage.getItem("userData");
-        if (!userData) {
-          navigate("/login");
-          return;
+    // Load password item data if we have an ID
+    if (id && passwords.length > 0) {
+      const passwordItem = passwords.find((item) => String(item.id) === id);
+
+      if (passwordItem) {
+        // Determine type based on category
+        let itemType: "login" | "card" | "note" = "login";
+        if (passwordItem.category === "Card") {
+          itemType = "card";
+        } else if (passwordItem.category === "Secure Note") {
+          itemType = "note";
         }
 
-        const { masterKey: key } = JSON.parse(userData);
-        setMasterKey(key);
-
-        // Get passwords from storage
-        const storedPasswords = localStorage.getItem("passwords");
-        if (!storedPasswords) {
-          navigate("/dashboard");
-          return;
-        }
-
-        // Find the specific password item
-        const passwords = JSON.parse(storedPasswords) as PasswordItem[];
-        const item = passwords.find((p) => p.id === id);
-
-        if (!item) {
-          navigate("/dashboard");
-          return;
-        }
-
-        // Set form data
-        setType(item.type || "login");
-        setTitle(item.title);
-        setUsername(item.username);
-        setOriginalPassword(item.password); // Store encrypted password
-        setWebsite(item.website || "");
-        setNotes(item.notes || "");
-
-        // Try to decrypt the password
-        try {
-          const decryptedPassword = await decrypt(item.password, key);
-          setPassword(decryptedPassword);
-        } catch (err) {
-          console.error("Failed to decrypt password:", err);
-          // Keep password field empty if decryption fails
-        }
-      } catch (err) {
-        console.error("Failed to load item data:", err);
-        navigate("/dashboard");
-      } finally {
+        setType(itemType);
+        setTitle(passwordItem.title);
+        setUsername(passwordItem.username || "");
+        setPassword(passwordItem.password || "");
+        setWebsite(passwordItem.website || "");
+        setNotes(passwordItem.notes || "");
         setInitialLoading(false);
+      } else {
+        // Password not found, redirect back to dashboard
+        navigate("/dashboard");
       }
-    }
+    } else if (passwords.length === 0) {
+      // No passwords loaded yet, will try to fetch from API
+      apiClient
+        .get(`/passwords/${id}`)
+        .then((response) => {
+          const passwordItem = response.data;
 
-    loadItemData();
-  }, [id, navigate]);
+          // Determine type based on category
+          let itemType: "login" | "card" | "note" = "login";
+          if (passwordItem.category === "Card") {
+            itemType = "card";
+          } else if (passwordItem.category === "Secure Note") {
+            itemType = "note";
+          }
+
+          setType(itemType);
+          setTitle(passwordItem.title);
+          setUsername(passwordItem.username || "");
+
+          // Decrypt password using master key
+          const masterKey = getMasterPassword();
+          if (masterKey && passwordItem.encryptedPassword) {
+            import("@/lib/crypto").then(({ decryptPassword }) => {
+              decryptPassword(passwordItem.encryptedPassword, masterKey)
+                .then((decrypted) => {
+                  setPassword(decrypted);
+                })
+                .catch((err) => {
+                  console.error("Failed to decrypt password:", err);
+                });
+            });
+          } else {
+            setPassword(passwordItem.password || "");
+          }
+
+          setWebsite(passwordItem.website || "");
+          setNotes(passwordItem.notes || "");
+          setInitialLoading(false);
+        })
+        .catch((error) => {
+          console.error("Failed to fetch password:", error);
+          navigate("/dashboard");
+        });
+    }
+  }, [id, isAuthenticated, navigate, passwords, getMasterPassword]);
 
   const handleGeneratedPassword = (generatedPassword: string) => {
     setPassword(generatedPassword);
@@ -126,49 +140,54 @@ export default function EditItemPage() {
     setLoading(true);
 
     try {
-      // Get current passwords
-      const storedPasswords = localStorage.getItem("passwords");
-      if (!storedPasswords) {
-        throw new Error("No passwords found");
+      if (!id) {
+        throw new Error("Password ID is missing");
       }
 
-      const passwords = JSON.parse(storedPasswords) as PasswordItem[];
-      const itemIndex = passwords.findIndex((p) => p.id === id);
+      // Create password category based on item type
+      const category =
+        type === "login" ? "Login" : type === "card" ? "Card" : "Secure Note";
 
-      if (itemIndex === -1) {
-        throw new Error("Password item not found");
+      // Get the master key for encryption
+      const masterKey = getMasterPassword();
+      if (!masterKey) {
+        throw new Error("Master key not found");
       }
 
-      // Determine if we need to re-encrypt the password
-      let encryptedPassword = originalPassword;
+      // Encrypt the password before sending to server
+      const encryptedPassword = await encryptPassword(password, masterKey);
 
-      // Only re-encrypt if password changed
-      if (password && password !== originalPassword) {
-        encryptedPassword = await encrypt(password, masterKey);
-      }
-
-      // Update the item
-      const updatedItem: PasswordItem = {
-        ...passwords[itemIndex],
-        type,
+      // Prepare the updated data
+      const passwordData: Partial<Password> = {
         title,
         username,
-        password: encryptedPassword,
         website: type === "login" ? website : "",
-        notes,
+        notes: notes || undefined,
+        category,
         updatedAt: new Date().toISOString(),
       };
 
-      // Update array
-      passwords[itemIndex] = updatedItem;
+      // Send to API
+      const response = await apiClient.put(`/passwords/${id}`, {
+        ...passwordData,
+        encryptedPassword,
+        // Don't send plaintext password to server
+        password: undefined,
+      });
 
-      // Save updated passwords back to localStorage
-      localStorage.setItem("passwords", JSON.stringify(passwords));
+      // Update Redux store with the updated password
+      dispatch(
+        updatePassword({
+          ...response.data,
+          // Keep plaintext password in local state only
+          password,
+        })
+      );
 
       // Redirect to dashboard
       navigate("/dashboard");
     } catch (err) {
-      console.error("Failed to update item:", err);
+      console.error("Failed to update password:", err);
     } finally {
       setLoading(false);
     }
@@ -318,6 +337,7 @@ export default function EditItemPage() {
                   <Label htmlFor="website">Website</Label>
                   <Input
                     id="website"
+                    type="url"
                     value={website}
                     onChange={(e) => setWebsite(e.target.value)}
                     placeholder="https://example.com"
@@ -332,19 +352,75 @@ export default function EditItemPage() {
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                rows={4}
+                placeholder="Add any additional information here..."
+                className="min-h-[120px]"
               />
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Saving Changes..." : "Save Changes"}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading || isLoading}
+            >
+              {loading || isLoading ? "Saving..." : "Save Changes"}
             </Button>
           </CardFooter>
         </form>
       </Card>
 
-      <PasswordGenerator onPasswordGenerated={handleGeneratedPassword} />
+      {/* Password Generator Dialog */}
+      <dialog
+        id="password-generator-dialog"
+        className="rounded-lg shadow-lg p-0"
+      >
+        <div className="p-4 bg-card">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Password Generator</h3>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                const dialog = document.getElementById(
+                  "password-generator-dialog"
+                );
+                if (dialog instanceof HTMLDialogElement) {
+                  dialog.close();
+                }
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span className="sr-only">Close</span>
+            </Button>
+          </div>
+          <PasswordGenerator
+            onPasswordGenerated={handleGeneratedPassword}
+            onClose={() => {
+              const dialog = document.getElementById(
+                "password-generator-dialog"
+              );
+              if (dialog instanceof HTMLDialogElement) {
+                dialog.close();
+              }
+            }}
+          />
+        </div>
+      </dialog>
     </div>
   );
 }

@@ -47,7 +47,7 @@ const authService = {
    */
   async refreshToken(token: string): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post("/auth/refresh-token", { token });
+      const response = await apiClient.post("/auth/refresh", { token });
       return response.data;
     } catch (error) {
       console.error("Token refresh error:", error);

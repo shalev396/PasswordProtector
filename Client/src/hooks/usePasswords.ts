@@ -1,29 +1,28 @@
-import { useCallback } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import {
-  addPassword as addPasswordAction,
-  deletePassword as deletePasswordAction,
-  setPasswords as setPasswordsAction,
-  setLoading as setLoadingAction,
-  setError as setErrorAction,
+  setPasswords,
+  setPasswordsLoading,
+  setPasswordsError,
+  addPasswordToStore,
+  updatePasswordInStore,
+  removePasswordFromStore,
 } from "@/redux/slices/passwordSlice";
+import { useAuth } from "@/hooks/useAuth";
+import passwordService from "@/services/passwordService";
 import { Password } from "@/types";
-import { useAuth } from "./useAuth";
-import apiClient from "@/api/api";
 import { encryptPassword, decryptPassword } from "@/lib/crypto";
 
 /**
- * Custom hook for password management
+ * Custom hook for password management functionality
  */
-export interface PasswordWithEncrypted extends Password {
-  encryptedPassword?: string;
-}
-
 export const usePasswords = () => {
   const dispatch = useDispatch();
-  const { getMasterPassword, user } = useAuth();
+  const { isAuthenticated, user, accessToken, getMasterPassword } = useAuth();
+  const [localError, setLocalError] = useState<string | null>(null);
 
+  // Get passwords state from Redux
   const passwords = useSelector(
     (state: RootState) => state.passwords.passwords
   );
@@ -32,128 +31,236 @@ export const usePasswords = () => {
   );
   const error = useSelector((state: RootState) => state.passwords.error);
 
+  // Set up authentication header when token changes
+  useEffect(() => {
+    if (accessToken) {
+      console.log("Setting authentication header in usePasswords");
+      passwordService.setAuthHeader(accessToken);
+    } else {
+      console.warn("No access token available for passwordService");
+      passwordService.setAuthHeader(null);
+    }
+  }, [accessToken]);
+
+  // Helper function to ensure authentication
+  const ensureAuthenticated = useCallback(() => {
+    if (!isAuthenticated || !accessToken) {
+      const errorMsg = "Authentication required to manage passwords";
+      console.error(errorMsg, { isAuthenticated, hasToken: !!accessToken });
+      throw new Error(errorMsg);
+    }
+
+    // Explicitly set the auth header before each operation
+    if (accessToken) {
+      passwordService.setAuthHeader(accessToken);
+    }
+
+    return true;
+  }, [isAuthenticated, accessToken]);
+
   /**
    * Fetch all passwords for the current user
    */
   const fetchPasswords = useCallback(async () => {
     try {
-      dispatch(setLoadingAction(true));
+      console.log("Fetching passwords...");
+      dispatch(setPasswordsLoading(true));
+      dispatch(setPasswordsError(null));
+      setLocalError(null);
 
-      // Get the master key for decryption
+      // Ensure we're authenticated
+      ensureAuthenticated();
+
+      // Get master password for decryption
       const masterKey = getMasterPassword();
       if (!masterKey) {
-        throw new Error("Master key not found");
+        const errorMsg = "Master password is required to decrypt passwords";
+        console.error(errorMsg);
+        dispatch(setPasswordsError(errorMsg));
+        setLocalError(errorMsg);
+        return [];
       }
 
-      // Fetch the encrypted passwords from server
-      const response = await apiClient.get<PasswordWithEncrypted[]>(
-        "/passwords"
-      );
-      const encryptedPasswords = response.data;
+      console.log("Fetching passwords from API...");
+      const passwordsData = await passwordService.getAllPasswords();
+      console.log(`Fetched ${passwordsData.length} passwords from API`);
 
-      // Decrypt each password
-      const decryptedPasswords = await Promise.all(
-        encryptedPasswords.map(async (encryptedPassword) => {
-          const decrypted: Password = {
-            id: encryptedPassword.id!,
-            title: encryptedPassword.title,
-            username: encryptedPassword.username || "",
-            password: encryptedPassword.encryptedPassword
-              ? await decryptPassword(
-                  encryptedPassword.encryptedPassword,
-                  masterKey
-                )
-              : encryptedPassword.password,
-            website: encryptedPassword.website || "",
-            notes: encryptedPassword.notes,
-            category: encryptedPassword.category || "",
-            createdAt: encryptedPassword.createdAt || new Date().toISOString(),
-            updatedAt: encryptedPassword.updatedAt || new Date().toISOString(),
-            userId: encryptedPassword.userId || user?.id || 0,
-          };
+      // Process passwords (potentially decrypt them)
+      const processedPasswords = passwordsData.map((pwd) => ({ ...pwd }));
 
-          return decrypted;
-        })
-      );
+      console.log("Setting passwords in store");
+      dispatch(setPasswords(processedPasswords));
+      dispatch(setPasswordsLoading(false));
 
-      // Update state with decrypted passwords
-      dispatch(setPasswordsAction(decryptedPasswords));
-      dispatch(setLoadingAction(false));
-      return decryptedPasswords;
-    } catch (err: any) {
-      dispatch(setErrorAction(err.message || "Failed to fetch passwords"));
-      dispatch(setLoadingAction(false));
-      throw err;
+      return processedPasswords;
+    } catch (error: any) {
+      console.error("Error fetching passwords:", error);
+      const errorMessage = error?.message || "Failed to fetch passwords";
+      dispatch(setPasswordsError(errorMessage));
+      dispatch(setPasswordsLoading(false));
+      setLocalError(errorMessage);
+      return [];
     }
-  }, [dispatch, getMasterPassword, user?.id]);
+  }, [dispatch, getMasterPassword, ensureAuthenticated]);
 
   /**
    * Add a new password
    */
   const addPassword = useCallback(
-    async (password: Omit<Password, "id">) => {
+    async (passwordData: PasswordWithEncrypted) => {
       try {
-        dispatch(setLoadingAction(true));
+        console.log("Starting addPassword process...");
+        dispatch(setPasswordsLoading(true));
+        setLocalError(null);
 
-        // Get the master key for encryption
-        const masterKey = getMasterPassword();
-        if (!masterKey) {
-          throw new Error("Master key not found");
+        // Ensure we're authenticated
+        try {
+          ensureAuthenticated();
+          console.log("Authentication confirmed for adding password");
+        } catch (authError: any) {
+          console.error("Authentication error in addPassword:", authError);
+          dispatch(setPasswordsError(authError.message));
+          setLocalError(authError.message);
+          dispatch(setPasswordsLoading(false));
+          throw authError;
         }
 
-        // Encrypt the password before sending to server
-        const encryptedPassword = await encryptPassword(
-          password.password,
-          masterKey
-        );
+        // Get master password for encryption
+        const masterKey = getMasterPassword();
+        if (!masterKey) {
+          const error = new Error(
+            "Master password is required to encrypt passwords"
+          );
+          console.error(error.message);
+          dispatch(setPasswordsError(error.message));
+          setLocalError(error.message);
+          dispatch(setPasswordsLoading(false));
+          throw error;
+        }
 
-        // Send to server
-        const response = await apiClient.post("/passwords", {
-          ...password,
-          encryptedPassword,
-          // Don't send plaintext password to server
-          password: undefined,
+        let encryptedPwd = passwordData.password;
+
+        // Only encrypt if it's a sensitive password and not already encrypted
+        if (passwordData.password && !passwordData.encryptedPassword) {
+          try {
+            console.log("Encrypting password with master key...");
+            encryptedPwd = await encryptPassword(
+              passwordData.password,
+              masterKey
+            );
+            console.log("Password encrypted successfully");
+          } catch (encryptError: any) {
+            console.error("Failed to encrypt password:", encryptError);
+            dispatch(
+              setPasswordsError(`Encryption failed: ${encryptError.message}`)
+            );
+            setLocalError(`Encryption failed: ${encryptError.message}`);
+            dispatch(setPasswordsLoading(false));
+            throw encryptError;
+          }
+        } else if (passwordData.encryptedPassword) {
+          console.log("Using pre-encrypted password");
+          encryptedPwd = passwordData.encryptedPassword;
+        }
+
+        // Prepare the data to send to API
+        const passwordToSave = {
+          ...passwordData,
+          password: encryptedPwd,
+        };
+
+        delete passwordToSave.encryptedPassword; // Remove the extra field
+
+        console.log("Calling API to create password:", {
+          title: passwordToSave.title,
+          category: passwordToSave.category,
+          hasEncryptedPassword: !!encryptedPwd,
         });
 
-        // Add new password to state
-        dispatch(
-          addPasswordAction({
-            ...response.data,
-            // Keep plaintext password in local state only
-            password: password.password,
-          })
-        );
-        dispatch(setLoadingAction(false));
-        return response.data;
-      } catch (err: any) {
-        dispatch(setErrorAction(err.message || "Failed to add password"));
-        dispatch(setLoadingAction(false));
-        throw err;
+        // Make the API call with explicit headers
+        try {
+          const createdPassword = await passwordService.createPassword(
+            passwordToSave
+          );
+          console.log("Password created successfully:", createdPassword.id);
+
+          // Add the password to the store
+          dispatch(addPasswordToStore(createdPassword));
+          dispatch(setPasswordsLoading(false));
+          return createdPassword;
+        } catch (apiError: any) {
+          console.error("API error when creating password:", apiError);
+          const errorMessage =
+            apiError?.response?.data?.message ||
+            apiError?.message ||
+            "Failed to save password";
+
+          console.error("API Error Details:", {
+            status: apiError?.response?.status,
+            statusText: apiError?.response?.statusText,
+            message: errorMessage,
+            hasToken: !!accessToken,
+            isAuthenticated,
+          });
+
+          dispatch(setPasswordsError(errorMessage));
+          setLocalError(errorMessage);
+          dispatch(setPasswordsLoading(false));
+          throw new Error(errorMessage);
+        }
+      } catch (error: any) {
+        console.error("Error in addPassword:", error);
+        const errorMessage = error.message || "An unknown error occurred";
+        dispatch(setPasswordsError(errorMessage));
+        setLocalError(errorMessage);
+        dispatch(setPasswordsLoading(false));
+        throw error;
       }
     },
-    [dispatch, getMasterPassword]
+    [
+      dispatch,
+      getMasterPassword,
+      ensureAuthenticated,
+      accessToken,
+      isAuthenticated,
+    ]
   );
 
   /**
-   * Delete a password
+   * Delete a password by ID
    */
   const deletePassword = useCallback(
-    async (id: number) => {
+    async (passwordId: number) => {
       try {
-        await apiClient.delete(`/passwords/${id}`);
-        dispatch(deletePasswordAction(id));
-      } catch (err: any) {
-        dispatch(setErrorAction(err.message || "Failed to delete password"));
-        throw err;
+        dispatch(setPasswordsLoading(true));
+        setLocalError(null);
+
+        // Ensure we're authenticated
+        ensureAuthenticated();
+
+        console.log(`Deleting password with ID: ${passwordId}`);
+        await passwordService.deletePassword(passwordId);
+
+        // Remove the password from the store
+        dispatch(removePasswordFromStore(passwordId));
+        dispatch(setPasswordsLoading(false));
+        return true;
+      } catch (error: any) {
+        console.error(`Error deleting password ${passwordId}:`, error);
+        const errorMessage = error.message || "Failed to delete password";
+        dispatch(setPasswordsError(errorMessage));
+        setLocalError(errorMessage);
+        dispatch(setPasswordsLoading(false));
+        return false;
       }
     },
-    [dispatch]
+    [dispatch, ensureAuthenticated]
   );
 
   return {
     passwords,
     isLoading,
-    error,
+    error: error || localError,
     fetchPasswords,
     addPassword,
     deletePassword,

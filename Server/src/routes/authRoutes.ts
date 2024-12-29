@@ -4,6 +4,7 @@ import {
   login,
   getProfile,
   refreshToken,
+  logout,
 } from "../controllers/authController";
 import { authenticate } from "../middleware/authMiddleware";
 import { body } from "express-validator";
@@ -46,6 +47,11 @@ router.get(
   "/profile",
   authenticate as express.RequestHandler,
   getProfile as express.RequestHandler
+);
+router.post(
+  "/logout",
+  authenticate as express.RequestHandler,
+  logout as express.RequestHandler
 );
 
 export default router;
