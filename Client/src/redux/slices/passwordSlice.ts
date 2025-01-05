@@ -9,6 +9,7 @@ const initialState: PasswordState = {
   searchTerm: "",
   selectedCategory: "All",
   sortOption: "newest",
+  currentPassword: null,
 };
 
 const passwordSlice = createSlice({
@@ -45,7 +46,7 @@ const passwordSlice = createSlice({
           action.payload.id || "new"
         }, title: ${action.payload.title}`
       );
-      state.passwords.push(action.payload);
+      state.passwords = [...state.passwords, action.payload];
       state.filteredPasswords = filterAndSortPasswords(
         state.passwords,
         state.searchTerm,
@@ -130,6 +131,12 @@ const passwordSlice = createSlice({
       state.selectedCategory = "All";
       state.sortOption = "newest";
     },
+    setCurrentPassword: (state, action: PayloadAction<Password | null>) => {
+      console.log(`Setting current password: ${action.payload?.id || "null"}`);
+      state.currentPassword = action.payload;
+      // Clear any previous errors
+      state.error = null;
+    },
   },
 });
 
@@ -181,6 +188,7 @@ export const {
   setSelectedCategory,
   setSortOption,
   clearPasswords,
+  setCurrentPassword,
 } = passwordSlice.actions;
 
 // For backward compatibility with code that might still use the old names

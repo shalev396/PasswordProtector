@@ -8,12 +8,26 @@ import { store } from "../redux/store";
 import { clearSession } from "../redux/slices/sessionSlice";
 import { clearUser } from "../redux/slices/userSlice";
 import { clearRefreshToken } from "../redux/slices/refreshTokenSlice";
-import authService from "../services/authService";
 import { setRefreshToken } from "../redux/slices/refreshTokenSlice";
 import {
   setAccessToken,
   clearAccessToken,
 } from "../redux/slices/accessTokenSlice";
+
+// Create helper functions for setting expiration timestamps
+const setAccessTokenExpiresAt = (expiresAt: number) => {
+  const accessToken = store.getState().accessToken.token;
+  if (accessToken) {
+    store.dispatch(setAccessToken({ token: accessToken, expiresAt }));
+  }
+};
+
+const setRefreshTokenExpiresAt = (expiresAt: number) => {
+  const refreshToken = store.getState().refreshToken.token;
+  if (refreshToken) {
+    store.dispatch(setRefreshToken({ token: refreshToken, expiresAt }));
+  }
+};
 
 // Extend the InternalAxiosRequestConfig type to include our custom properties
 declare module "axios" {
@@ -175,21 +189,13 @@ apiClient.interceptors.request.use(
 // Response interceptor for token refresh and error handling
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Calculate response time for debugging
-    const config = response.config;
-    const startTime = config.metadata?.startTime;
-    if (startTime) {
-      const endTime = new Date().getTime();
-      const duration = endTime - startTime;
-      console.log(
-        `API Response: ${
-          response.status
-        } in ${duration}ms for ${config.method?.toUpperCase()} ${config.url}`
-      );
-    }
+    // Simple response logging without using metadata
+    const method = response.config?.method?.toUpperCase() || "unknown";
+    const url = response.config?.url || "unknown";
+    console.log(`API Response: ${response.status} for ${method} ${url}`);
 
     // Check if we're dealing with a password-related response
-    const isPasswordResponse = config.url?.includes("/passwords");
+    const isPasswordResponse = response.config?.url?.includes("/passwords");
     if (isPasswordResponse) {
       // For password responses, log some info without sensitive data
       if (Array.isArray(response.data)) {
@@ -200,7 +206,7 @@ apiClient.interceptors.response.use(
         console.log("Password response:", {
           id: response.data.id,
           title: response.data.title,
-          success: true,
+          category: response.data.category || "None",
         });
       }
     }
@@ -240,86 +246,133 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // If error is 401 and we haven't tried to refresh the token yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
+    // Check if we should attempt to refresh token
+    if (
+      error.response?.status === 401 &&
+      error.config &&
+      !error.config._retry && // Add null check
+      error.config.url &&
+      !error.config.url.includes("/auth/refresh") // Add null check
+    ) {
       try {
+        // Prevent infinite loop by checking if this request has already been retried
+        if (
+          error.config &&
+          (error.config._retry ||
+            (error.config.url && error.config.url.includes("/auth/refresh")))
+        ) {
+          console.error(
+            "Request already retried or is a refresh request itself - preventing infinite loop"
+          );
+          logoutUserDueToAuthError(
+            "Authentication failed. Please log in again."
+          );
+          return Promise.reject(error);
+        }
+
+        // Mark this request as retried
+        if (error.config) {
+          error.config._retry = true;
+        }
+
+        // Get current auth state
         const state = store.getState();
         const refreshToken = state.refreshToken?.token;
-        const refreshTokenExpiresAt = state.refreshToken?.expiresAt;
 
-        // Check if refresh token is available and not expired
-        if (
-          !refreshToken ||
-          (refreshTokenExpiresAt && Date.now() > refreshTokenExpiresAt)
-        ) {
-          // No valid refresh token, user needs to login again
-          console.warn(
-            "Authentication failed and no valid refresh token available"
+        // Check if refresh token exists
+        if (!refreshToken) {
+          console.error("No refresh token available");
+          logoutUserDueToAuthError(
+            "Your session has expired. Please log in again."
           );
-          handleLogout();
-          return Promise.reject(
-            new Error("Your session has expired. Please log in again.")
-          );
+          return Promise.reject(error);
         }
 
-        console.log("Attempting to refresh authentication token");
+        try {
+          console.log("Attempting to refresh access token");
+          const response = await apiClient.post("/auth/refresh", {
+            refreshToken: refreshToken,
+          });
 
-        // Attempt to refresh the token
-        const response = await authService.refreshToken(refreshToken);
+          if (response.data) {
+            console.log("Token refresh response received:", {
+              hasAccessToken: !!response.data.accessToken,
+              hasRefreshToken: !!response.data.refreshToken,
+              hasExpiryData: !!response.data.accessTokenExpiresAt,
+            });
+            // Update tokens in Redux store
+            store.dispatch(
+              setAccessToken({
+                token: response.data.accessToken,
+                expiresAt: response.data.accessTokenExpiresAt || null,
+              })
+            );
 
-        if (!response || !response.accessToken) {
-          console.error("Token refresh failed: Invalid response");
-          handleLogout();
-          return Promise.reject(
-            new Error("Authentication failed. Please log in again.")
+            if (response.data.accessTokenExpiresAt) {
+              setAccessTokenExpiresAt(response.data.accessTokenExpiresAt);
+            }
+
+            if (response.data.refreshToken) {
+              store.dispatch(
+                setRefreshToken({
+                  token: response.data.refreshToken,
+                  expiresAt: response.data.refreshTokenExpiresAt || null,
+                })
+              );
+
+              if (response.data.refreshTokenExpiresAt) {
+                setRefreshTokenExpiresAt(response.data.refreshTokenExpiresAt);
+              }
+            }
+
+            // Apply the new token to the Authorization header
+            apiClient.defaults.headers.common[
+              "Authorization"
+            ] = `Bearer ${response.data.accessToken}`;
+
+            // Apply the new token to original request and retry
+            if (error.config && error.config.headers) {
+              error.config.headers[
+                "Authorization"
+              ] = `Bearer ${response.data.accessToken}`;
+              console.log("Token refreshed successfully, retrying request");
+
+              // Return a new instance of the original request with the new token
+              return error.config
+                ? apiClient(error.config)
+                : Promise.reject(error);
+            } else {
+              console.error("Cannot retry request - config or headers missing");
+              return Promise.reject(error);
+            }
+          } else {
+            console.error("Failed to refresh token - no data returned");
+            logoutUserDueToAuthError(
+              "Authentication failed. Please log in again."
+            );
+            return Promise.reject(error);
+          }
+        } catch (refreshError) {
+          console.error("Error refreshing token:", refreshError);
+          logoutUserDueToAuthError(
+            "Authentication error. Please log in again."
           );
+          return Promise.reject(error);
         }
-
-        console.log("Token refresh successful");
-
-        // Update tokens in Redux store
-        if (response.refreshToken) {
-          store.dispatch(
-            setRefreshToken({
-              token: response.refreshToken,
-              expiresAt: response.refreshTokenExpiresAt || null,
-            })
-          );
-        }
-
-        if (response.accessToken) {
-          store.dispatch(
-            setAccessToken({
-              token: response.accessToken,
-              expiresAt: response.accessTokenExpiresAt || Date.now() + 3600000, // Default 1 hour if not provided
-            })
-          );
-        }
-
-        // Update the Authorization header with new token
-        originalRequest.headers = originalRequest.headers || {};
-        originalRequest.headers.Authorization = `Bearer ${response.accessToken}`;
-
-        // Retry the original request with new token
-        return apiClient(originalRequest);
       } catch (refreshError) {
-        // Token refresh failed, logout user
-        console.error("Token refresh failed:", refreshError);
-        handleLogout();
-        return Promise.reject(
-          new Error("Authentication failed. Please log in again.")
-        );
+        console.error("Error refreshing token:", refreshError);
+        logoutUserDueToAuthError("Authentication error. Please log in again.");
+        return Promise.reject(error);
       }
     }
 
     // Special handling for password-related errors
     if (error.config?.url?.includes("/passwords")) {
+      const errorData = error.response?.data as any;
       console.error("Password API error:", {
         method: error.config?.method,
         status: error.response?.status,
-        message: error.response?.data?.message || error.message,
+        message: errorData?.message || error.message,
         hasAuth: !!error.config?.headers?.Authorization,
       });
     }
@@ -370,7 +423,82 @@ const handleLogout = () => {
   store.dispatch(clearAccessToken());
 };
 
+// Function to handle logout with error message
+const logoutUserDueToAuthError = (errorMessage: string) => {
+  console.error(`Auth Error: ${errorMessage}`);
+  // Display error message to user if toast notification system exists
+  if (typeof window !== "undefined" && window.alert) {
+    // This is a fallback - ideally you'd use a toast notification system
+    window.alert(errorMessage);
+  }
+  handleLogout();
+};
+
 // Export connectivity checker for use in other components
 export const checkConnection = checkServerConnectivity;
 
 export default apiClient;
+
+/**
+ * Refresh access token
+ */
+const refreshAccessToken = async () => {
+  try {
+    // Get the refresh token from the store
+    const { token: refreshToken } = store.getState().refreshToken || {};
+
+    if (!refreshToken) {
+      console.error("No refresh token available");
+      store.dispatch(clearSession());
+      return null;
+    }
+
+    console.log("Attempting to refresh access token manually");
+
+    // Fixed URL and parameter name - server expects "refreshToken" not "token"
+    console.log(
+      `Sending refresh token request (length: ${refreshToken.length})`
+    );
+    const response = await axios.post(`${API_URL}/auth/refresh`, {
+      refreshToken: refreshToken,
+    });
+
+    console.log("Refresh token response:", {
+      success: !!response.data,
+      hasAccessToken: !!response.data.accessToken,
+      hasRefreshToken: !!response.data.refreshToken,
+    });
+
+    if (response.data) {
+      console.log("Access token refreshed successfully");
+      store.dispatch(setAccessToken(response.data.accessToken));
+      return response.data.accessToken;
+    } else {
+      console.error(
+        "Refresh response did not contain access token",
+        response.data
+      );
+      store.dispatch(clearSession());
+      return null;
+    }
+  } catch (error: any) {
+    console.error("Failed to refresh access token:", error);
+
+    // Log detailed error information for debugging
+    if (error.response) {
+      console.error("Refresh token error details:", {
+        status: error.response.status,
+        message: error.response.data?.message || "Unknown error",
+        url: error.config?.url,
+      });
+    } else if (error.request) {
+      console.error("No response received for refresh token request", {
+        url: error.config?.url || "/auth/refresh",
+      });
+    }
+
+    // Clear session on refresh failure
+    store.dispatch(clearSession());
+    return null;
+  }
+};

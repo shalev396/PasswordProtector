@@ -10,8 +10,20 @@ const passwordService = {
    */
   setAuthHeader(token: string | null): void {
     if (token) {
+      console.log(
+        `Setting authorization header with token length: ${token.length}`
+      );
       apiClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      // Double-check that the header was set correctly
+      const currentHeader = apiClient.defaults.headers.common["Authorization"];
+      if (currentHeader) {
+        console.log("Authorization header successfully set");
+      } else {
+        console.error("Failed to set Authorization header");
+      }
     } else {
+      console.warn("Removing Authorization header - no token provided");
       delete apiClient.defaults.headers.common["Authorization"];
     }
   },
@@ -47,7 +59,31 @@ const passwordService = {
    */
   async createPassword(password: Omit<Password, "id">): Promise<Password> {
     try {
+      // Verify auth header is set
+      const hasAuthHeader = apiClient.defaults.headers.common["Authorization"];
+      if (!hasAuthHeader) {
+        console.error("Authorization header missing in createPassword call");
+        console.log("Trying to get token from the store as a fallback");
+
+        // Try to get token from Redux store as fallback
+        const store = (await import("../redux/store")).store;
+        const accessToken = store.getState().accessToken?.token;
+
+        if (accessToken) {
+          console.log("Token found in store, setting authorization header");
+          this.setAuthHeader(accessToken);
+        } else {
+          throw new Error("Authentication required");
+        }
+      }
+
+      console.log("Sending create password request to API");
       const response = await apiClient.post("/passwords", password);
+      console.log(
+        `Password created successfully with ID: ${
+          response.data?.id || "unknown"
+        }`
+      );
       return response.data;
     } catch (error) {
       console.error("Error creating password:", error);

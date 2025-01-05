@@ -32,7 +32,8 @@ import { Password } from "@/types";
 
 export default function AddItemPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, user, accessToken, isTokenValid } = useAuth();
+  const { isAuthenticated, user, accessToken, isTokenValid, ensureAuthHeader } =
+    useAuth();
   const {
     addPassword,
     isLoading: passwordsLoading,
@@ -155,6 +156,12 @@ export default function AddItemPage() {
         setLoading(false);
         navigate("/login");
         return;
+      }
+
+      // Explicitly ensure auth header is set
+      if (ensureAuthHeader) {
+        console.log("Explicitly ensuring auth header is set before submission");
+        ensureAuthHeader();
       }
 
       // Validate token if we have the function
@@ -411,7 +418,9 @@ export default function AddItemPage() {
                   {passwordFieldError && (
                     <p className="text-sm text-red-500">{passwordFieldError}</p>
                   )}
-                  <PasswordGenerator onGenerate={handleGeneratedPassword} />
+                  <PasswordGenerator
+                    onPasswordGenerated={handleGeneratedPassword}
+                  />
                 </div>
 
                 <div className="space-y-2">

@@ -50,7 +50,7 @@ export default function DashboardPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const navigate = useNavigate();
-  const { passwords, deletePassword } = usePasswords();
+  const { passwords = [], deletePassword } = usePasswords();
   const { logout } = useAuth();
 
   // Toggle password visibility

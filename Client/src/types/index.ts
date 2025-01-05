@@ -69,6 +69,7 @@ export interface PasswordState {
   searchTerm: string;
   selectedCategory: string;
   sortOption: "newest" | "oldest" | "alphabetical";
+  currentPassword: Password | null;
 }
 
 export interface ApiError {

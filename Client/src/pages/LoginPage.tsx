@@ -18,13 +18,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const {
-    login,
-    isAuthenticated,
-    isLoading,
-    error: authError,
-    isTokenValid,
-  } = useAuth();
+  const { login, isAuthenticated, error: authError, isTokenValid } = useAuth();
 
   // If already authenticated and has valid token, redirect to dashboard
   useEffect(() => {

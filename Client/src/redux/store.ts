@@ -14,13 +14,19 @@ import refreshTokenReducer from "./slices/refreshTokenSlice";
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["user", "session", "accessToken", "refreshToken"], // Only these will be persisted
+  whitelist: ["user", "session", "accessToken", "refreshToken"], // Exclude passwords from persistence to avoid mutations
   // Add migration for version changes if needed
   version: 1,
+  transforms: [
+    {
+      in: (state: any) => validatePersistedState(state),
+      out: (state: any) => state,
+    },
+  ],
 };
 
 // Create a function to validate persisted state before hydration
-const validatePersistedState = (state: any) => {
+const validatePersistedState = (state: Record<string, any>) => {
   // Validate access token expiration
   if (
     state?.accessToken?.expiresAt &&
@@ -42,6 +48,13 @@ const validatePersistedState = (state: any) => {
     state.session = { ...state.session, isAuthenticated: false };
   }
 
+  // Don't try to persist passwords in validatePersistedState to avoid mutations
+  // This will be handled by the passwordReducer's initial state
+  if (state.passwords) {
+    console.log("Removing passwords from persisted state to avoid mutations");
+    delete state.passwords;
+  }
+
   return state;
 };
 
@@ -55,16 +68,7 @@ const rootReducer = combineReducers({
 });
 
 // Create persisted reducer with transform
-const persistedReducer = persistReducer(
-  {
-    ...persistConfig,
-    // Use stateReconciler to validate state before hydration
-    stateReconciler: (inboundState, originalState) => {
-      return validatePersistedState(inboundState);
-    },
-  },
-  rootReducer
-);
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 // Create the store with the persisted reducer
 export const store = configureStore({

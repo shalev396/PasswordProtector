@@ -48,17 +48,20 @@ export const useAuth = () => {
   // Clear authentication state and redirect to login
   const logout = useCallback(() => {
     try {
+      console.log("Logging out user...");
       authService.logout();
     } catch (err) {
       console.error("Logout API error:", err);
     } finally {
       // Clear Redux state regardless of API success
+      console.log("Clearing authentication state from Redux");
       dispatch(clearSession());
       dispatch(clearUser());
       dispatch(clearRefreshToken());
       dispatch(clearAccessToken());
 
       // Clear auth header
+      console.log("Removing Authorization header");
       authService.setAuthHeader(null);
 
       // Redirect to login page
@@ -68,15 +71,51 @@ export const useAuth = () => {
 
   // Check if token has expired
   const isTokenExpired = useCallback(() => {
-    if (!accessTokenExpiresAt) return true;
+    if (!accessTokenExpiresAt) {
+      console.warn("No token expiration timestamp available");
+      return true;
+    }
+
     // Add a 10-second buffer to account for timing differences
-    return Date.now() > accessTokenExpiresAt - 10000;
+    const isExpired = Date.now() > accessTokenExpiresAt - 10000;
+
+    if (isExpired) {
+      console.warn(
+        `Token expired at ${new Date(
+          accessTokenExpiresAt
+        ).toISOString()}, current time is ${new Date().toISOString()}`
+      );
+    }
+
+    return isExpired;
   }, [accessTokenExpiresAt]);
 
   // Check token validity - both presence and expiration
   const isTokenValid = useCallback(() => {
-    return !!accessToken && !isTokenExpired();
+    const valid = !!accessToken && !isTokenExpired();
+    console.log("Token validity check:", {
+      hasToken: !!accessToken,
+      tokenLength: accessToken?.length || 0,
+      isExpired: isTokenExpired(),
+      isValid: valid,
+    });
+    return valid;
   }, [accessToken, isTokenExpired]);
+
+  // Force set the auth header with the current token
+  const ensureAuthHeader = useCallback(() => {
+    console.log("Ensuring auth header is set...");
+    if (accessToken) {
+      console.log(
+        `Setting auth header with token of length: ${accessToken.length}`
+      );
+      authService.setAuthHeader(accessToken);
+      return true;
+    } else {
+      console.warn("Cannot set auth header - no token available");
+      return false;
+    }
+  }, [accessToken]);
 
   // Login with email and password
   const login = useCallback(
@@ -254,11 +293,28 @@ export const useAuth = () => {
   useEffect(() => {
     // If not loading and has token but token is expired
     if (!isLoading && accessToken && isTokenExpired()) {
-      console.warn("Access token has expired, logging out");
+      console.warn("Access token has expired, logging out", {
+        expiresAt: accessTokenExpiresAt
+          ? new Date(accessTokenExpiresAt).toISOString()
+          : "unknown",
+        currentTime: new Date().toISOString(),
+        accessTokenLength: accessToken.length,
+      });
       // Token is expired but still in Redux - force logout to prevent redirect loops
       logout();
+    } else if (accessToken && !isTokenExpired()) {
+      // Valid token, ensure header is set
+      console.log("Valid token detected, ensuring auth header is set");
+      ensureAuthHeader();
     }
-  }, [isLoading, accessToken, isTokenExpired, logout]);
+  }, [
+    isLoading,
+    accessToken,
+    isTokenExpired,
+    logout,
+    accessTokenExpiresAt,
+    ensureAuthHeader,
+  ]);
 
   return {
     // State
@@ -274,9 +330,10 @@ export const useAuth = () => {
     register,
     logout,
     getProfile,
-    refreshToken: refreshTokenManually,
+    refreshTokenManually,
     getMasterPassword,
     isTokenValid,
+    ensureAuthHeader,
   };
 };
 

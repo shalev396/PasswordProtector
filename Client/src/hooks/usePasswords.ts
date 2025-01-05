@@ -1,35 +1,43 @@
-import { useCallback, useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
 import {
-  setPasswords,
   setPasswordsLoading,
   setPasswordsError,
+  setPasswords,
   addPasswordToStore,
-  updatePasswordInStore,
   removePasswordFromStore,
 } from "@/redux/slices/passwordSlice";
-import { useAuth } from "@/hooks/useAuth";
 import passwordService from "@/services/passwordService";
+import { useAuth } from "@/hooks/useAuth";
+import { RootState } from "@/types/redux";
 import { Password } from "@/types";
-import { encryptPassword, decryptPassword } from "@/lib/crypto";
+import { encryptPassword } from "@/lib/crypto";
+import { store } from "@/redux/store";
+
+// Define the interface for password with optional encrypted version
+interface PasswordWithEncrypted extends Omit<Password, "id"> {
+  id?: number;
+  encryptedPassword?: string;
+}
 
 /**
  * Custom hook for password management functionality
  */
 export const usePasswords = () => {
   const dispatch = useDispatch();
-  const { isAuthenticated, user, accessToken, getMasterPassword } = useAuth();
+  const { isAuthenticated, accessToken, getMasterPassword } = useAuth();
   const [localError, setLocalError] = useState<string | null>(null);
 
   // Get passwords state from Redux
   const passwords = useSelector(
-    (state: RootState) => state.passwords.passwords
+    (state: RootState) => state.passwords?.passwords ?? []
   );
   const isLoading = useSelector(
-    (state: RootState) => state.passwords.isLoading
+    (state: RootState) => state.passwords?.isLoading ?? false
   );
-  const error = useSelector((state: RootState) => state.passwords.error);
+  const error = useSelector(
+    (state: RootState) => state.passwords?.error ?? null
+  );
 
   // Set up authentication header when token changes
   useEffect(() => {
@@ -42,21 +50,26 @@ export const usePasswords = () => {
     }
   }, [accessToken]);
 
-  // Helper function to ensure authentication
-  const ensureAuthenticated = useCallback(() => {
-    if (!isAuthenticated || !accessToken) {
-      const errorMsg = "Authentication required to manage passwords";
-      console.error(errorMsg, { isAuthenticated, hasToken: !!accessToken });
-      throw new Error(errorMsg);
+  // Ensure authentication before making API calls
+  const ensureAuthenticated = () => {
+    // Get token both from current hook state and from Redux store directly
+    // in case there's a synchronization issue
+    const reduxAccessToken = store.getState().accessToken?.token;
+    const currentAccessToken = accessToken;
+
+    // Use whichever token is available
+    const token = currentAccessToken || reduxAccessToken;
+
+    if (!token) {
+      console.error("No access token available for API request");
+      throw new Error("Authentication required");
     }
 
-    // Explicitly set the auth header before each operation
-    if (accessToken) {
-      passwordService.setAuthHeader(accessToken);
-    }
-
-    return true;
-  }, [isAuthenticated, accessToken]);
+    // Explicitly set the auth header for this request
+    console.log(`Setting auth header with token length: ${token.length}`);
+    passwordService.setAuthHeader(token);
+    return token;
+  };
 
   /**
    * Fetch all passwords for the current user
@@ -106,125 +119,121 @@ export const usePasswords = () => {
   /**
    * Add a new password
    */
-  const addPassword = useCallback(
-    async (passwordData: PasswordWithEncrypted) => {
-      try {
-        console.log("Starting addPassword process...");
-        dispatch(setPasswordsLoading(true));
-        setLocalError(null);
+  const addPassword = async (
+    passwordData: PasswordWithEncrypted
+  ): Promise<Password> => {
+    try {
+      console.log("Starting addPassword process...");
 
-        // Ensure we're authenticated
-        try {
-          ensureAuthenticated();
-          console.log("Authentication confirmed for adding password");
-        } catch (authError: any) {
-          console.error("Authentication error in addPassword:", authError);
-          dispatch(setPasswordsError(authError.message));
-          setLocalError(authError.message);
-          dispatch(setPasswordsLoading(false));
-          throw authError;
-        }
+      dispatch(setPasswordsLoading(true));
 
-        // Get master password for encryption
-        const masterKey = getMasterPassword();
-        if (!masterKey) {
-          const error = new Error(
-            "Master password is required to encrypt passwords"
-          );
-          console.error(error.message);
-          dispatch(setPasswordsError(error.message));
-          setLocalError(error.message);
-          dispatch(setPasswordsLoading(false));
-          throw error;
-        }
+      // Check authentication
+      const token = ensureAuthenticated();
+      console.log("Authentication confirmed for adding password", {
+        hasToken: !!token,
+        tokenLength: token ? token.length : 0,
+        isAuthenticated: store.getState().session?.isAuthenticated,
+      });
 
-        let encryptedPwd = passwordData.password;
-
-        // Only encrypt if it's a sensitive password and not already encrypted
-        if (passwordData.password && !passwordData.encryptedPassword) {
-          try {
-            console.log("Encrypting password with master key...");
-            encryptedPwd = await encryptPassword(
-              passwordData.password,
-              masterKey
-            );
-            console.log("Password encrypted successfully");
-          } catch (encryptError: any) {
-            console.error("Failed to encrypt password:", encryptError);
-            dispatch(
-              setPasswordsError(`Encryption failed: ${encryptError.message}`)
-            );
-            setLocalError(`Encryption failed: ${encryptError.message}`);
-            dispatch(setPasswordsLoading(false));
-            throw encryptError;
-          }
-        } else if (passwordData.encryptedPassword) {
-          console.log("Using pre-encrypted password");
-          encryptedPwd = passwordData.encryptedPassword;
-        }
-
-        // Prepare the data to send to API
-        const passwordToSave = {
-          ...passwordData,
-          password: encryptedPwd,
-        };
-
-        delete passwordToSave.encryptedPassword; // Remove the extra field
-
-        console.log("Calling API to create password:", {
-          title: passwordToSave.title,
-          category: passwordToSave.category,
-          hasEncryptedPassword: !!encryptedPwd,
-        });
-
-        // Make the API call with explicit headers
-        try {
-          const createdPassword = await passwordService.createPassword(
-            passwordToSave
-          );
-          console.log("Password created successfully:", createdPassword.id);
-
-          // Add the password to the store
-          dispatch(addPasswordToStore(createdPassword));
-          dispatch(setPasswordsLoading(false));
-          return createdPassword;
-        } catch (apiError: any) {
-          console.error("API error when creating password:", apiError);
-          const errorMessage =
-            apiError?.response?.data?.message ||
-            apiError?.message ||
-            "Failed to save password";
-
-          console.error("API Error Details:", {
-            status: apiError?.response?.status,
-            statusText: apiError?.response?.statusText,
-            message: errorMessage,
-            hasToken: !!accessToken,
-            isAuthenticated,
-          });
-
-          dispatch(setPasswordsError(errorMessage));
-          setLocalError(errorMessage);
-          dispatch(setPasswordsLoading(false));
-          throw new Error(errorMessage);
-        }
-      } catch (error: any) {
-        console.error("Error in addPassword:", error);
-        const errorMessage = error.message || "An unknown error occurred";
-        dispatch(setPasswordsError(errorMessage));
-        setLocalError(errorMessage);
-        dispatch(setPasswordsLoading(false));
-        throw error;
+      // Get master key for encryption
+      const masterKey = getMasterPassword();
+      if (!masterKey) {
+        console.error("Master key not available");
+        throw new Error("Master key required for password encryption");
       }
-    },
-    [
-      dispatch,
-      getMasterPassword,
-      ensureAuthenticated,
-      accessToken,
-      isAuthenticated,
-    ]
-  );
+
+      // Encrypt password if provided
+      let encryptedPassword: string | undefined;
+      if (passwordData.password) {
+        console.log("Encrypting password with master key...");
+        try {
+          encryptedPassword = await encryptPassword(
+            passwordData.password,
+            masterKey
+          );
+          console.log("Password encrypted successfully", {
+            encryptedLength: encryptedPassword?.length,
+            originalLength: passwordData.password.length,
+          });
+        } catch (encryptError) {
+          console.error("Failed to encrypt password:", encryptError);
+          throw new Error("Password encryption failed");
+        }
+      }
+
+      // Prepare data for API
+      const dataToSend: Partial<Password> = {
+        ...passwordData,
+        // Use encrypted password if available
+        password: encryptedPassword || passwordData.encryptedPassword,
+      };
+
+      // Remove the plain text password and the encryptedPassword field
+      delete (dataToSend as any).encryptedPassword;
+
+      console.log("Calling API to create password:", {
+        title: dataToSend.title,
+        category: dataToSend.category,
+        hasEncryptedPassword: !!dataToSend.password,
+        passwordLength: dataToSend.password?.length || 0,
+        endpoint: "/passwords",
+        header: `Bearer ${token?.substring(0, 5)}...`,
+      });
+
+      // Make API call with explicit authentication
+      passwordService.setAuthHeader(token);
+
+      // Detailed API call with logging
+      console.log(`Making API request to create password: ${dataToSend.title}`);
+      const response = await passwordService.createPassword(dataToSend);
+      console.log("API response received:", {
+        success: !!response,
+        status: "Success",
+        data: {
+          id: response?.id,
+          title: response?.title,
+          category: response?.category,
+        },
+      });
+
+      // Add the new password to state
+      dispatch(addPasswordToStore(response));
+      console.log("Password added to Redux store successfully");
+
+      return response;
+    } catch (error: any) {
+      console.error("API error when creating password:", error);
+
+      // Detailed error logging for debugging
+      if (error.response) {
+        console.log("API Error Details:", {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          message: error.response.data?.message || error.message,
+          hasToken: !!store.getState().accessToken?.token,
+          isAuthenticated: store.getState().session?.isAuthenticated,
+          endpoint: "/passwords",
+          method: "POST",
+        });
+      } else {
+        // Network error or other non-response error
+        console.error("Network or connection error:", {
+          message: error.message,
+          code: error.code,
+          name: error.name,
+          isAxiosError: error.isAxiosError,
+        });
+      }
+
+      // Set specific Redux error
+      dispatch(
+        setPasswordsError(error.response?.data?.message || error.message)
+      );
+      throw new Error(error.response?.data?.message || error.message);
+    } finally {
+      dispatch(setPasswordsLoading(false));
+    }
+  };
 
   /**
    * Delete a password by ID
