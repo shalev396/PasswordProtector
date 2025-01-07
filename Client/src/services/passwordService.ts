@@ -57,7 +57,7 @@ const passwordService = {
   /**
    * Create a new password
    */
-  async createPassword(password: Omit<Password, "id">): Promise<Password> {
+  async createPassword(password: Partial<Password>): Promise<Password> {
     try {
       // Verify auth header is set
       const hasAuthHeader = apiClient.defaults.headers.common["Authorization"];

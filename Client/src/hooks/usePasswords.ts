@@ -25,7 +25,7 @@ interface PasswordWithEncrypted extends Omit<Password, "id"> {
  */
 export const usePasswords = () => {
   const dispatch = useDispatch();
-  const { isAuthenticated, accessToken, getMasterPassword } = useAuth();
+  const { accessToken, getMasterPassword } = useAuth();
   const [localError, setLocalError] = useState<string | null>(null);
 
   // Get passwords state from Redux

@@ -442,7 +442,7 @@ export default apiClient;
 /**
  * Refresh access token
  */
-const refreshAccessToken = async () => {
+export const refreshAccessToken = async () => {
   try {
     // Get the refresh token from the store
     const { token: refreshToken } = store.getState().refreshToken || {};
