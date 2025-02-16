@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Menu,
@@ -50,7 +50,7 @@ export default function DashboardPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const navigate = useNavigate();
-  const { passwords = [], deletePassword } = usePasswords();
+  const { passwords = [], deletePassword, fetchPasswords } = usePasswords();
   const { logout } = useAuth();
 
   // Toggle password visibility
@@ -152,6 +152,11 @@ export default function DashboardPage() {
     });
     return Array.from(uniqueCategories);
   }, [passwords]);
+
+  useEffect(() => {
+    // Fetch passwords when the dashboard loads
+    fetchPasswords();
+  }, []);
 
   return (
     <div className="h-screen flex flex-col">
