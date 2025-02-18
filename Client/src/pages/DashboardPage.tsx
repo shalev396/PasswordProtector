@@ -13,6 +13,7 @@ import {
   Edit2,
   SortAsc,
   SortDesc,
+  Unlock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +37,7 @@ import { toast } from "sonner";
 import { usePasswords } from "@/hooks/usePasswords";
 import { useAuth } from "@/hooks/useAuth";
 import { Password } from "@/types";
+import { decryptPassword } from "@/lib/crypto";
 
 export default function DashboardPage() {
   const [showSidebar, setShowSidebar] = useState(false);
@@ -48,10 +50,13 @@ export default function DashboardPage() {
     "recent"
   );
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [decryptedPasswords, setDecryptedPasswords] = useState<{
+    [key: number]: string;
+  }>({});
 
   const navigate = useNavigate();
   const { passwords = [], deletePassword, fetchPasswords } = usePasswords();
-  const { logout } = useAuth();
+  const { logout, getMasterPassword } = useAuth();
 
   // Toggle password visibility
   const togglePasswordVisibility = (id: number | undefined) => {
@@ -73,6 +78,27 @@ export default function DashboardPage() {
     navigator.clipboard.writeText(text).then(() => {
       toast.success("Copied to clipboard!");
     });
+  };
+
+  // Handle decrypt password
+  const handleDecrypt = async (id: number | undefined) => {
+    if (id === undefined) return;
+
+    try {
+      const masterPassword = getMasterPassword();
+      if (!masterPassword) {
+        toast.error("Master password not available");
+        return;
+      }
+
+      const passwordData = passwords.find((p) => p.id === id)?.password || "";
+      const decrypted = await decryptPassword(passwordData, masterPassword);
+      setDecryptedPasswords((prev) => ({ ...prev, [id]: decrypted }));
+      toast.success("Password decrypted!");
+    } catch (error) {
+      console.error("Decryption error:", error);
+      toast.error("Failed to decrypt password");
+    }
   };
 
   // Handle delete password
@@ -338,7 +364,9 @@ export default function DashboardPage() {
                               ? "text"
                               : "password"
                           }
-                          value={password.password}
+                          value={
+                            decryptedPasswords[password.id] || password.password
+                          }
                           className="pr-10"
                           onClick={(e) => e.stopPropagation()}
                         />
@@ -365,10 +393,23 @@ export default function DashboardPage() {
                           size="icon"
                           onClick={(e) => {
                             e.stopPropagation();
-                            copyToClipboard(password.password);
+                            copyToClipboard(
+                              decryptedPasswords[password.id] ||
+                                password.password
+                            );
                           }}
                         >
                           <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDecrypt(password.id);
+                          }}
+                        >
+                          <Unlock className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="outline"
