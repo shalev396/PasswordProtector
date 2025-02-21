@@ -51,7 +51,6 @@ const validatePersistedState = (state: Record<string, any>) => {
   // Don't try to persist passwords in validatePersistedState to avoid mutations
   // This will be handled by the passwordReducer's initial state
   if (state.passwords) {
-    console.log("Removing passwords from persisted state to avoid mutations");
     delete state.passwords;
   }
 

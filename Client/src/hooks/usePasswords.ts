@@ -42,7 +42,6 @@ export const usePasswords = () => {
   // Set up authentication header when token changes
   useEffect(() => {
     if (accessToken) {
-      console.log("Setting authentication header in usePasswords");
       passwordService.setAuthHeader(accessToken);
     } else {
       console.warn("No access token available for passwordService");
@@ -66,7 +65,7 @@ export const usePasswords = () => {
     }
 
     // Explicitly set the auth header for this request
-    console.log(`Setting auth header with token length: ${token.length}`);
+
     passwordService.setAuthHeader(token);
     return token;
   };
@@ -76,7 +75,6 @@ export const usePasswords = () => {
    */
   const fetchPasswords = useCallback(async () => {
     try {
-      console.log("Fetching passwords...");
       dispatch(setPasswordsLoading(true));
       dispatch(setPasswordsError(null));
       setLocalError(null);
@@ -94,14 +92,11 @@ export const usePasswords = () => {
         return [];
       }
 
-      console.log("Fetching passwords from API...");
       const passwordsData = await passwordService.getAllPasswords();
-      console.log(`Fetched ${passwordsData.length} passwords from API`);
 
       // Process passwords (potentially decrypt them)
       const processedPasswords = passwordsData.map((pwd) => ({ ...pwd }));
 
-      console.log("Setting passwords in store");
       dispatch(setPasswords(processedPasswords));
       dispatch(setPasswordsLoading(false));
 
@@ -123,17 +118,10 @@ export const usePasswords = () => {
     passwordData: PasswordWithEncrypted
   ): Promise<Password> => {
     try {
-      console.log("Starting addPassword process...");
-
       dispatch(setPasswordsLoading(true));
 
       // Check authentication
       const token = ensureAuthenticated();
-      console.log("Authentication confirmed for adding password", {
-        hasToken: !!token,
-        tokenLength: token ? token.length : 0,
-        isAuthenticated: store.getState().session?.isAuthenticated,
-      });
 
       // Get master key for encryption
       const masterKey = getMasterPassword();
@@ -145,16 +133,11 @@ export const usePasswords = () => {
       // Encrypt password if provided
       let encryptedPassword: string | undefined;
       if (passwordData.password) {
-        console.log("Encrypting password with master key...");
         try {
           encryptedPassword = await encryptPassword(
             passwordData.password,
             masterKey
           );
-          console.log("Password encrypted successfully", {
-            encryptedLength: encryptedPassword?.length,
-            originalLength: passwordData.password.length,
-          });
         } catch (encryptError) {
           console.error("Failed to encrypt password:", encryptError);
           throw new Error("Password encryption failed");
@@ -171,34 +154,15 @@ export const usePasswords = () => {
       // Remove the plain text password and the encryptedPassword field
       delete (dataToSend as any).encryptedPassword;
 
-      console.log("Calling API to create password:", {
-        title: dataToSend.title,
-        category: dataToSend.category,
-        hasEncryptedPassword: !!dataToSend.password,
-        passwordLength: dataToSend.password?.length || 0,
-        endpoint: "/passwords",
-        header: `Bearer ${token?.substring(0, 5)}...`,
-      });
-
       // Make API call with explicit authentication
       passwordService.setAuthHeader(token);
 
       // Detailed API call with logging
-      console.log(`Making API request to create password: ${dataToSend.title}`);
+
       const response = await passwordService.createPassword(dataToSend);
-      console.log("API response received:", {
-        success: !!response,
-        status: "Success",
-        data: {
-          id: response?.id,
-          title: response?.title,
-          category: response?.category,
-        },
-      });
 
       // Add the new password to state
       dispatch(addPasswordToStore(response));
-      console.log("Password added to Redux store successfully");
 
       return response;
     } catch (error: any) {
@@ -206,15 +170,6 @@ export const usePasswords = () => {
 
       // Detailed error logging for debugging
       if (error.response) {
-        console.log("API Error Details:", {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          message: error.response.data?.message || error.message,
-          hasToken: !!store.getState().accessToken?.token,
-          isAuthenticated: store.getState().session?.isAuthenticated,
-          endpoint: "/passwords",
-          method: "POST",
-        });
       } else {
         // Network error or other non-response error
         console.error("Network or connection error:", {
@@ -247,7 +202,6 @@ export const usePasswords = () => {
         // Ensure we're authenticated
         ensureAuthenticated();
 
-        console.log(`Deleting password with ID: ${passwordId}`);
         await passwordService.deletePassword(passwordId);
 
         // Remove the password from the store

@@ -48,20 +48,19 @@ export const useAuth = () => {
   // Clear authentication state and redirect to login
   const logout = useCallback(() => {
     try {
-      console.log("Logging out user...");
       authService.logout();
     } catch (err) {
       console.error("Logout API error:", err);
     } finally {
       // Clear Redux state regardless of API success
-      console.log("Clearing authentication state from Redux");
+
       dispatch(clearSession());
       dispatch(clearUser());
       dispatch(clearRefreshToken());
       dispatch(clearAccessToken());
 
       // Clear auth header
-      console.log("Removing Authorization header");
+
       authService.setAuthHeader(null);
 
       // Redirect to login page
@@ -93,22 +92,13 @@ export const useAuth = () => {
   // Check token validity - both presence and expiration
   const isTokenValid = useCallback(() => {
     const valid = !!accessToken && !isTokenExpired();
-    console.log("Token validity check:", {
-      hasToken: !!accessToken,
-      tokenLength: accessToken?.length || 0,
-      isExpired: isTokenExpired(),
-      isValid: valid,
-    });
+
     return valid;
   }, [accessToken, isTokenExpired]);
 
   // Force set the auth header with the current token
   const ensureAuthHeader = useCallback(() => {
-    console.log("Ensuring auth header is set...");
     if (accessToken) {
-      console.log(
-        `Setting auth header with token of length: ${accessToken.length}`
-      );
       authService.setAuthHeader(accessToken);
       return true;
     } else {
@@ -304,7 +294,7 @@ export const useAuth = () => {
       logout();
     } else if (accessToken && !isTokenExpired()) {
       // Valid token, ensure header is set
-      console.log("Valid token detected, ensuring auth header is set");
+
       ensureAuthHeader();
     }
   }, [

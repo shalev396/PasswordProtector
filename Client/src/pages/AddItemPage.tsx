@@ -61,13 +61,6 @@ export default function AddItemPage() {
 
   // Check if user is authenticated
   useEffect(() => {
-    console.log("Checking authentication in AddItemPage:", {
-      isAuthenticated,
-      hasUser: !!user,
-      hasToken: !!accessToken,
-      isTokenValid: isTokenValid ? isTokenValid() : false,
-    });
-
     if (!isAuthenticated) {
       console.warn("User not authenticated, redirecting to login");
       navigate("/login");
@@ -77,7 +70,6 @@ export default function AddItemPage() {
   // Update error from the hook
   useEffect(() => {
     if (passwordError) {
-      console.log("Password error from hook:", passwordError);
       setError(passwordError);
     }
   }, [passwordError]);
@@ -88,7 +80,6 @@ export default function AddItemPage() {
   };
 
   const validateForm = () => {
-    console.log("Validating form...");
     // Reset previous errors
     setError(null);
     setTitleError(null);
@@ -135,7 +126,6 @@ export default function AddItemPage() {
       }
     }
 
-    console.log("Form validation result:", isValid ? "Valid" : "Invalid");
     return isValid;
   };
 
@@ -146,8 +136,6 @@ export default function AddItemPage() {
     setSubmitSuccess(false);
 
     try {
-      console.log("Form submission started");
-
       // Check authentication status before proceeding
       if (!isAuthenticated || !accessToken) {
         const authError = "You must be logged in to add passwords";
@@ -160,7 +148,6 @@ export default function AddItemPage() {
 
       // Explicitly ensure auth header is set
       if (ensureAuthHeader) {
-        console.log("Explicitly ensuring auth header is set before submission");
         ensureAuthHeader();
       }
 
@@ -176,12 +163,9 @@ export default function AddItemPage() {
 
       // Validate the form first
       if (!validateForm()) {
-        console.log("Form validation failed, stopping submission");
         setLoading(false);
         return;
       }
-
-      console.log("Form validation passed, preparing to submit password");
 
       // Create password category based on item type
       const category =
@@ -203,33 +187,19 @@ export default function AddItemPage() {
         userId: 0, // Will be set by the server
       };
 
-      console.log("Submitting password with data:", {
-        type,
-        title,
-        username: username ? username.substring(0, 3) + "..." : "none",
-        passwordLength: password?.length || 0,
-        hasWebsite: !!website,
-        hasNotes: !!notes,
-        category,
-      });
-
       try {
         // Add the new password to the store
-        console.log("Calling addPassword function...");
-        const result = await addPassword(passwordData);
-        console.log("Password added successfully:", result ? "Yes" : "No", {
-          id: result?.id,
-        });
+
+        await addPassword(passwordData);
 
         setSubmitSuccess(true);
 
         // Show success message
-        console.log("Password added successfully, preparing to redirect");
 
         // Small delay to show success message before redirecting
         setTimeout(() => {
           // Redirect to dashboard
-          console.log("Redirecting to dashboard");
+
           navigate("/dashboard");
         }, 1500);
       } catch (addError: any) {

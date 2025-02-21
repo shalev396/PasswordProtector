@@ -57,7 +57,6 @@ export default function LoginPage() {
       const success = await login(email, password);
 
       if (success) {
-        console.log("Login successful, redirecting to dashboard");
         navigate("/dashboard");
       }
     } catch (err: any) {

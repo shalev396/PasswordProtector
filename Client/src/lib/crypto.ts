@@ -9,8 +9,6 @@ export async function generateEncryptionKey(
   salt: string
 ): Promise<CryptoKey> {
   try {
-    console.log(`Generating encryption key with salt length: ${salt.length}`);
-
     if (!password || password.trim() === "") {
       throw new Error("Empty password provided for key generation");
     }
@@ -46,7 +44,6 @@ export async function generateEncryptionKey(
       ["encrypt", "decrypt"] // Key usages
     );
 
-    console.log("Encryption key generated successfully");
     return encryptionKey;
   } catch (error) {
     console.error("Error generating encryption key:", error);
@@ -67,8 +64,6 @@ export async function hashPassword(
   salt: string
 ): Promise<string> {
   try {
-    console.log("Hashing password with salt");
-
     if (!password || password.trim() === "") {
       throw new Error("Empty password provided for hashing");
     }
@@ -88,7 +83,6 @@ export async function hashPassword(
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
 
-    console.log(`Password hashed successfully, length: ${hashHex.length}`);
     return hashHex;
   } catch (error) {
     console.error("Error hashing password:", error);
@@ -118,7 +112,6 @@ export async function encryptData(
       throw new Error("No encryption key provided");
     }
 
-    console.log(`Encrypting data (length: ${data.length})`);
     const encoder = new TextEncoder();
     const dataBuffer = encoder.encode(data);
 
@@ -143,7 +136,7 @@ export async function encryptData(
     const base64Result = btoa(
       String.fromCharCode.apply(null, Array.from(resultBuffer))
     );
-    console.log(`Encryption successful, result length: ${base64Result.length}`);
+
     return base64Result;
   } catch (error) {
     console.error("Error encrypting data:", error);
@@ -171,8 +164,6 @@ export async function decryptData(
     if (!encryptionKey) {
       throw new Error("No encryption key provided for decryption");
     }
-
-    console.log(`Decrypting data (length: ${encryptedDataB64.length})`);
 
     // Decode base64 string back to Uint8Array
     let encryptedBytes;
@@ -213,7 +204,7 @@ export async function decryptData(
       // Convert the decrypted ArrayBuffer back to a string
       const decoder = new TextDecoder();
       const result = decoder.decode(decryptedBuffer);
-      console.log(`Decryption successful, result length: ${result.length}`);
+
       return result;
     } catch (cryptoError) {
       console.error("Decryption operation failed:", cryptoError);
@@ -239,8 +230,6 @@ export async function encryptPassword(
   masterPassword: string
 ): Promise<string> {
   try {
-    console.log("Starting password encryption process");
-
     // Validate inputs
     if (!password || password.trim() === "") {
       console.error("Empty password provided for encryption");
@@ -252,30 +241,22 @@ export async function encryptPassword(
       throw new Error("Master key is required for encryption");
     }
 
-    console.log(
-      `Encrypting password (length: ${password.length}) with master key (length: ${masterPassword.length})`
-    );
-
     // Generate a random salt for this encryption
     const saltBuffer = window.crypto.getRandomValues(new Uint8Array(16));
     const salt = Array.from(saltBuffer)
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
 
-    console.log("Generated random salt for encryption");
-
     try {
       // Generate encryption key from master password
       const encryptionKey = await generateEncryptionKey(masterPassword, salt);
-      console.log("Generated encryption key successfully");
 
       // Encrypt the password
       const encryptedData = await encryptData(password, encryptionKey);
-      console.log("Password encryption successful");
 
       // Combine salt and encrypted data for storage
       const result = `${salt}:${encryptedData}`;
-      console.log(`Encryption complete, result length: ${result.length}`);
+
       return result;
     } catch (cryptoError) {
       console.error("Web Crypto API operation failed:", cryptoError);
@@ -301,8 +282,6 @@ export async function decryptPassword(
   masterPassword: string
 ): Promise<string> {
   try {
-    console.log("Starting password decryption process");
-
     // Validate inputs
     if (!encryptedPassword || encryptedPassword.trim() === "") {
       console.error("Empty encrypted password provided for decryption");
@@ -313,10 +292,6 @@ export async function decryptPassword(
       console.error("Empty master key provided for decryption");
       throw new Error("Master key is required for decryption");
     }
-
-    console.log(
-      `Decrypting data (length: ${encryptedPassword.length}) with master key (length: ${masterPassword.length})`
-    );
 
     // Split the salt and encrypted data
     const parts = encryptedPassword.split(":");
@@ -347,11 +322,10 @@ export async function decryptPassword(
     try {
       // Generate encryption key from master password and salt
       const encryptionKey = await generateEncryptionKey(masterPassword, salt);
-      console.log("Generated decryption key successfully");
 
       // Decrypt the password
       const decryptedPassword = await decryptData(encryptedData, encryptionKey);
-      console.log("Password decryption successful");
+
       return decryptedPassword;
     } catch (cryptoError) {
       console.error("Decryption operation failed:", cryptoError);

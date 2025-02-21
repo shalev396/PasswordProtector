@@ -42,7 +42,6 @@ declare module "axios" {
 
 // Make sure we're using the correct API URL
 const API_URL = "http://localhost:5000/api";
-console.log("Initializing API client with URL:", API_URL);
 
 // Check server connectivity
 let isServerConnected = false;
@@ -60,7 +59,6 @@ const checkServerConnectivity = async () => {
 
     if (response.ok || response.status === 404) {
       // Even a 404 means server is running
-      console.log("API server is reachable");
       isServerConnected = true;
       return true;
     } else {
@@ -115,29 +113,8 @@ apiClient.interceptors.request.use(
     // Check if we're dealing with a password-related endpoint
     const isPasswordEndpoint = config.url?.includes("/passwords");
 
-    // Log the request for debugging
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`, {
-      hasAuth: isAuthenticated && !!accessToken,
-      isTokenExpired: accessToken ? isTokenExpired : "N/A",
-      data: config.data ? "Present" : "None",
-      isPasswordEndpoint,
-    });
-
-    // Log request data for password endpoints in development
-    if (isPasswordEndpoint && config.data) {
-      console.log("Password request data:", {
-        title: config.data.title,
-        username: config.data.username
-          ? `${config.data.username.substring(0, 3)}...`
-          : "None",
-        hasPassword: !!config.data.password,
-        category: config.data.category,
-      });
-    }
-
     // Only add Authorization header if we have a token and we're authenticated
     if (isAuthenticated && accessToken && !isTokenExpired) {
-      console.log("Adding Authorization header with access token");
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${accessToken}`;
     } else if (
@@ -171,7 +148,6 @@ apiClient.interceptors.request.use(
         if (accessToken) {
           config.headers = config.headers || {};
           config.headers.Authorization = `Bearer ${accessToken}`;
-          console.log("Forced Authorization header for password endpoint");
         } else {
           console.error("Cannot add Authorization header - no token available");
         }
@@ -189,28 +165,6 @@ apiClient.interceptors.request.use(
 // Response interceptor for token refresh and error handling
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Simple response logging without using metadata
-    const method = response.config?.method?.toUpperCase() || "unknown";
-    const url = response.config?.url || "unknown";
-    console.log(`API Response: ${response.status} for ${method} ${url}`);
-
-    // Check if we're dealing with a password-related response
-    const isPasswordResponse = response.config?.url?.includes("/passwords");
-    if (isPasswordResponse) {
-      // For password responses, log some info without sensitive data
-      if (Array.isArray(response.data)) {
-        console.log(
-          `Password response: ${response.data.length} passwords returned`
-        );
-      } else if (response.data) {
-        console.log("Password response:", {
-          id: response.data.id,
-          title: response.data.title,
-          category: response.data.category || "None",
-        });
-      }
-    }
-
     return response;
   },
   async (error: AxiosError) => {
@@ -289,17 +243,11 @@ apiClient.interceptors.response.use(
         }
 
         try {
-          console.log("Attempting to refresh access token");
           const response = await apiClient.post("/auth/refresh", {
             refreshToken: refreshToken,
           });
 
           if (response.data) {
-            console.log("Token refresh response received:", {
-              hasAccessToken: !!response.data.accessToken,
-              hasRefreshToken: !!response.data.refreshToken,
-              hasExpiryData: !!response.data.accessTokenExpiresAt,
-            });
             // Update tokens in Redux store
             store.dispatch(
               setAccessToken({
@@ -335,7 +283,6 @@ apiClient.interceptors.response.use(
               error.config.headers[
                 "Authorization"
               ] = `Bearer ${response.data.accessToken}`;
-              console.log("Token refreshed successfully, retrying request");
 
               // Return a new instance of the original request with the new token
               return error.config
@@ -416,7 +363,6 @@ apiClient.interceptors.response.use(
 
 // Helper function to handle logout
 const handleLogout = () => {
-  console.log("Logging out user due to authentication error");
   store.dispatch(clearSession());
   store.dispatch(clearUser());
   store.dispatch(clearRefreshToken());
@@ -453,24 +399,11 @@ export const refreshAccessToken = async () => {
       return null;
     }
 
-    console.log("Attempting to refresh access token manually");
-
-    // Fixed URL and parameter name - server expects "refreshToken" not "token"
-    console.log(
-      `Sending refresh token request (length: ${refreshToken.length})`
-    );
     const response = await axios.post(`${API_URL}/auth/refresh`, {
       refreshToken: refreshToken,
     });
 
-    console.log("Refresh token response:", {
-      success: !!response.data,
-      hasAccessToken: !!response.data.accessToken,
-      hasRefreshToken: !!response.data.refreshToken,
-    });
-
     if (response.data) {
-      console.log("Access token refreshed successfully");
       store.dispatch(setAccessToken(response.data.accessToken));
       return response.data.accessToken;
     } else {

@@ -18,7 +18,6 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
   // Set auth header whenever this component renders
   useEffect(() => {
     if (accessToken && isTokenValid()) {
-      console.log("Setting Authorization header in PrivateRoute");
       apiClient.defaults.headers.common[
         "Authorization"
       ] = `Bearer ${accessToken}`;
