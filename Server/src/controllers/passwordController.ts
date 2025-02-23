@@ -106,28 +106,9 @@ export const createPassword = async (req: Request, res: Response) => {
   }
 
   try {
-    // Log detailed request info for debugging
-    console.log("Password creation request received", {
-      hasAuth: !!req.headers.authorization,
-      authHeader: req.headers.authorization
-        ? `${req.headers.authorization.substring(0, 15)}...`
-        : "missing",
-      userId: req.user?.id || "not set",
-      userEmail: req.user?.email || "not available",
-      method: req.method,
-      path: req.path,
-    });
+    
 
-    // Log the received data for debugging
-    console.log("Creating password with data:", {
-      title: req.body.title,
-      username: req.body.username,
-      hasPassword: !!req.body.password,
-      passwordLength: req.body.password?.length || 0,
-      website: req.body.website,
-      category: req.body.category,
-      hasUserId: !!req.user?.id,
-    });
+   
 
     // Ensure user exists in the request
     if (!req.user || !req.user.id) {
@@ -159,11 +140,11 @@ export const createPassword = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    console.log(`User ${user.email} found with ID ${userId}`);
+    
     const { title, username, password, website, notes, category } = req.body;
 
     // Create the password record with type assertion
-    console.log("Creating password record in database");
+    
     const newPassword = await Password.create({
       title,
       username,
@@ -174,7 +155,7 @@ export const createPassword = async (req: Request, res: Response) => {
       userId,
     } as any);
 
-    console.log(`Password created successfully with ID: ${newPassword.id}`);
+    
     return res.status(201).json(newPassword);
   } catch (error) {
     console.error("Error creating password:", error);
