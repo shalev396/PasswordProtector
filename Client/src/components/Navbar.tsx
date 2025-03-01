@@ -1,16 +1,88 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LockKeyhole, Menu } from "lucide-react";
+import { LockKeyhole, Menu, Moon, Sun } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"; // For mobile menu
+import { cn } from "@/lib/utils";
 
 const Navbar: React.FC = () => {
+  const [activeSection, setActiveSection] = useState<string>("hero");
+  const [darkMode, setDarkMode] = useState<boolean>(false);
+
+  // Updated navItems to include all sections in order
   const navItems = [
-    // Add more links as needed
-    { href: "#features", label: "Features" },
-    // { href: "/pricing", label: "Pricing" }, // Example for later
-    // { href: "/help", label: "Help" }, // Example for later
+    { href: "#hero", label: "Home" }, // 1. Secure Password Management...
+    { href: "#security", label: "Security" }, // 2. Always Protected
+    { href: "#zero-knowledge", label: "Zero-Knowledge" }, // 3. Zero-Knowledge Security Model
+    { href: "#encryption-flow", label: "Encryption Flow" }, // 4. How End-to-End Encryption Works
+    { href: "#decryption-demo", label: "Decryption Demo" }, // 5. Retrieving Your Secure Passwords
+    { href: "#features", label: "Features" }, // 6. Everything You Need
   ];
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    if (darkMode) {
+      document.documentElement.classList.remove("dark");
+    } else {
+      document.documentElement.classList.add("dark");
+    }
+    setDarkMode(!darkMode);
+  };
+
+  // Check system preference for dark mode on initial load
+  useEffect(() => {
+    if (
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    ) {
+      document.documentElement.classList.add("dark");
+      setDarkMode(true);
+    }
+  }, []);
+
+  // Monitor scroll position to highlight active section
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+
+      // Get all sections and determine which one is currently in view
+      const sections = navItems.map((item) => item.href.substring(1));
+
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = document.getElementById(sections[i]);
+        if (section) {
+          const sectionTop = section.offsetTop;
+          if (scrollPosition >= sectionTop - 100) {
+            // 100px offset for better UX
+            setActiveSection(sections[i]);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [navItems]);
+
+  // Function to handle smooth scrolling
+  const scrollToSection = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string
+  ) => {
+    e.preventDefault();
+    const targetId = href.substring(1);
+    const element = document.getElementById(targetId);
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+      setActiveSection(targetId);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -24,10 +96,16 @@ const Navbar: React.FC = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
           {navItems.map((item) => (
-            <a // Use <a> for intra-page links, Link for router links
+            <a
               key={item.label}
-              href={item.href} // Use href for anchor links
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
+              href={item.href}
+              onClick={(e) => scrollToSection(e, item.href)}
+              className={cn(
+                "transition-colors hover:text-primary py-1",
+                activeSection === item.href.substring(1)
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-foreground/60"
+              )}
             >
               {item.label}
             </a>
@@ -36,6 +114,21 @@ const Navbar: React.FC = () => {
 
         {/* Right Side Buttons (Desktop) */}
         <div className="flex flex-1 items-center justify-end space-x-2">
+          {/* Dark Mode Toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleDarkMode}
+            className="mr-2"
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
+          </Button>
+
           <Button variant="ghost" asChild className="hidden md:inline-flex">
             <Link to="/login">Sign In</Link>
           </Button>
@@ -51,29 +144,58 @@ const Navbar: React.FC = () => {
                 <span className="sr-only">Toggle Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[240px]">
-              <nav className="flex flex-col space-y-4 mt-6">
-                <Link to="/" className="mr-6 flex items-center space-x-2 mb-4">
+            <SheetContent side="right" className="w-[280px] p-6">
+              <nav className="flex flex-col h-full">
+                <Link to="/" className="flex items-center space-x-2 mb-8">
                   <LockKeyhole className="h-5 w-5 text-primary" />
-                  <span className="font-bold inline-block">
-                    Password Protector
-                  </span>
+                  <span className="font-bold text-lg">Password Protector</span>
                 </Link>
-                {navItems.map((item) => (
-                  <a // Use <a> for intra-page links, Link for router links
-                    key={item.label}
-                    href={item.href}
-                    className="transition-colors hover:text-foreground/80 text-foreground/60"
+                <div className="flex-grow space-y-3">
+                  {navItems.map((item) => (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      onClick={(e) => scrollToSection(e, item.href)}
+                      className={cn(
+                        "block px-3 py-2 rounded-md text-base font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+                        activeSection === item.href.substring(1)
+                          ? "bg-accent text-accent-foreground"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      {item.label}
+                    </a>
+                  ))}
+                </div>
+                <div className="mt-auto space-y-3 pt-6 border-t border-border/40">
+                  <Button
+                    variant="outline"
+                    className="w-full flex items-center justify-start gap-2"
+                    onClick={toggleDarkMode}
                   >
-                    {item.label}
-                  </a>
-                ))}
-                <Button variant="ghost" asChild>
-                  <Link to="/login">Sign In</Link>
-                </Button>
-                <Button asChild>
-                  <Link to="/register">Sign Up</Link>
-                </Button>
+                    {darkMode ? (
+                      <>
+                        <Sun className="h-4 w-4" />
+                        <span>Light Mode</span>
+                      </>
+                    ) : (
+                      <>
+                        <Moon className="h-4 w-4" />
+                        <span>Dark Mode</span>
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    asChild
+                    className="w-full justify-start"
+                  >
+                    <Link to="/login">Sign In</Link>
+                  </Button>
+                  <Button asChild className="w-full">
+                    <Link to="/register">Sign Up</Link>
+                  </Button>
+                </div>
               </nav>
             </SheetContent>
           </Sheet>
