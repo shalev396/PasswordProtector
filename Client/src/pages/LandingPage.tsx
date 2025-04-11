@@ -7,77 +7,38 @@ import {
   Key,
   ArrowRight,
   Copy,
-  CheckCheck,
   RefreshCw,
   Clock,
   Smartphone,
   Globe,
-  Share2,
-  FileText,
   CheckCircle2,
   Shield,
-  Timer,
-  Users,
-  Server,
-  Fingerprint,
-  AlertTriangle,
   Database,
-  CreditCard,
-  Linkedin,
-  Facebook,
-  ChevronRight,
-  Trophy,
-  MessageCircle,
-  Apple,
-  Laptop,
-  Monitor,
-  Terminal,
-  Chrome,
-  SquareDashed,
-  Compass,
   Github,
-  X,
-  Twitter,
   EyeOff,
   Download,
   Unlock,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import {
-  motion,
-  useAnimation,
-  useInView,
-  AnimatePresence,
-} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
+
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+
 import { generateRandomPassword } from "@/lib/passwordGenerator";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 
 const LandingPage: React.FC = () => {
-  const [step, setStep] = useState(1);
-  const totalSteps = 3;
+  // const [step, setStep] = useState(1); // Error TS6133
+  // const totalSteps = 3; // Error TS6133
 
   // Password generator demo state
-  const [demoPassword, setDemoPassword] = useState("");
-  const [passwordLength, setPasswordLength] = useState(12);
-  const [copied, setCopied] = useState(false);
+  // const [demoPassword, setDemoPassword] = useState(""); // Error TS6133
+  const [passwordLength] = useState(12); // Remove setPasswordLength (Error TS6133)
+  // const [copied] = useState(false); // Remove copied (Error TS6133) - Assuming it's not used elsewhere after refactor
+  const [decryptedPassword] = useState("MySecretPass123!"); // Remove setDecryptedPassword (Error TS6133)
 
   // Refs for animations
   const heroRef = useRef<HTMLDivElement>(null);
@@ -91,29 +52,29 @@ const LandingPage: React.FC = () => {
 
   // State for decryption demo
   const [showDecrypted, setShowDecrypted] = useState(false);
-  const [decryptedPassword, setDecryptedPassword] =
-    useState("MySecretPass123!");
+  // const [decryptedPassword, setDecryptedPassword] = useState("MySecretPass123!"); // Remove setDecryptedPassword (Error TS6133)
 
-  const nextStep = () => {
-    setStep((prev) => (prev < totalSteps ? prev + 1 : 1));
-  };
+  // const nextStep = () => { ... }; // Error TS6133
 
   const generatePassword = () => {
-    setCopied(false);
-    const newPassword = generateRandomPassword(passwordLength, {
+    // setCopied(false);
+    // const newPassword = generateRandomPassword(passwordLength, { // Error TS6133
+    generateRandomPassword(passwordLength, {
       uppercase: true,
       lowercase: true,
       numbers: true,
       symbols: true,
     });
-    setDemoPassword(newPassword);
+    // setDemoPassword(newPassword);
   };
 
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(decryptedPassword);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+      // setCopied(true); // Keep or remove based on whether visual feedback is desired
+      // setTimeout(() => setCopied(false), 2000); // Keep or remove based on feedback
+      // Consider using a toast notification instead if 'copied' state is removed
+      console.log("Password copied!"); // Simple feedback
     } catch (err) {
       console.error("Failed to copy password:", err);
     }
@@ -211,26 +172,10 @@ const LandingPage: React.FC = () => {
   }, []);
 
   // Variants for framer-motion animations
-  const fadeIn = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6 },
-    },
-  };
+  // const fadeIn = { ... }; // Error TS6133
+  // const staggerContainer = { ... }; // Error TS6133
 
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const [deploymentType, setDeploymentType] = useState("cloud");
+  // const [deploymentType, setDeploymentType] = useState("cloud"); // Errors TS6133
 
   return (
     <div className="flex min-h-screen flex-col">
