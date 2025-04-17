@@ -199,7 +199,7 @@ const LandingPage: React.FC = () => {
                 >
                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter">
                     Secure Password Management with End-to-End Encryption
-                  </h1>
+                </h1>
                   <p className="text-lg md:text-xl text-muted-foreground">
                     Password Protector ensures your sensitive data remains
                     private and secure with AES-256 encryption and
@@ -813,9 +813,9 @@ const LandingPage: React.FC = () => {
                 See exactly how your passwords remain protected throughout their
                 entire lifecycle
               </motion.p>
-            </div>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Password Creation Card */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -1158,7 +1158,7 @@ const LandingPage: React.FC = () => {
                 >
                   <div className="bg-primary/10 p-2 rounded-lg mt-1">
                     <Unlock className="w-5 h-5 text-primary" />
-                  </div>
+                </div>
                   <div>
                     <h4 className="font-medium text-foreground mb-1">
                       Local Decryption
@@ -1180,7 +1180,7 @@ const LandingPage: React.FC = () => {
                 >
                   <div className="bg-primary/10 p-2 rounded-lg mt-1">
                     <ShieldCheck className="w-5 h-5 text-primary" />
-                  </div>
+                </div>
                   <div>
                     <h4 className="font-medium text-foreground mb-1">
                       Security Maintained
@@ -1304,7 +1304,7 @@ const LandingPage: React.FC = () => {
               >
                 <div className="bg-primary/10 h-12 w-12 rounded-full flex items-center justify-center mb-4">
                   <Lock className="h-6 w-6 text-primary" />
-                </div>
+              </div>
                 <h3 className="text-xl font-semibold mb-2">
                   Military-Grade Security
                 </h3>

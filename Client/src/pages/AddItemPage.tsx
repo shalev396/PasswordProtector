@@ -238,205 +238,216 @@ export default function AddItemPage() {
   };
 
   return (
-    <div className="container mx-auto max-w-2xl py-8 px-4 md:px-6">
-      <div className="mb-6 flex items-center">
-        <Button variant="ghost" size="sm" asChild className="mr-2">
-          <Link to="/dashboard">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Vault
-          </Link>
-        </Button>
-      </div>
+    <div className="min-h-screen bg-background px-4 py-6 md:px-6 lg:px-8">
+      <div className="mx-auto max-w-md md:max-w-lg lg:max-w-xl">
+        <div className="mb-6">
+          <Button variant="ghost" size="sm" asChild className="mb-2">
+            <Link to="/dashboard" className="flex items-center text-sm">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Vault
+            </Link>
+          </Button>
+        </div>
 
-      {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      {submitSuccess && (
-        <Alert className="mb-4 bg-green-50 text-green-800 border-green-200">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertTitle>Success</AlertTitle>
-          <AlertDescription>
-            Password added successfully! Redirecting to vault...
-          </AlertDescription>
-        </Alert>
-      )}
+        {submitSuccess && (
+          <Alert className="mb-4 border-green-200 bg-green-50 text-green-800">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertTitle>Success</AlertTitle>
+            <AlertDescription>
+              Password added successfully! Redirecting to vault...
+            </AlertDescription>
+          </Alert>
+        )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Add New Item</CardTitle>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label>Item Type</Label>
-              <RadioGroup
-                value={type}
-                onValueChange={(value) =>
-                  setType(value as "login" | "card" | "note")
-                }
-                className="flex space-x-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="login" id="login" />
-                  <Label
-                    htmlFor="login"
-                    className="flex items-center cursor-pointer"
-                  >
-                    <Key className="mr-2 h-4 w-4" />
-                    Login
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="card" id="card" />
-                  <Label
-                    htmlFor="card"
-                    className="flex items-center cursor-pointer"
-                  >
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Card
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="note" id="note" />
-                  <Label
-                    htmlFor="note"
-                    className="flex items-center cursor-pointer"
-                  >
-                    <FileText className="mr-2 h-4 w-4" />
-                    Secure Note
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                  setTitleError(null);
-                }}
-                placeholder="My Account"
-                className={titleError ? "border-red-500" : ""}
-              />
-              {titleError && (
-                <p className="text-sm text-red-500">{titleError}</p>
-              )}
-            </div>
-
-            {type === "login" && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username / Email</Label>
-                  <Input
-                    id="username"
-                    value={username}
-                    onChange={(e) => {
-                      setUsername(e.target.value);
-                      setUsernameError(null);
-                    }}
-                    placeholder="john.doe@example.com"
-                    className={usernameError ? "border-red-500" : ""}
-                  />
-                  {usernameError && (
-                    <p className="text-sm text-red-500">{usernameError}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                  </div>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        setPasswordFieldError(null);
-                      }}
-                      placeholder="Enter a strong password"
-                      className={`pr-10 ${
-                        passwordFieldError ? "border-red-500" : ""
-                      }`}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                      <span className="sr-only">
-                        Toggle password visibility
-                      </span>
-                    </Button>
-                  </div>
-                  {passwordFieldError && (
-                    <p className="text-sm text-red-500">{passwordFieldError}</p>
-                  )}
-                  <PasswordGenerator
-                    onPasswordGenerated={handleGeneratedPassword}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="website">Website URL</Label>
+        <Card className="shadow-md">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl">Add New Item</CardTitle>
+          </CardHeader>
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Item Type</Label>
+                <RadioGroup
+                  value={type}
+                  onValueChange={(value) =>
+                    setType(value as "login" | "card" | "note")
+                  }
+                  className="flex flex-wrap gap-4"
+                >
                   <div className="flex items-center space-x-2">
-                    <Globe className="h-4 w-4 text-muted-foreground" />
+                    <RadioGroupItem value="login" id="login" />
+                    <Label
+                      htmlFor="login"
+                      className="flex cursor-pointer items-center"
+                    >
+                      <Key className="mr-2 h-4 w-4 text-blue-500" />
+                      Login
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="card" id="card" />
+                    <Label
+                      htmlFor="card"
+                      className="flex cursor-pointer items-center"
+                    >
+                      <CreditCard className="mr-2 h-4 w-4 text-green-500" />
+                      Card
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="note" id="note" />
+                    <Label
+                      htmlFor="note"
+                      className="flex cursor-pointer items-center"
+                    >
+                      <FileText className="mr-2 h-4 w-4 text-yellow-500" />
+                      Secure Note
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setTitleError(null);
+                  }}
+                  placeholder="My Account"
+                  className={`${
+                    titleError ? "border-red-500" : ""
+                  } bg-background`}
+                />
+                {titleError && (
+                  <p className="text-sm text-red-500">{titleError}</p>
+                )}
+              </div>
+
+              {type === "login" && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username / Email</Label>
                     <Input
-                      id="website"
-                      value={website}
+                      id="username"
+                      value={username}
                       onChange={(e) => {
-                        setWebsite(e.target.value);
-                        setWebsiteError(null);
+                        setUsername(e.target.value);
+                        setUsernameError(null);
                       }}
-                      placeholder="https://example.com"
-                      className={websiteError ? "border-red-500" : ""}
+                      placeholder="john.doe@example.com"
+                      className={`${
+                        usernameError ? "border-red-500" : ""
+                      } bg-background`}
+                    />
+                    {usernameError && (
+                      <p className="text-sm text-red-500">{usernameError}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password">Password</Label>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          setPasswordFieldError(null);
+                        }}
+                        placeholder="Enter a strong password"
+                        className={`pr-10 bg-background ${
+                          passwordFieldError ? "border-red-500" : ""
+                        }`}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        <span className="sr-only">
+                          Toggle password visibility
+                        </span>
+                      </Button>
+                    </div>
+                    {passwordFieldError && (
+                      <p className="text-sm text-red-500">
+                        {passwordFieldError}
+                      </p>
+                    )}
+                    <PasswordGenerator
+                      onPasswordGenerated={handleGeneratedPassword}
                     />
                   </div>
-                  {websiteError && (
-                    <p className="text-sm text-red-500">{websiteError}</p>
-                  )}
-                </div>
-              </>
-            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add any additional information here..."
-                rows={4}
-              />
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading || passwordsLoading}
-            >
-              {loading || passwordsLoading ? "Adding item..." : "Add Item"}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Website URL</Label>
+                    <div className="flex items-center space-x-2">
+                      <Globe className="h-4 w-4 text-blue-500" />
+                      <Input
+                        id="website"
+                        value={website}
+                        onChange={(e) => {
+                          setWebsite(e.target.value);
+                          setWebsiteError(null);
+                        }}
+                        placeholder="https://example.com"
+                        className={`${
+                          websiteError ? "border-red-500" : ""
+                        } bg-background`}
+                      />
+                    </div>
+                    {websiteError && (
+                      <p className="text-sm text-red-500">{websiteError}</p>
+                    )}
+                  </div>
+                </>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Add any additional information here..."
+                  rows={4}
+                  className="min-h-[100px] resize-none bg-background"
+                />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading || passwordsLoading}
+              >
+                {loading || passwordsLoading ? "Adding item..." : "Add Item"}
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }

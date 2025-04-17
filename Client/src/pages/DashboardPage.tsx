@@ -14,6 +14,8 @@ import {
   SortAsc,
   SortDesc,
   Unlock,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +55,9 @@ export default function DashboardPage() {
   const [decryptedPasswords, setDecryptedPasswords] = useState<{
     [key: number]: string;
   }>({});
+  const [darkMode, setDarkMode] = useState<boolean>(
+    document.documentElement.classList.contains("dark")
+  );
 
   const navigate = useNavigate();
   const { passwords = [], deletePassword, fetchPasswords } = usePasswords();
@@ -179,6 +184,16 @@ export default function DashboardPage() {
     return Array.from(uniqueCategories);
   }, [passwords]);
 
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    if (darkMode) {
+      document.documentElement.classList.remove("dark");
+    } else {
+      document.documentElement.classList.add("dark");
+    }
+    setDarkMode(!darkMode);
+  };
+
   useEffect(() => {
     // Fetch passwords when the dashboard loads
     fetchPasswords();
@@ -187,60 +202,99 @@ export default function DashboardPage() {
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <header className="px-4 py-3 border-b flex justify-between items-center bg-background">
-        <div className="flex items-center">
-          <Sheet open={showSidebar} onOpenChange={setShowSidebar}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-[240px] p-0">
-              <div className="px-6 py-4 border-b">
-                <h2 className="text-lg font-semibold">Password Protector</h2>
-              </div>
-              <ScrollArea className="h-[calc(100vh-60px)] p-6">
-                <div className="flex flex-col space-y-1">
-                  <Button onClick={goToAddPassword} className="justify-start">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Password
+      <header className="border-b bg-background">
+        <div className="mx-auto max-w-5xl px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Sheet open={showSidebar} onOpenChange={setShowSidebar}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon" className="md:hidden">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Toggle menu</span>
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleLogout}
-                    className="justify-start"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                  </Button>
-                </div>
-              </ScrollArea>
-            </SheetContent>
-          </Sheet>
-          <h1 className="text-xl font-bold ml-2 md:ml-0">Your Passwords</h1>
-        </div>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[240px] p-0">
+                  <div className="px-6 py-4 border-b">
+                    <h2 className="text-lg font-semibold">
+                      Password Protector
+                    </h2>
+                  </div>
+                  <ScrollArea className="h-[calc(100vh-60px)] p-6">
+                    <div className="flex flex-col space-y-1">
+                      <Button
+                        onClick={goToAddPassword}
+                        className="justify-start"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Password
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={toggleDarkMode}
+                        className="justify-start"
+                      >
+                        {darkMode ? (
+                          <>
+                            <Sun className="mr-2 h-4 w-4" />
+                            Light Mode
+                          </>
+                        ) : (
+                          <>
+                            <Moon className="mr-2 h-4 w-4" />
+                            Dark Mode
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={handleLogout}
+                        className="justify-start"
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Logout
+                      </Button>
+                    </div>
+                  </ScrollArea>
+                </SheetContent>
+              </Sheet>
+              <h1 className="text-xl font-bold ml-2 md:ml-0">Your Passwords</h1>
+            </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleLogout}
-            className="hidden md:flex"
-          >
-            <LogOut className="h-5 w-5" />
-            <span className="sr-only">Logout</span>
-          </Button>
-          <Button onClick={goToAddPassword}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add
-          </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={toggleDarkMode}
+                className="hidden md:flex"
+              >
+                {darkMode ? (
+                  <Sun className="h-5 w-5" />
+                ) : (
+                  <Moon className="h-5 w-5" />
+                )}
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleLogout}
+                className="hidden md:flex"
+              >
+                <LogOut className="h-5 w-5" />
+                <span className="sr-only">Logout</span>
+              </Button>
+              <Button onClick={goToAddPassword}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add
+              </Button>
+            </div>
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 overflow-auto">
-        <div className="max-w-5xl mx-auto space-y-4">
+      <main className="flex-1 overflow-auto py-4">
+        <div className="mx-auto max-w-5xl space-y-4 px-4">
           {/* Search and Filters */}
           <div className="flex flex-col md:flex-row gap-2">
             <div className="relative flex-1">
