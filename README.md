@@ -1,132 +1,242 @@
 # Password Protector
 
-A secure application for storing, managing, and generating passwords with end-to-end encryption.
+A modern, secure password management solution built with end-to-end encryption. Password Protector helps you store and manage your passwords with zero-knowledge architecture, ensuring your sensitive data remains protected and accessible only to you.
 
-## Project Structure
+## Table of Contents
 
-```
-password-protector/
-├── backend/        # Node.js (TypeScript) Express API
-│   ├── src/
-│   ├── dist/       # Compiled TypeScript output
-│   ├── node_modules/
-│   ├── .env        # Environment variables (DB connection, JWT secret) - MUST BE CREATED
-│   ├── .gitignore
-│   ├── nodemon.json
-│   ├── package.json
-│   └── tsconfig.json
-├── frontend/       # React (TypeScript) Vite App
-│   ├── src/
-│   ├── public/
-│   ├── node_modules/
-│   ├── .gitignore
-│   ├── index.html
-│   ├── package.json
-│   ├── postcss.config.js
-│   ├── tailwind.config.js
-│   └── vite.config.ts
-└── README.md       # This file
-```
+- [Features](#features)
+- [Security Architecture](#security-architecture)
+- [Tech Stack](#tech-stack)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
 
-## MVP Features (Planned)
+## Features
 
-- User registration and authentication (JWT)
-- Secure password storage (encrypted in DB)
-- Password generation tool
-- Basic CRUD operations for passwords
-- Search and filter passwords
-- Password strength analysis (basic)
-- Secure sharing functionality (future)
-- Basic import/export (future)
+- **Zero-Knowledge Architecture**: Your data is encrypted before leaving your device
+- **End-to-End Encryption**: AES-256-GCM encryption for all sensitive data
+- **Modern UI/UX**: Clean, responsive interface built with React and Tailwind CSS
+- **Password Generator**: Built-in secure password generator
+- **Dark/Light Mode**: Full theme support with system preference detection
+- **Cross-Platform**: Web-based solution accessible from any modern browser
+- **Responsive Design**: Optimized for both desktop and mobile devices
+
+## Security Architecture
+
+### Client-Side Encryption
+
+- **Master Password**: Never stored or transmitted to the server
+- **Encryption Algorithm**: AES-256-GCM with unique IV for each encryption
+- **Key Derivation**: PBKDF2 with 100,000 iterations for master key generation
+- **Salt Generation**: Unique salt for each encrypted item
+- **Zero-Knowledge Design**: Server never has access to unencrypted data
+
+### Authentication
+
+- **JWT-Based**: Secure token-based authentication
+- **Token Refresh**: Automatic token refresh mechanism
+- **Session Management**: Secure session handling with expiration
 
 ## Tech Stack
 
-- **Frontend**: React, Vite, TypeScript, Tailwind CSS, Axios, React Router
-- **Backend**: Node.js, Express, TypeScript, CORS
-- **Database**: Microsoft SQL Server (MSSQL)
-- **Authentication**: JSON Web Tokens (JWT)
-- **Password Hashing**: Bcrypt
+### Frontend
 
-## Setup and Installation
+- **Framework**: React 19 with TypeScript
+- **Build Tool**: Vite
+- **State Management**: Redux Toolkit with Redux Persist
+- **Styling**: Tailwind CSS with shadcn/ui components
+- **Icons**: Lucide React
+- **Animations**: Framer Motion
+- **HTTP Client**: Axios with interceptors
+- **Form Handling**: React Hook Form with Zod validation
 
-**Prerequisites:**
+### Backend
+
+- **Runtime**: Node.js with Express
+- **Database**: Microsoft SQL Server
+- **ORM**: Sequelize with TypeScript
+- **Authentication**: JWT (jsonwebtoken)
+- **Password Hashing**: bcrypt
+- **API Security**: CORS, Helmet
+
+## Installation
+
+### Prerequisites
 
 - Node.js (v18+ recommended)
 - npm or yarn
-- Microsoft SQL Server instance (local or remote)
+- Microsoft SQL Server instance
+- Git
 
-**Backend Setup:**
+### Frontend Setup
 
-1.  Navigate to the `backend` directory: `cd backend`
-2.  Install dependencies: `npm install`
-3.  Create a `.env` file by copying `.env.example` (or create it manually) and fill in your database credentials and a strong `JWT_SECRET`:
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/password-protector.git
+cd password-protector
 
-    ```env
-    # Server Configuration
-    PORT=5000
+# Install frontend dependencies
+cd Client
+npm install
 
-    # Database Configuration (Replace with your credentials)
-    DB_USER=
-    DB_PASSWORD=
-    DB_DATABASE=
-    DB_SERVER=localhost
-    # Set DB_ENCRYPT to true if using Azure SQL or requires encryption
-    DB_ENCRYPT=false
-    # Set DB_TRUST_SERVER_CERTIFICATE to true for local dev or self-signed certificates
-    DB_TRUST_SERVER_CERTIFICATE=false
+# Start development server
+npm run dev
+```
 
-    # JWT Configuration (Replace with a strong, random secret)
-    JWT_SECRET=your_super_secret_jwt_key_here_at_least_32_chars
-    JWT_EXPIRES_IN=1h
-    ```
+### Backend Setup
 
-4.  **Database Initialization**: Connect to your SQL Server instance and run the following SQL commands to create the necessary tables (or use a migration tool later):
+```bash
+# Navigate to server directory
+cd Server
 
-    ```sql
-    -- Create Users Table
-    CREATE TABLE Users (
-        id INT IDENTITY(1,1) PRIMARY KEY,
-        email VARCHAR(255) NOT NULL UNIQUE,
-        password_hash VARCHAR(255) NOT NULL,
-        created_at DATETIME DEFAULT GETDATE(),
-        updated_at DATETIME DEFAULT GETDATE()
-    );
+# Install dependencies
+npm install
 
-    -- Create Passwords Table
-    CREATE TABLE Passwords (
-        id INT IDENTITY(1,1) PRIMARY KEY,
-        user_id INT NOT NULL,
-        title VARCHAR(255) NOT NULL,
-        website VARCHAR(255),
-        username VARCHAR(255),
-        encrypted_password TEXT NOT NULL, -- Store encrypted password here
-        notes TEXT,
-        category VARCHAR(100),
-        created_at DATETIME DEFAULT GETDATE(),
-        updated_at DATETIME DEFAULT GETDATE(),
-        FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
-    );
+# Create .env file
+cp .env.example .env
 
-    -- Optional: Index on user_id for faster lookups
-    CREATE INDEX idx_user_id ON Passwords(user_id);
-    ```
+# Configure environment variables
+# Edit .env with your database credentials and JWT secret
+```
 
-5.  Run the development server: `npm run dev`
-    The backend API will be running on `http://localhost:5000` (or the port specified in `.env`).
+Required environment variables:
 
-**Frontend Setup:**
+```env
+# Server Configuration
+PORT=5000
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_DATABASE=your_db_name
+DB_SERVER=localhost
+JWT_SECRET=your_secure_jwt_secret
+```
 
-1.  Navigate to the `frontend` directory: `cd ../frontend` (from backend) or `cd frontend` (from root)
-2.  Install dependencies: `npm install`
-3.  Run the development server: `npm run dev`
-    The frontend application will be available at `http://localhost:5173` (or another port if 5173 is busy).
+### Database Setup
 
-## Next Steps (Implementation)
+```sql
+-- Create Users Table
+CREATE TABLE Users (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at DATETIME DEFAULT GETDATE(),
+    updated_at DATETIME DEFAULT GETDATE()
+);
 
-- Implement backend API endpoints (Auth, Passwords CRUD).
-- Implement encryption/decryption logic for passwords.
-- Build frontend components (Login, Register, Dashboard, Password forms/list).
-- Connect frontend components to backend API.
-- Implement state management (e.g., Context API, Zustand).
-- Add authentication flow (login, registration, protected routes).
-- Styling with Tailwind CSS.
+-- Create Passwords Table
+CREATE TABLE Passwords (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    website VARCHAR(255),
+    username VARCHAR(255),
+    encrypted_password TEXT NOT NULL,
+    notes TEXT,
+    category VARCHAR(100),
+    created_at DATETIME DEFAULT GETDATE(),
+    updated_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+);
+```
+
+### Example API Usage
+
+```typescript
+// Authentication
+const login = async (email: string, password: string) => {
+  const response = await axios.post("/api/auth/login", { email, password });
+  return response.data;
+};
+
+// Password Management
+const createPassword = async (passwordData: PasswordData) => {
+  const encrypted = await encryptPassword(passwordData.password, masterKey);
+  const response = await axios.post("/api/passwords", {
+    ...passwordData,
+    password: encrypted,
+  });
+  return response.data;
+};
+```
+
+### Example React Component
+
+```tsx
+const PasswordList: React.FC = () => {
+  const [passwords, setPasswords] = useState<Password[]>([]);
+
+  useEffect(() => {
+    const fetchPasswords = async () => {
+      const data = await getPasswords();
+      setPasswords(data);
+    };
+    fetchPasswords();
+  }, []);
+
+  return (
+    <div className="grid gap-4">
+      {passwords.map((password) => (
+        <PasswordCard key={password.id} password={password} />
+      ))}
+    </div>
+  );
+};
+```
+
+## Usage
+
+1. Register an account with a strong master password
+2. Log in to access your vault
+3. Add passwords, secure notes, or payment cards
+4. Use the password generator for strong passwords
+5. Search, filter, and organize your items
+6. Access your vault from any device
+
+### Security Best Practices
+
+- Use a strong, unique master password
+- Enable two-factor authentication if available
+- Regularly update your master password
+- Log out when using shared devices
+- Keep your browser and system updated
+
+## Contributing
+
+We welcome contributions! Please follow these steps:
+
+```bash
+# Fork and clone the repository
+git clone https://github.com/yourusername/password-protector.git
+
+# Create a new branch
+git checkout -b feature/amazing-feature
+
+# Make your changes and commit
+git commit -m 'Add amazing feature'
+
+# Push to your fork
+git push origin feature/amazing-feature
+
+# Open a Pull Request
+```
+
+### Development Guidelines
+
+- Follow TypeScript best practices
+- Maintain existing code style
+- Write tests for new features
+- Update documentation as needed
+- Ensure all tests pass before submitting PR
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- [shadcn/ui](https://ui.shadcn.com/) for beautiful React components
+- [Tailwind CSS](https://tailwindcss.com/) for utility-first CSS
+- [Lucide](https://lucide.dev/) for icons
+- [Redux Toolkit](https://redux-toolkit.js.org/) for state management
+- [Vite](https://vitejs.dev/) for frontend tooling
