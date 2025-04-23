@@ -74,6 +74,7 @@ A modern, secure password management solution built with end-to-end encryption. 
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/password-protector.git
+
 cd password-protector
 
 # Install frontend dependencies
