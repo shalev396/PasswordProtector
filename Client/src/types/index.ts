@@ -12,6 +12,7 @@ export interface Password {
   title: string;
   username: string;
   password: string;
+  encryptedPassword?: string; // The encrypted version of the password
   website: string;
   category: string;
   notes?: string;
