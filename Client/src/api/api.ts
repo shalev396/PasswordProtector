@@ -41,14 +41,14 @@ declare module "axios" {
 }
 
 // Make sure we're using the correct API URL
-const API_URL = "http://localhost:5000/api";
+const API_URL = "http://localhost:5000/dev/api";
 
 // Check server connectivity
 let isServerConnected = false;
 const checkServerConnectivity = async () => {
   try {
     // Use the root endpoint instead of /health which doesn't exist
-    const response = await fetch(`${API_URL.replace("/api", "")}`, {
+    const response = await fetch(`${API_URL}/health`, {
       method: "GET",
       mode: "cors",
       cache: "no-cache",

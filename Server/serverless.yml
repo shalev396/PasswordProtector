@@ -1,0 +1,128 @@
+service: password-protector
+
+frameworkVersion: "4"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  environment:
+    PORT: ${env:PORT, '5000'}
+
+    DB_SERVER: ${env:DB_SERVER, 'localhost'}
+    DB_DATABASE: ${env:DB_DATABASE, 'your_database'}
+    DB_USER: ${env:DB_USER, 'your_user'}
+    DB_PASSWORD: ${env:DB_PASSWORD, 'your_password'}
+
+    DB_ENCRYPT: ${env:DB_ENCRYPT, 'false'}
+    DB_TRUST_SERVER_CERTIFICATE: ${env:DB_TRUST_SERVER_CERTIFICATE, 'true'}
+    JWT_SECRET: ${env:JWT_SECRET, 'your_jwt_secret'}
+    ACCESS_TOKEN_EXPIRY: ${env:ACCESS_TOKEN_EXPIRY, '15m'}
+    REFRESH_TOKEN_EXPIRY: ${env:REFRESH_TOKEN_EXPIRY, '7d'}
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+custom:
+  serverless-offline:
+    httpPort: ${env:PORT, '5000'}
+  dotenv:
+    path: ./.env
+
+# Disable esbuild since we're using serverless-bundle
+build:
+  esbuild: false
+
+functions:
+  health:
+    handler: src/handlers/health.handler
+    events:
+      - http:
+          path: /api/health
+          method: get
+          cors: true
+
+  # Auth functions
+  register:
+    handler: src/handlers/auth/register.handler
+    events:
+      - http:
+          path: /api/auth/register
+          method: post
+          cors: true
+
+  login:
+    handler: src/handlers/auth/login.handler
+    events:
+      - http:
+          path: /api/auth/login
+          method: post
+          cors: true
+
+  refreshToken:
+    handler: src/handlers/auth/refreshToken.handler
+    events:
+      - http:
+          path: /api/auth/refresh
+          method: post
+          cors: true
+
+  getProfile:
+    handler: src/handlers/auth/getProfile.handler
+    events:
+      - http:
+          path: /api/auth/profile
+          method: get
+          cors: true
+
+  logout:
+    handler: src/handlers/auth/logout.handler
+    events:
+      - http:
+          path: /api/auth/logout
+          method: post
+          cors: true
+
+  # Password functions
+  getAllPasswords:
+    handler: src/handlers/passwords/getAllPasswords.handler
+    events:
+      - http:
+          path: /api/passwords
+          method: get
+          cors: true
+
+  getPasswordById:
+    handler: src/handlers/passwords/getPasswordById.handler
+    events:
+      - http:
+          path: /api/passwords/{id}
+          method: get
+          cors: true
+
+  createPassword:
+    handler: src/handlers/passwords/createPassword.handler
+    events:
+      - http:
+          path: /api/passwords
+          method: post
+          cors: true
+
+  updatePassword:
+    handler: src/handlers/passwords/updatePassword.handler
+    events:
+      - http:
+          path: /api/passwords/{id}
+          method: put
+          cors: true
+
+  deletePassword:
+    handler: src/handlers/passwords/deletePassword.handler
+    events:
+      - http:
+          path: /api/passwords/{id}
+          method: delete
+          cors: true

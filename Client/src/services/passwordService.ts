@@ -30,7 +30,7 @@ const passwordService = {
   async getAllPasswords(): Promise<Password[]> {
     try {
       const response = await apiClient.get("/passwords");
-      return response.data;
+      return response.data.passwords;
     } catch (error) {
       console.error("Error fetching all passwords:", error);
       throw error;
