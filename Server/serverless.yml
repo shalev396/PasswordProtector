@@ -1,6 +1,10 @@
-service: password-protector
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: shalev396
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: password-protector
+# "service" is the name of this project. This will also be added to your AWS resource names.
 
-frameworkVersion: "4"
+service: Password-Protector-Backend
 
 provider:
   name: aws
@@ -22,23 +26,28 @@ provider:
     REFRESH_TOKEN_EXPIRY: ${env:REFRESH_TOKEN_EXPIRY, '7d'}
 
 plugins:
-  - serverless-plugin-typescript
   - serverless-offline
   - serverless-dotenv-plugin
-
+useDotenv: true
 custom:
   serverless-offline:
     httpPort: ${env:PORT, '5000'}
   dotenv:
     path: ./.env
+  # Add hooks to run npm build before packaging
+  hooks:
+    before:offline:start: npm run build
+    before:deploy:deploy: npm run build
+    package:initialize: npm run build
 
 # Disable esbuild since we're using serverless-bundle
-build:
-  esbuild: false
-
+package:
+  individually: true
+  patterns:
+    - "dist/**" # Include the dist directory and all its contents
 functions:
   health:
-    handler: src/handlers/health.handler
+    handler: ./dist/handlers/health.handler
     events:
       - http:
           path: /api/health
@@ -47,7 +56,7 @@ functions:
 
   # Auth functions
   register:
-    handler: src/handlers/auth/register.handler
+    handler: ./dist/handlers/auth/register.handler
     events:
       - http:
           path: /api/auth/register
@@ -55,7 +64,7 @@ functions:
           cors: true
 
   login:
-    handler: src/handlers/auth/login.handler
+    handler: ./dist/handlers/auth/login.handler
     events:
       - http:
           path: /api/auth/login
@@ -63,7 +72,7 @@ functions:
           cors: true
 
   refreshToken:
-    handler: src/handlers/auth/refreshToken.handler
+    handler: ./dist/handlers/auth/refreshToken.handler
     events:
       - http:
           path: /api/auth/refresh
@@ -71,7 +80,7 @@ functions:
           cors: true
 
   getProfile:
-    handler: src/handlers/auth/getProfile.handler
+    handler: ./dist/handlers/auth/getProfile.handler
     events:
       - http:
           path: /api/auth/profile
@@ -79,7 +88,7 @@ functions:
           cors: true
 
   logout:
-    handler: src/handlers/auth/logout.handler
+    handler: ./dist/handlers/auth/logout.handler
     events:
       - http:
           path: /api/auth/logout
@@ -88,7 +97,7 @@ functions:
 
   # Password functions
   getAllPasswords:
-    handler: src/handlers/passwords/getAllPasswords.handler
+    handler: ./dist/handlers/passwords/getAllPasswords.handler
     events:
       - http:
           path: /api/passwords
@@ -96,7 +105,7 @@ functions:
           cors: true
 
   getPasswordById:
-    handler: src/handlers/passwords/getPasswordById.handler
+    handler: ./dist/handlers/passwords/getPasswordById.handler
     events:
       - http:
           path: /api/passwords/{id}
@@ -104,7 +113,7 @@ functions:
           cors: true
 
   createPassword:
-    handler: src/handlers/passwords/createPassword.handler
+    handler: ./dist/handlers/passwords/createPassword.handler
     events:
       - http:
           path: /api/passwords
@@ -112,7 +121,7 @@ functions:
           cors: true
 
   updatePassword:
-    handler: src/handlers/passwords/updatePassword.handler
+    handler: ./dist/handlers/passwords/updatePassword.handler
     events:
       - http:
           path: /api/passwords/{id}
@@ -120,7 +129,7 @@ functions:
           cors: true
 
   deletePassword:
-    handler: src/handlers/passwords/deletePassword.handler
+    handler: ./dist/handlers/passwords/deletePassword.handler
     events:
       - http:
           path: /api/passwords/{id}

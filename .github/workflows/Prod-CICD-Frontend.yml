@@ -6,7 +6,7 @@ on:
     paths:
       - "Client/**"
 jobs:
-  deploy-app:
+  deploy-frontend:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -34,13 +34,12 @@ jobs:
       - name: Build
         run: npm run build --prefix Client
 
-      - name: Config AWS CLI
-        run: |
-          pip install awscli
-          aws configure set region eu-central-1
-          aws configure set output json
-          aws configure set aws_access_key_id ${{ env.AWS_ACCESS_CONNECT_KEY }} 
-          aws configure set aws_secret_access_key ${{ env.AWS_ACCESS_SECRET }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_CONNECT_KEY }}
+          aws-secret-access-key: ${{ env.AWS_ACCESS_SECRET }}
+          aws-region: eu-central-1
 
       - name: Deploy with AWS CLI
         run: |
