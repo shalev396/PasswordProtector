@@ -1,145 +1,138 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
-import { updatePassword } from "@/redux/slices/passwordSlice";
-import apiClient from "@/api/api";
-import { encryptPassword } from "@/lib/crypto";
-import { Password } from "@/types";
 import { ItemForm } from "@/components/ItemForm";
+import { useAuth } from "@/hooks/useAuth";
+import { Password } from "@/types";
+import { usePasswords } from "@/hooks/usePasswords";
+import { decryptPassword } from "@/lib/crypto";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryClient";
 
 export default function EditItemPage() {
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
   const { id } = useParams<{ id: string }>();
-  const { isAuthenticated, getMasterPassword } = useAuth();
-
-  const passwords = useSelector(
-    (state: RootState) => state.passwords.passwords
-  );
-  const isLoading = useSelector(
-    (state: RootState) => state.passwords.isLoading
-  );
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { isAuthenticated, isTokenValid, getMasterPassword, ensureAuthHeader } =
+    useAuth();
+  const { updatePasswordMutation, getPasswordById } = usePasswords();
 
   const [error, setError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [initialData, setInitialData] = useState<
-    Partial<Password> | undefined
-  >();
-  const [initialLoading, setInitialLoading] = useState(true);
+  const [initialData, setInitialData] = useState<Partial<Password> | undefined>(
+    undefined
+  );
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Check if user is authenticated and load item data
+  // Fetch password data on component mount
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/login");
-      return;
-    }
-
     const loadPasswordData = async () => {
-      try {
-        let passwordItem: Password | undefined;
+      if (!isAuthenticated || !id) {
+        console.warn(
+          "User not authenticated or missing ID, redirecting to login"
+        );
+        navigate("/login");
+        return;
+      }
 
-        if (passwords.length > 0) {
-          passwordItem = passwords.find((item) => String(item.id) === id);
+      try {
+        // Ensure auth header is set
+        if (ensureAuthHeader) {
+          ensureAuthHeader();
         }
 
-        if (!passwordItem && id) {
-          const response = await apiClient.get(`/passwords/${id}`);
-          passwordItem = response.data;
+        // Get the password data
+        const passwordData = await getPasswordById(Number(id));
 
-          if (passwordItem) {
-            // Store the encrypted password before decryption
-            const encryptedPassword =
-              passwordItem.encryptedPassword || passwordItem.password;
+        if (!passwordData) {
+          console.error("Password not found");
+          setError("Password not found");
+          navigate("/dashboard");
+          return;
+        }
 
-            // Decrypt password if needed
+        // Decrypt the password if it's encrypted
+        let decryptedData = { ...passwordData };
+        if (passwordData.password) {
+          try {
             const masterKey = getMasterPassword();
-            if (masterKey && passwordItem.encryptedPassword) {
-              const { decryptPassword } = await import("@/lib/crypto");
-              try {
-                passwordItem.password = await decryptPassword(
-                  passwordItem.encryptedPassword,
-                  masterKey
-                );
-                // Store both encrypted and decrypted versions
-                passwordItem.encryptedPassword = encryptedPassword;
-              } catch (err) {
-                console.error("Failed to decrypt password:", err);
-                // If decryption fails, still use the encrypted password
-                passwordItem.password = encryptedPassword;
-              }
-            } else {
-              // If no encryption, ensure password is set correctly
-              passwordItem.password = encryptedPassword;
+            if (masterKey && passwordData.password) {
+              const decrypted = await decryptPassword(
+                passwordData.password,
+                masterKey
+              );
+              decryptedData.password = decrypted;
             }
+          } catch (decryptError) {
+            console.error("Failed to decrypt password:", decryptError);
+            setError(
+              "Could not decrypt password. Please check your master password."
+            );
           }
         }
 
-        if (passwordItem) {
-          setInitialData(passwordItem);
-        } else {
-          navigate("/dashboard");
-        }
-      } catch (err) {
-        console.error("Failed to load password:", err);
-        navigate("/dashboard");
+        // Set the initial data just once when the component mounts
+        setInitialData(decryptedData);
+      } catch (err: any) {
+        console.error("Error loading password:", err);
+        setError(err?.message || "Failed to load password data");
       } finally {
-        setInitialLoading(false);
+        setIsLoading(false);
       }
     };
 
     loadPasswordData();
-  }, [id, isAuthenticated, navigate, passwords, getMasterPassword]);
+  }, [
+    id,
+    isAuthenticated,
+    navigate,
+    getPasswordById,
+    ensureAuthHeader,
+    getMasterPassword,
+  ]);
 
   const handleSubmit = async (data: Partial<Password>) => {
-    setError(null);
-    setSubmitSuccess(false);
+    if (!isAuthenticated || !isTokenValid || !id) {
+      navigate("/login");
+      return;
+    }
 
     try {
-      if (!id) {
-        throw new Error("Password ID is missing");
+      setError(null);
+
+      // Ensure we have the auth header set
+      if (ensureAuthHeader) {
+        ensureAuthHeader();
       }
 
-      const masterKey = getMasterPassword();
-      if (!masterKey) {
-        throw new Error("Master key not found");
-      }
-
-      const encryptedPassword = await encryptPassword(
-        data.password || "",
-        masterKey
-      );
-
-      const response = await apiClient.put(`/passwords/${id}`, {
+      // Make sure we're using the updated password from the form
+      const updatedPasswordData = {
         ...data,
-        encryptedPassword,
-        password: undefined,
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Use the updatePasswordMutation which should handle optimistic updates
+      await updatePasswordMutation.mutateAsync({
+        id: Number(id),
+        passwordData: updatedPasswordData,
       });
 
-      dispatch(
-        updatePassword({
-          ...response.data,
-          password: data.password,
-        })
-      );
+      // Explicitly invalidate the passwords list query to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: queryKeys.passwords.lists() });
 
       setSubmitSuccess(true);
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1500);
+      // Navigate back to dashboard after successful update
+      navigate("/dashboard");
     } catch (err: any) {
       console.error("Failed to update password:", err);
-      setError(
-        err?.message || "An unexpected error occurred. Please try again."
-      );
+      setError(err?.message || "Failed to update password. Please try again.");
+      setSubmitSuccess(false);
     }
   };
 
-  if (initialLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-xl font-medium">Loading item data...</p>
+        Loading...
       </div>
     );
   }
@@ -149,7 +142,7 @@ export default function EditItemPage() {
       mode="edit"
       initialData={initialData}
       onSubmit={handleSubmit}
-      isLoading={isLoading}
+      isLoading={updatePasswordMutation.isPending}
       error={error}
       submitSuccess={submitSuccess}
     />

@@ -1,6 +1,6 @@
 import { UserState } from "../redux/slices/userSlice";
 import { AccessTokenState } from "../redux/slices/accessTokenSlice";
-import { RefreshTokenState, SessionState, PasswordState } from "../types";
+import { RefreshTokenState, SessionState } from "../types";
 
 // Root state type combining all slices
 export interface RootState {
@@ -8,7 +8,6 @@ export interface RootState {
   accessToken: AccessTokenState;
   refreshToken: RefreshTokenState;
   session: SessionState;
-  passwords: PasswordState;
 }
 
 // Type for dispatch function from store

@@ -62,17 +62,6 @@ export interface RefreshTokenState {
   expiresAt: number | null; // Unix timestamp in milliseconds
 }
 
-export interface PasswordState {
-  passwords: Password[];
-  filteredPasswords: Password[];
-  isLoading: boolean;
-  error: string | null;
-  searchTerm: string;
-  selectedCategory: string;
-  sortOption: "newest" | "oldest" | "alphabetical";
-  currentPassword: Password | null;
-}
-
 export interface ApiError {
   message: string;
   statusCode: number;

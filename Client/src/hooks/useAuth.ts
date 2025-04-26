@@ -21,6 +21,8 @@ import authService from "@/services/authService";
 import { AuthResponse } from "@/types";
 import { useNavigate } from "react-router-dom";
 
+import { clearQueryCache } from "@/lib/queryClient";
+
 /**
  * Custom hook for authentication functionality
  */
@@ -45,28 +47,36 @@ export const useAuth = () => {
     (state: RootState) => state.refreshToken?.token
   );
 
-  // Clear authentication state and redirect to login
+  /**
+   * Log the user out
+   */
   const logout = useCallback(() => {
+    // Call auth service to log out
     try {
-      authService.logout();
-    } catch (err) {
-      console.error("Logout API error:", err);
+      if (accessToken) {
+        authService.logout().catch((err) => {
+          console.warn("Error during logout:", err);
+        });
+      }
+    } catch (error) {
+      console.error("Failed to call logout endpoint:", error);
     } finally {
-      // Clear Redux state regardless of API success
-
-      dispatch(clearSession());
+      // Clear Redux state regardless of API response
       dispatch(clearUser());
-      dispatch(clearRefreshToken());
       dispatch(clearAccessToken());
+      dispatch(clearRefreshToken());
+      dispatch(clearSession());
 
-      // Clear auth header
-
+      // Clear API headers
       authService.setAuthHeader(null);
+
+      // Clear React Query cache
+      clearQueryCache();
 
       // Redirect to login page
       navigate("/login");
     }
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate, accessToken]);
 
   // Check if token has expired
   const isTokenExpired = useCallback(() => {

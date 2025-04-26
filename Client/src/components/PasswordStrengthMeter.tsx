@@ -48,15 +48,15 @@ export function PasswordStrengthMeter({
   const strengthColor = useMemo(() => {
     switch (strength) {
       case 0:
-        return "bg-destructive"; // Use theme colors
+        return "bg-destructive";
       case 1:
-        return "bg-orange-500"; // Consider adding orange to theme if needed
+        return "bg-warning";
       case 2:
-        return "bg-yellow-500"; // Consider adding yellow to theme if needed
+        return "bg-warning";
       case 3:
-        return "bg-lime-500"; // Consider adding lime to theme if needed
+        return "bg-success/80";
       case 4:
-        return "bg-green-500"; // Consider adding green to theme if needed
+        return "bg-success";
       default:
         return "bg-muted";
     }
@@ -67,13 +67,13 @@ export function PasswordStrengthMeter({
       case 0:
         return "text-destructive";
       case 1:
-        return "text-orange-500";
+        return "text-warning";
       case 2:
-        return "text-yellow-500";
+        return "text-warning";
       case 3:
-        return "text-lime-500";
+        return "text-success/80";
       case 4:
-        return "text-green-500";
+        return "text-success";
       default:
         return "text-muted-foreground";
     }
@@ -82,7 +82,7 @@ export function PasswordStrengthMeter({
   return (
     <div className="space-y-1 pt-1">
       {/* Strength bar */}
-      <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+      <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted/50">
         {/* Create 4 segments for the bar */}
         {Array.from({ length: 4 }).map((_, i) => (
           <div
@@ -92,7 +92,7 @@ export function PasswordStrengthMeter({
               // Width is proportional, ensure sum is w-full (4 * w-1/4)
               "w-1/4",
               // Apply color only if strength is high enough for this segment
-              i < strength ? strengthColor : "bg-muted",
+              i < strength ? strengthColor : "bg-muted/50",
               // Add slight gap between segments if needed
               i > 0 ? "ml-0.5" : ""
             )}

@@ -6,7 +6,6 @@ import { combineReducers } from "@reduxjs/toolkit";
 // Import reducers
 import userReducer from "./slices/userSlice";
 import sessionReducer from "./slices/sessionSlice";
-import passwordReducer from "./slices/passwordSlice";
 import accessTokenReducer from "./slices/accessTokenSlice";
 import refreshTokenReducer from "./slices/refreshTokenSlice";
 
@@ -14,8 +13,7 @@ import refreshTokenReducer from "./slices/refreshTokenSlice";
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["user", "session", "accessToken", "refreshToken"], // Exclude passwords from persistence to avoid mutations
-  // Add migration for version changes if needed
+  whitelist: ["user", "session", "accessToken", "refreshToken"],
   version: 1,
   transforms: [
     {
@@ -48,12 +46,6 @@ const validatePersistedState = (state: Record<string, any>) => {
     state.session = { ...state.session, isAuthenticated: false };
   }
 
-  // Don't try to persist passwords in validatePersistedState to avoid mutations
-  // This will be handled by the passwordReducer's initial state
-  if (state.passwords) {
-    delete state.passwords;
-  }
-
   return state;
 };
 
@@ -61,7 +53,6 @@ const validatePersistedState = (state: Record<string, any>) => {
 const rootReducer = combineReducers({
   user: userReducer,
   session: sessionReducer,
-  passwords: passwordReducer,
   accessToken: accessTokenReducer,
   refreshToken: refreshTokenReducer,
 });

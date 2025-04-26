@@ -41,7 +41,7 @@ export async function encrypt(
     encryptedArray.set(new Uint8Array(encryptedBuffer), iv.length);
 
     // Convert to base64 for storage
-    return arrayBufferToBase64(encryptedArray);
+    return arrayBufferToBase64(encryptedArray.buffer);
   } catch (error) {
     console.error("Encryption failed:", error);
     throw new Error("Failed to encrypt data");

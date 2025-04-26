@@ -4,16 +4,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePasswords } from "@/hooks/usePasswords";
 import { ItemForm } from "@/components/ItemForm";
 import { Password } from "@/types";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryClient";
 
 export default function AddItemPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isAuthenticated, user, accessToken, isTokenValid, ensureAuthHeader } =
     useAuth();
-  const {
-    addPassword,
-    isLoading: passwordsLoading,
-    error: passwordError,
-  } = usePasswords();
+  const { addPasswordMutation, fetchPasswords } = usePasswords();
 
   const [error, setError] = React.useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = React.useState(false);
@@ -25,13 +24,6 @@ export default function AddItemPage() {
       navigate("/login");
     }
   }, [isAuthenticated, navigate, user, accessToken, isTokenValid]);
-
-  // Update error from the hook
-  useEffect(() => {
-    if (passwordError) {
-      setError(passwordError);
-    }
-  }, [passwordError]);
 
   const handleSubmit = async (data: Partial<Password>) => {
     setError(null);
@@ -75,13 +67,32 @@ export default function AddItemPage() {
         userId: 0, // Will be set by the server
       };
 
-      await addPassword(passwordData);
-      setSubmitSuccess(true);
+      // Use React Query mutation to add the password
+      await addPasswordMutation.mutateAsync(passwordData, {
+        onSuccess: async () => {
+          console.log("Password added successfully!");
+          setSubmitSuccess(true);
 
-      // Small delay to show success message before redirecting
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1500);
+          // Force fetch to update the cache with the latest data from server
+          await fetchPasswords();
+
+          // Also explicitly invalidate the passwords list query to ensure fresh data
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.passwords.lists(),
+          });
+
+          // Small delay to show success message before redirecting
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 1500);
+        },
+        onError: (err: any) => {
+          console.error("Failed to add password:", err);
+          setError(
+            err?.message || "An unexpected error occurred. Please try again."
+          );
+        },
+      });
     } catch (err: any) {
       console.error("Failed to add password:", err);
       setError(
@@ -94,9 +105,10 @@ export default function AddItemPage() {
     <ItemForm
       mode="add"
       onSubmit={handleSubmit}
-      isLoading={passwordsLoading}
+      isLoading={addPasswordMutation.isPending}
       error={error}
       submitSuccess={submitSuccess}
+      disableNonLoginTypes={true}
     />
   );
 }
