@@ -65,6 +65,11 @@ export default function AddItemPage() {
       const passwordData: Password = {
         id: 0, // Will be assigned by server
         ...data,
+        title: data.title || "Untitled",
+        username: data.username || "",
+        password: data.password || "",
+        website: data.website || "",
+        category: data.category || "Other",
         createdAt: now,
         updatedAt: now,
         userId: 0, // Will be set by the server

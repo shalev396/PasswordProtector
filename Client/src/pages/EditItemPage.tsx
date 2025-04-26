@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useDispatch, useSelector } from "react-redux";
@@ -58,12 +58,11 @@ export default function EditItemPage() {
             if (masterKey && passwordItem.encryptedPassword) {
               const { decryptPassword } = await import("@/lib/crypto");
               try {
-                const decryptedPassword = await decryptPassword(
+                passwordItem.password = await decryptPassword(
                   passwordItem.encryptedPassword,
                   masterKey
                 );
                 // Store both encrypted and decrypted versions
-                passwordItem.password = passwordItem.encryptedPassword;
                 passwordItem.encryptedPassword = encryptedPassword;
               } catch (err) {
                 console.error("Failed to decrypt password:", err);
