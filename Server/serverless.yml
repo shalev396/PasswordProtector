@@ -135,3 +135,4 @@ functions:
           path: /api/passwords/{id}
           method: delete
           cors: true
+#

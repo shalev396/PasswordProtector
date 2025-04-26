@@ -33,6 +33,7 @@ jobs:
         with:
           path: Server/.env
           export-variables: true
+          keys-case: bypass
 
       - name: Install Dependencies
         run: npm install --prefix Server
