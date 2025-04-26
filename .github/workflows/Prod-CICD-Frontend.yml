@@ -27,6 +27,7 @@ jobs:
         with:
           path: Client/.env
           export-variables: true
+          keys-case: bypass
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps --prefix Client
