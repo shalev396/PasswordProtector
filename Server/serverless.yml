@@ -9,7 +9,7 @@ service: Password-Protector-Backend
 provider:
   name: aws
   runtime: nodejs18.x
-  stage: ${opt:stage, 'dev'}
+  # stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
   environment:
     PORT: ${env:PORT, '5000'}
@@ -49,7 +49,7 @@ functions:
   health:
     handler: ./dist/handlers/health.handler
     events:
-      - http:
+      - httpApi:
           path: /api/health
           method: get
           cors: true
@@ -58,7 +58,7 @@ functions:
   register:
     handler: ./dist/handlers/auth/register.handler
     events:
-      - http:
+      - httpApi:
           path: /api/auth/register
           method: post
           cors: true
@@ -66,7 +66,7 @@ functions:
   login:
     handler: ./dist/handlers/auth/login.handler
     events:
-      - http:
+      - httpApi:
           path: /api/auth/login
           method: post
           cors: true
@@ -74,7 +74,7 @@ functions:
   refreshToken:
     handler: ./dist/handlers/auth/refreshToken.handler
     events:
-      - http:
+      - httpApi:
           path: /api/auth/refresh
           method: post
           cors: true
@@ -82,7 +82,7 @@ functions:
   getProfile:
     handler: ./dist/handlers/auth/getProfile.handler
     events:
-      - http:
+      - httpApi:
           path: /api/auth/profile
           method: get
           cors: true
@@ -90,7 +90,7 @@ functions:
   logout:
     handler: ./dist/handlers/auth/logout.handler
     events:
-      - http:
+      - httpApi:
           path: /api/auth/logout
           method: post
           cors: true
@@ -99,7 +99,7 @@ functions:
   getAllPasswords:
     handler: ./dist/handlers/passwords/getAllPasswords.handler
     events:
-      - http:
+      - httpApi:
           path: /api/passwords
           method: get
           cors: true
@@ -107,7 +107,7 @@ functions:
   getPasswordById:
     handler: ./dist/handlers/passwords/getPasswordById.handler
     events:
-      - http:
+      - httpApi:
           path: /api/passwords/{id}
           method: get
           cors: true
@@ -115,7 +115,7 @@ functions:
   createPassword:
     handler: ./dist/handlers/passwords/createPassword.handler
     events:
-      - http:
+      - httpApi:
           path: /api/passwords
           method: post
           cors: true
@@ -123,7 +123,7 @@ functions:
   updatePassword:
     handler: ./dist/handlers/passwords/updatePassword.handler
     events:
-      - http:
+      - httpApi:
           path: /api/passwords/{id}
           method: put
           cors: true
@@ -131,7 +131,7 @@ functions:
   deletePassword:
     handler: ./dist/handlers/passwords/deletePassword.handler
     events:
-      - http:
+      - httpApi:
           path: /api/passwords/{id}
           method: delete
           cors: true
