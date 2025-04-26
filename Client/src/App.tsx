@@ -5,7 +5,8 @@ import RegisterPage from "./pages/RegisterPage.tsx";
 import DashboardPage from "./pages/DashboardPage.tsx";
 import AddItemPage from "./pages/AddItemPage.tsx"; // Import AddItemPage
 import EditItemPage from "./pages/EditItemPage.tsx"; // Import EditItemPage
-import PasswordGeneratorPage from "./pages/PasswordGeneratorPage.tsx"; // Import PasswordGeneratorPage
+import NotFoundPage from "./pages/NotFoundPage.tsx"; // Import NotFoundPage
+
 import PrivateRoute from "./components/PrivateRoute.tsx"; // Import the placeholder
 
 function App() {
@@ -41,16 +42,8 @@ function App() {
           </PrivateRoute>
         }
       />
-      <Route
-        path="/password-generator"
-        element={
-          <PrivateRoute>
-            <PasswordGeneratorPage />
-          </PrivateRoute>
-        }
-      />
-      {/* Optional: Add a 404 Not Found Route */}
-      {/* <Route path="*" element={<div>404 Not Found</div>} /> */}
+      {/* 404 Not Found Route */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
