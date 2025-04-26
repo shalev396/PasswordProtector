@@ -13,7 +13,6 @@ import {
   Download,
   Unlock,
   ShieldCheck,
-  Smartphone,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 

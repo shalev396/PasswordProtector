@@ -6,8 +6,6 @@ import { motion } from "framer-motion";
 const HeroSection: React.FC = () => {
   // Refs for animations
   const heroRef = useRef<HTMLDivElement>(null);
-  const heroTextRef = useRef<HTMLDivElement>(null);
-  const heroButtonsRef = useRef<HTMLDivElement>(null);
 
   return (
     <section

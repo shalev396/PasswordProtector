@@ -18,7 +18,6 @@ import Divider from "@/components/sections/Divider";
 const LandingPage: React.FC = () => {
   // We keep some state and functions that might still be needed
   const [passwordLength] = useState(12);
-  const [decryptedPassword] = useState("MySecretPass123!");
 
   // Refs for GSAP animations - these will be passed to child components if needed
   const heroRef = useRef<HTMLDivElement>(null);

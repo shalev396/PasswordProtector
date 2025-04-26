@@ -373,10 +373,10 @@ const handleLogout = () => {
 const logoutUserDueToAuthError = (errorMessage: string) => {
   console.error(`Auth Error: ${errorMessage}`);
   // Display error message to user if toast notification system exists
-  if (typeof window !== "undefined" && window.alert) {
-    // This is a fallback - ideally you'd use a toast notification system
-    window.alert(errorMessage);
-  }
+  // if (typeof window !== "undefined" && window.alert) {
+  //   // This is a fallback - ideally you'd use a toast notification system
+  //   window.alert(errorMessage);
+  // }
   handleLogout();
 };
 
