@@ -41,7 +41,10 @@ declare module "axios" {
 }
 
 // Make sure we're using the correct API URL
-const API_URL = "http://localhost:5000/dev/api";
+const API_URL =
+  import.meta.env.VITE_NODE_ENV === "development"
+    ? "http://localhost:5000/dev/api"
+    : "/api";
 
 // Check server connectivity
 let isServerConnected = false;
