@@ -69,6 +69,44 @@ A modern, secure password management solution built with end-to-end encryption. 
 - Microsoft SQL Server instance
 - Git
 
+### GitHub Secrets Setup
+
+For production deployments using GitHub Actions, you need to configure the following repository secret:
+
+- **PROD_ENV**: Contains all production environment variables from your `.env` file + deployment secrets
+
+  - Example format (replace with your actual values):
+
+  ```
+  # AWS Deployment Credentials
+  AWS_ACCESS_CONNECT_KEY=<Your AWS access key for deployments>
+  AWS_ACCESS_SECRET=<Your AWS secret access key>
+  S3_BUCKET_NAME=<Name of the S3 bucket for static files>
+  CLOUDFRONT_DISTRIBUTION_ID=<CloudFront distribution ID for CDN>
+
+  # Serverless Framework Credentials
+  SLS_ACCESS_KEY=<Your Serverless Framework access key>
+
+  # Server Configuration
+  PORT=5000
+
+  # Database Configuration
+  DB_SERVER=<SQL Server hostname or IP>
+  DB_DATABASE=<Database name>
+  DB_USER=<Database username>
+  DB_PASSWORD=<Database password>
+  DB_PORT=<Database port, typically 1433 for SQL Server>
+  DB_ENCRYPT=<true/false - whether to use encryption for DB connection>
+  DB_TRUST_SERVER_CERTIFICATE=<true/false - whether to trust server certificate>
+
+  # Authentication
+  JWT_SECRET=<Strong secret key for JWT token generation>
+  ACCESS_TOKEN_EXPIRY=<Access token expiry time, e.g. '1h'>
+  REFRESH_TOKEN_EXPIRY=<Refresh token expiry time, e.g. '7d'>
+
+  # Add any other environment variables needed for production
+  ```
+
 ### Frontend Setup
 
 ```bash
