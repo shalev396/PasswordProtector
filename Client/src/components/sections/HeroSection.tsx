@@ -2,11 +2,12 @@ import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, ArrowRight, Lock, Key, Copy, Github } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection: React.FC = () => {
   // Refs for animations
   const heroRef = useRef<HTMLDivElement>(null);
-
+  const navigate = useNavigate();
   return (
     <section
       id="hero"
@@ -44,7 +45,11 @@ const HeroSection: React.FC = () => {
                 whileTap={{ scale: 0.95 }}
                 transition={{ duration: 0.2 }}
               >
-                <Button size="lg" className="gap-2">
+                <Button
+                  size="lg"
+                  className="gap-2"
+                  onClick={() => navigate("/login")}
+                >
                   <span>Get Started</span>
                   <motion.div
                     animate={{ x: [0, 4, 0] }}
