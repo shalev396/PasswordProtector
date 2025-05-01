@@ -68,7 +68,17 @@ const HeroSection: React.FC = () => {
                 whileTap={{ scale: 0.95 }}
                 transition={{ duration: 0.2 }}
               >
-                <Button size="lg" variant="outline" className="gap-2">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() =>
+                    window.open(
+                      "https://github.com/shalev396/PasswordProtector",
+                      "_blank"
+                    )
+                  }
+                >
                   <Github className="h-4 w-4" />
                   <span>View on GitHub</span>
                 </Button>
