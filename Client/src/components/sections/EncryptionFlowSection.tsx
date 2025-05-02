@@ -138,7 +138,7 @@ const EncryptionFlowSection: React.FC = () => {
           </motion.div>
         </div>
 
-        <div className="mt-12 text-center">
+        {/* <div className="mt-12 text-center">
           <Link
             to="/security"
             className="inline-flex items-center text-primary hover:text-primary/90 font-medium"
@@ -146,7 +146,7 @@ const EncryptionFlowSection: React.FC = () => {
             Learn more about our encryption
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
-        </div>
+        </div> */}
       </div>
     </section>
   );
