@@ -29,6 +29,7 @@ A modern, secure password management solution built with end-to-end encryption. 
 - **Master Password**: Never stored or transmitted to the server
 - **Encryption Algorithm**: AES-256-GCM with unique IV for each encryption
 - **Key Derivation**: PBKDF2 with 100,000 iterations for master key generation
+- **Additional Security**: Environment variable secret added to password hash
 - **Salt Generation**: Unique salt for each encrypted item
 - **Zero-Knowledge Design**: Server never has access to unencrypted data
 
@@ -119,9 +120,21 @@ cd password-protector
 cd Client
 npm install
 
+# Create .env file for frontend
+cp .env.example .env
+
 # Start development server
 npm run dev
 ```
+
+Required client-side environment variables:
+
+```env
+# Security Settings - Critical for encryption strength
+VITE_APP_SECRET=your_strong_random_secret_key
+```
+
+> **IMPORTANT**: The `VITE_APP_SECRET` environment variable enhances the security of the master key derivation process. This secret is combined with the user's password and email during key generation, ensuring that even if two users have the exact same password and email, their encryption keys will differ between deployments with different secrets.
 
 ### Backend Setup
 

@@ -218,10 +218,13 @@ export const useAuth = () => {
           );
         }
 
+        // Generate master key using the same approach as login
+        const masterKey = await hashPassword(password, email);
+
         // Set the user data in Redux with master key
         const userWithMasterKey = {
           ...response.user,
-          masterKey: password, // Store the password as the master key for encryption
+          masterKey: masterKey, // Use the hashed key instead of raw password
         };
 
         dispatch(setUser(userWithMasterKey));

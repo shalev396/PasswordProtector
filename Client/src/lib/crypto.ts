@@ -1,5 +1,9 @@
 // Client-side crypto utility functions
 
+// Add a fallback for the environment variable
+const APP_SECRET =
+  import.meta.env.VITE_APP_SECRET || "default-secret-key-replace-in-production";
+
 /**
  * Generates a secure encryption key from the master password and salt (email)
  * using PBKDF2 and AES-GCM.
@@ -57,7 +61,7 @@ export async function generateEncryptionKey(
 
 /**
  * Hashes the master password using SHA-256 for authentication verification.
- * Includes the salt (email) in the hash input.
+ * Includes the salt (email) and an app secret in the hash input for additional security.
  */
 export async function hashPassword(
   password: string,
@@ -73,8 +77,8 @@ export async function hashPassword(
     }
 
     const encoder = new TextEncoder();
-    // Combine password and salt before hashing
-    const data = encoder.encode(password + salt);
+    // Combine password, salt, and application secret before hashing
+    const data = encoder.encode(password + salt + APP_SECRET);
 
     const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
     // Convert ArrayBuffer to hex string
