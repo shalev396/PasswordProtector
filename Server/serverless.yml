@@ -18,9 +18,8 @@ provider:
     DB_DATABASE: ${env:DB_DATABASE, 'your_database'}
     DB_USER: ${env:DB_USER, 'your_user'}
     DB_PASSWORD: ${env:DB_PASSWORD, 'your_password'}
+    DB_PORT: ${env:DB_PORT, '5432'}
 
-    DB_ENCRYPT: ${env:DB_ENCRYPT, 'false'}
-    DB_TRUST_SERVER_CERTIFICATE: ${env:DB_TRUST_SERVER_CERTIFICATE, 'true'}
     JWT_SECRET: ${env:JWT_SECRET, 'your_jwt_secret'}
     ACCESS_TOKEN_EXPIRY: ${env:ACCESS_TOKEN_EXPIRY, '15m'}
     REFRESH_TOKEN_EXPIRY: ${env:REFRESH_TOKEN_EXPIRY, '7d'}

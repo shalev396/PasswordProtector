@@ -19,8 +19,7 @@ This is the serverless backend for the Password Protector application, built wit
    DB_USER=your_database_user
    DB_PASSWORD=your_database_password
    DB_SERVER=localhost
-   DB_ENCRYPT=false
-   DB_TRUST_SERVER_CERTIFICATE=true
+   DB_PORT=5432
 
    # JWT Configuration
    JWT_SECRET=your_jwt_secret

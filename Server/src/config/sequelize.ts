@@ -10,9 +10,7 @@ const dbName = process.env.DB_DATABASE as string;
 const dbUser = process.env.DB_USER as string;
 const dbPassword = process.env.DB_PASSWORD as string;
 const dbHost = process.env.DB_SERVER || "localhost";
-const dbEncrypt = process.env.DB_ENCRYPT === "true";
-const dbTrustServerCertificate =
-  process.env.DB_TRUST_SERVER_CERTIFICATE === "true";
+const dbPort = parseInt(process.env.DB_PORT || "5432");
 
 if (!dbName || !dbUser || !dbPassword) {
   throw new Error(
@@ -28,12 +26,13 @@ let sequelize: Sequelize | null = null;
 const createSequelizeInstance = () => {
   return new Sequelize(dbName, dbUser, dbPassword, {
     host: dbHost,
-    dialect: "mssql",
+    port: dbPort,
+    dialect: "postgres",
     logging: false, // Set to console.log for debugging SQL queries
     dialectOptions: {
-      options: {
-        encrypt: dbEncrypt,
-        trustServerCertificate: dbTrustServerCertificate,
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
       },
     },
     pool: {
@@ -81,10 +80,25 @@ const connectDB = async () => {
     await sequelizeInstance.authenticate({ retry: { max: 1 } });
     console.log("Sequelize Connection has been established successfully.");
 
-    // Sync all models that aren't already in the database.
-    // force: false will NOT drop existing tables
-    await sequelizeInstance.sync({ force: false });
-    console.log("All models were synchronized successfully.");
+    try {
+      // Use raw query to attempt to use existing tables without creating schema
+      // This allows the application to work even with limited permissions
+      await sequelizeInstance.query("SELECT 1");
+      console.log("Successfully verified database connection.");
+
+      // Skip automatic sync entirely
+      console.log(
+        "Skipping automatic model synchronization due to permission constraints."
+      );
+      console.log("Application will use existing tables if available.");
+      console.log(
+        "If you need to create tables, please run these commands as a database admin:"
+      );
+      console.log(`GRANT ALL ON SCHEMA public TO "${dbUser}";`);
+    } catch (syncError) {
+      console.error("Database query error:", syncError);
+      throw syncError;
+    }
 
     return sequelizeInstance;
   } catch (error) {
