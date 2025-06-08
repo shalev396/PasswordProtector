@@ -1,1 +1,63 @@
- 
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer glow effect -->
+  <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur stdDeviation="8" result="blur" />
+    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+  </filter>
+
+  <!-- Shield shape with gradient -->
+  <path 
+    d="M256 32L80 112v160c0 132.336 116.992 203.792 176 223.2 59.008-19.408 176-90.864 176-223.2V112L256 32z"
+    fill="url(#shieldGradient)"
+    stroke="url(#outlineGradient)"
+    stroke-width="24"
+    filter="url(#glow)"
+  />
+
+  <!-- Shield gradient -->
+  <defs>
+    <linearGradient id="shieldGradient" x1="256" y1="32" x2="256" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#3730A3" />
+    </linearGradient>
+    
+    <!-- Cyan outline gradient -->
+    <linearGradient id="outlineGradient" x1="256" y1="32" x2="256" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22D3EE" />
+      <stop offset="100%" stop-color="#0891B2" />
+    </linearGradient>
+  </defs>
+
+  <!-- Lock shape perfectly centered -->
+  <g transform="translate(256, 256) scale(1) translate(-72, -96)">
+    <!-- Lock body -->
+    <rect
+      x="0"
+      y="64"
+      width="144"
+      height="128"
+      rx="16"
+      fill="#FFFFFF"
+      filter="url(#glow)"
+    />
+    
+    <!-- Lock shackle -->
+    <path
+      d="M24 64V32a48 48 0 0196 0v32"
+      stroke="#FFFFFF"
+      stroke-width="32"
+      stroke-linecap="round"
+      fill="none"
+      filter="url(#glow)"
+    />
+    
+    <!-- Keyhole -->
+    <circle
+      cx="72"
+      cy="128"
+      r="12"
+      fill="#3730A3"
+    />
+  </g>
+</svg>

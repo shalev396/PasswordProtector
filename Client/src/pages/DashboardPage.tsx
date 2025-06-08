@@ -13,8 +13,6 @@ import {
   SortAsc,
   SortDesc,
   Unlock,
-  Moon,
-  Sun,
   Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -39,6 +37,7 @@ import { usePasswords } from "@/hooks/usePasswords";
 import { useAuth } from "@/hooks/useAuth";
 import { Password } from "@/types";
 import { decryptPassword } from "@/lib/crypto";
+import { ModeToggle } from "@/components/mode-toggle";
 
 export default function DashboardPage() {
   const [visiblePasswordIds, setVisiblePasswordIds] = useState<Set<number>>(
@@ -53,9 +52,6 @@ export default function DashboardPage() {
   const [decryptedPasswords, setDecryptedPasswords] = useState<{
     [key: number]: string;
   }>({});
-  const [darkMode, setDarkMode] = useState<boolean>(
-    document.documentElement.classList.contains("dark")
-  );
 
   const navigate = useNavigate();
   const {
@@ -195,16 +191,6 @@ export default function DashboardPage() {
     return Array.from(uniqueCategories);
   }, [passwords]);
 
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    if (darkMode) {
-      document.documentElement.classList.remove("dark");
-    } else {
-      document.documentElement.classList.add("dark");
-    }
-    setDarkMode(!darkMode);
-  };
-
   // Only fetch passwords when the component mounts, not on every re-render
   useEffect(() => {
     // Fetch passwords only if we don't have them already
@@ -225,19 +211,7 @@ export default function DashboardPage() {
               <span className="text-gradient">Password Protector</span>
             </h1>
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleDarkMode}
-                className="hidden md:flex text-muted-foreground hover:text-foreground hover:bg-secondary/80"
-              >
-                {darkMode ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
-                <span className="sr-only">Toggle theme</span>
-              </Button>
+              <ModeToggle />
               <Button
                 onClick={handleLogout}
                 variant="outline"

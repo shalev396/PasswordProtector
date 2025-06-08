@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LockKeyhole, Menu, Moon, Sun } from "lucide-react";
+import { LockKeyhole, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"; // For mobile menu
 import { cn } from "@/lib/utils";
+import { ModeToggle } from "@/components/mode-toggle";
 
 const Navbar: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>("hero");
-  const [darkMode, setDarkMode] = useState<boolean>(false);
 
   // Updated navItems to include all sections in order
   const navItems = [
@@ -18,27 +18,6 @@ const Navbar: React.FC = () => {
     { href: "#decryption-demo", label: "Decryption Demo" }, // 5. Retrieving Your Secure Passwords
     { href: "#features", label: "Features" }, // 6. Everything You Need
   ];
-
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    if (darkMode) {
-      document.documentElement.classList.remove("dark");
-    } else {
-      document.documentElement.classList.add("dark");
-    }
-    setDarkMode(!darkMode);
-  };
-
-  // Check system preference for dark mode on initial load
-  useEffect(() => {
-    if (
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    ) {
-      document.documentElement.classList.add("dark");
-      setDarkMode(true);
-    }
-  }, []);
 
   // Monitor scroll position to highlight active section
   useEffect(() => {
@@ -115,19 +94,7 @@ const Navbar: React.FC = () => {
         {/* Right Side Buttons (Desktop) */}
         <div className="flex flex-1 items-center justify-end space-x-2">
           {/* Dark Mode Toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleDarkMode}
-            className="mr-2"
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
-          </Button>
+          <ModeToggle />
 
           <Button variant="ghost" asChild className="hidden md:inline-flex">
             <Link to="/login">Sign In</Link>
@@ -168,23 +135,7 @@ const Navbar: React.FC = () => {
                   ))}
                 </div>
                 <div className="mt-auto space-y-3 pt-6 border-t border-border/40">
-                  <Button
-                    variant="outline"
-                    className="w-full flex items-center justify-start gap-2"
-                    onClick={toggleDarkMode}
-                  >
-                    {darkMode ? (
-                      <>
-                        <Sun className="h-4 w-4" />
-                        <span>Light Mode</span>
-                      </>
-                    ) : (
-                      <>
-                        <Moon className="h-4 w-4" />
-                        <span>Dark Mode</span>
-                      </>
-                    )}
-                  </Button>
+                  <ModeToggle />
                   <Button
                     variant="ghost"
                     asChild
