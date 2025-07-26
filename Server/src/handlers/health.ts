@@ -1,30 +1,17 @@
-import "reflect-metadata";
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { formatJSONResponse } from "../utils/apiGateway";
-import { connectDB, closeConnection } from "../config/sequelize";
+import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
+import { successResponse, errorResponse } from "../utils/handlerHelper.js";
 
 export const handler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+  _event: APIGatewayProxyEventV2
+): Promise<APIGatewayProxyResultV2> => {
   try {
-    // Connect to the database and test connection
-    await connectDB();
-
-    return formatJSONResponse({
+    // Return success response
+    return successResponse({
       message: "Password Protector API Running!",
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Health check error:", error);
-    return formatJSONResponse(
-      {
-        message: "Service is experiencing issues",
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
-      500
-    );
-  } finally {
-    // Close database connection
-    await closeConnection();
+    console.error("Error in health handler:", error);
+    return errorResponse("Service is experiencing issues", 500);
   }
 };

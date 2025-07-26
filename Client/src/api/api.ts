@@ -43,7 +43,7 @@ declare module "axios" {
 // Make sure we're using the correct API URL
 const API_URL =
   import.meta.env.VITE_NODE_ENV === "development"
-    ? "http://localhost:5000/api"
+    ? "http://localhost:3000/api"
     : "/api";
 
 // Check server connectivity

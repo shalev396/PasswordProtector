@@ -1,134 +1,36 @@
-import { Sequelize } from "sequelize-typescript";
+import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
-import path from "path";
-import User from "../models/User"; // Import the User model
-import Password from "../models/Password"; // Import the Password model
+import pg from "pg";
 
+// Environment variables
 dotenv.config();
 
-const dbName = process.env.DB_DATABASE as string;
-const dbUser = process.env.DB_USER as string;
-const dbPassword = process.env.DB_PASSWORD as string;
-const dbHost = process.env.DB_SERVER || "localhost";
-const dbPort = parseInt(process.env.DB_PORT || "5432");
-
-if (!dbName || !dbUser || !dbPassword) {
-  throw new Error(
-    "Database credentials (DB_DATABASE, DB_USER, DB_PASSWORD) are missing in .env file"
-  );
+const ENV = process.env["ENV"] || "prod";
+let ENV_DATABASE_URL = "";
+if (ENV === "prod") {
+  ENV_DATABASE_URL = process.env["DATABASE_URL_PROD"] || "";
+} else if (ENV === "dev") {
+  ENV_DATABASE_URL = process.env["DATABASE_URL_DEV"] || "";
+} else if (ENV === "local") {
+  ENV_DATABASE_URL = process.env["DATABASE_URL_LOCAL"] || "";
 }
+const databaseUrl = ENV_DATABASE_URL;
 
-// Lambda function timeout default is 6 seconds (6000 ms)
-const LAMBDA_FUNCTION_TIMEOUT = 6000;
+const sequelize = new Sequelize(databaseUrl, {
+  dialect: "postgres",
+  dialectModule: pg,
+  dialectOptions: {
+    ssl:
+      ENV === "prod" || true
+        ? {
+            require: true,
+            rejectUnauthorized: false,
+          }
+        : undefined,
+    connectionTimeoutMillis: 60000,
+    statement_timeout: 60000,
+  },
+  logging: false,
+});
 
-let sequelize: Sequelize | null = null;
-
-const createSequelizeInstance = () => {
-  return new Sequelize(dbName, dbUser, dbPassword, {
-    host: dbHost,
-    port: dbPort,
-    dialect: "postgres",
-    logging: false, // Set to console.log for debugging SQL queries
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false,
-      },
-    },
-    pool: {
-      max: 2, // Reduced for Lambda to avoid too many connections
-      min: 0, // Set to 0 so connections can be cleaned up
-      acquire: 3000,
-      idle: 0, // Set to 0 so connections are eligible for cleanup immediately
-      evict: LAMBDA_FUNCTION_TIMEOUT, // Clean up connections after Lambda function timeout
-    },
-    models: [User, Password], // Pass model classes directly
-  });
-};
-
-const getSequelize = async () => {
-  if (!sequelize) {
-    sequelize = createSequelizeInstance();
-  } else {
-    // Check if connection is still valid, otherwise reinitialize
-    try {
-      await sequelize.authenticate({ retry: { max: 0 } });
-    } catch (error) {
-      console.log("Reinitializing sequelize instance due to connection issues");
-      // Create a fresh instance if there's an error
-      try {
-        if (sequelize.connectionManager) {
-          // Close existing connections if any are still open
-          await sequelize.connectionManager.close();
-        }
-      } catch (e) {
-        console.log("Error closing existing connection manager:", e);
-      }
-
-      sequelize = createSequelizeInstance();
-    }
-  }
-
-  return sequelize;
-};
-
-const connectDB = async () => {
-  try {
-    const sequelizeInstance = await getSequelize();
-
-    // Try to authenticate but don't keep retrying if it fails
-    await sequelizeInstance.authenticate({ retry: { max: 1 } });
-    console.log("Sequelize Connection has been established successfully.");
-
-    try {
-      // Use raw query to attempt to use existing tables without creating schema
-      // This allows the application to work even with limited permissions
-      await sequelizeInstance.query("SELECT 1");
-      console.log("Successfully verified database connection.");
-
-      // Skip automatic sync entirely
-      console.log(
-        "Skipping automatic model synchronization due to permission constraints."
-      );
-      console.log("Application will use existing tables if available.");
-      console.log(
-        "If you need to create tables, please run these commands as a database admin:"
-      );
-      console.log(`GRANT ALL ON SCHEMA public TO "${dbUser}";`);
-    } catch (syncError) {
-      console.error("Database query error:", syncError);
-      throw syncError;
-    }
-
-    return sequelizeInstance;
-  } catch (error) {
-    console.error("Unable to connect to the database via Sequelize:", error);
-
-    // If the connection fails, we should reset our instance to ensure we don't reuse it
-    sequelize = null;
-
-    throw error;
-  }
-};
-
-const closeConnection = async () => {
-  if (sequelize) {
-    try {
-      // Only close if it's not already closed
-      if (
-        sequelize.connectionManager &&
-        !sequelize.connectionManager.hasOwnProperty("getConnection")
-      ) {
-        await sequelize.connectionManager.close();
-        console.log("Database connection closed successfully");
-      }
-    } catch (error) {
-      console.error("Error closing database connection:", error);
-    } finally {
-      // After closing, we set sequelize to null for the next invocation
-      sequelize = null;
-    }
-  }
-};
-
-export { getSequelize, connectDB, closeConnection };
+export default sequelize;

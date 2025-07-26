@@ -1,62 +1,85 @@
-import "reflect-metadata";
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import dotenv from "dotenv";
+import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import bcrypt from "bcryptjs";
-import { body } from "express-validator";
-import { User } from "../../models/User";
+import jwt from "jsonwebtoken";
 import {
-  formatJSONResponse,
-  formatErrorResponse,
+  successResponse,
+  errorResponse,
   parseBody,
-  runValidation,
-} from "../../utils/apiGateway";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-} from "../../controllers/authController";
-import { connectDB, closeConnection } from "../../config/sequelize";
+} from "../../utils/handlerHelper.js";
+import { User } from "../../models/User.js";
+import sequelize from "../../config/sequelize.js";
+import "../../config/bootstrap.js";
 
-// Validation rules
-const validations = [
-  body("email").isEmail().withMessage("Please provide a valid email"),
-  body("password").exists().withMessage("Password is required"),
-];
+// Load environment variables
+dotenv.config();
+
+// Connect to database
+await sequelize.authenticate();
+
+// JWT Configuration
+const JWT_SECRET = process.env["JWT_SECRET"] || "your_jwt_secret";
+const ACCESS_TOKEN_EXPIRY = "15m"; // 15 minutes
+const REFRESH_TOKEN_EXPIRY = "7d"; // 7 days
+
+/**
+ * Generate JWT access token
+ */
+const generateAccessToken = (userId: number): string => {
+  return jwt.sign({ id: userId }, JWT_SECRET, {
+    expiresIn: ACCESS_TOKEN_EXPIRY,
+  });
+};
+
+/**
+ * Generate JWT refresh token
+ */
+const generateRefreshToken = (userId: number): string => {
+  return jwt.sign({ id: userId }, JWT_SECRET, {
+    expiresIn: REFRESH_TOKEN_EXPIRY,
+  });
+};
 
 export const handler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+  event: APIGatewayProxyEventV2
+): Promise<APIGatewayProxyResultV2> => {
   try {
-    await connectDB();
+    // No authentication required for login
 
-    // Validate input
-    const validationErrors = await runValidation(event, validations);
-    if (validationErrors) {
-      return formatErrorResponse("Validation failed", 400, validationErrors);
+    // Parse and validate input
+    const body = parseBody(event);
+    if (!body) {
+      return errorResponse("Invalid JSON body", 400);
     }
 
-    const { email, password } =
-      parseBody<{ email: string; password: string }>(event) || {};
+    const { email, password } = body;
 
+    // Simple validation
     if (!email || !password) {
-      return formatErrorResponse("Email and password are required", 400);
+      return errorResponse("Email and password are required", 400);
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      return errorResponse("Please provide a valid email", 400);
     }
 
     // Find the user
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return formatErrorResponse("Invalid credentials", 400);
+      return errorResponse("Invalid credentials", 400);
     }
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      return formatErrorResponse("Invalid credentials", 400);
+      return errorResponse("Invalid credentials", 400);
     }
 
     // Generate tokens
     const accessToken = generateAccessToken(user.id);
     const refreshToken = generateRefreshToken(user.id);
 
-    return formatJSONResponse({
+    return successResponse({
       accessToken,
       refreshToken,
       user: {
@@ -65,9 +88,7 @@ export const handler = async (
       },
     });
   } catch (error) {
-    console.error("Login error:", error);
-    return formatErrorResponse("Server error", 500);
-  } finally {
-    await closeConnection();
+    console.error("Error in login handler:", error);
+    return errorResponse("Server error", 500);
   }
 };

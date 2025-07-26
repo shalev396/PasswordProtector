@@ -1,27 +1,42 @@
-import "reflect-metadata";
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import dotenv from "dotenv";
+import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import jwt from "jsonwebtoken";
-import { body } from "express-validator";
-import { User } from "../../models/User";
 import {
-  formatJSONResponse,
-  formatErrorResponse,
+  successResponse,
+  errorResponse,
   parseBody,
-  runValidation,
-} from "../../utils/apiGateway";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-} from "../../controllers/authController";
-import { connectDB, closeConnection } from "../../config/sequelize";
+} from "../../utils/handlerHelper.js";
+import { User } from "../../models/User.js";
+import sequelize from "../../config/sequelize.js";
+import "../../config/bootstrap.js";
+// Load environment variables
+dotenv.config();
+
+// Connect to database
+await sequelize.authenticate();
 
 // Use the same JWT secret as auth controller
-const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
+const JWT_SECRET = process.env["JWT_SECRET"] || "your_jwt_secret";
+const ACCESS_TOKEN_EXPIRY = "15m"; // 15 minutes
+const REFRESH_TOKEN_EXPIRY = "7d"; // 7 days
 
-// Validation rules
-const validations = [
-  body("refreshToken").exists().withMessage("Refresh token is required"),
-];
+/**
+ * Generate JWT access token
+ */
+const generateAccessToken = (userId: number): string => {
+  return jwt.sign({ id: userId }, JWT_SECRET, {
+    expiresIn: ACCESS_TOKEN_EXPIRY,
+  });
+};
+
+/**
+ * Generate JWT refresh token
+ */
+const generateRefreshToken = (userId: number): string => {
+  return jwt.sign({ id: userId }, JWT_SECRET, {
+    expiresIn: REFRESH_TOKEN_EXPIRY,
+  });
+};
 
 // Define the structure of the JWT payload
 interface JwtPayload {
@@ -29,21 +44,21 @@ interface JwtPayload {
 }
 
 export const handler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+  event: APIGatewayProxyEventV2
+): Promise<APIGatewayProxyResultV2> => {
   try {
-    await connectDB();
+    // No authentication required for refresh token
 
-    // Validate input
-    const validationErrors = await runValidation(event, validations);
-    if (validationErrors) {
-      return formatErrorResponse("Validation failed", 400, validationErrors);
+    // Parse and validate input
+    const body = parseBody(event);
+    if (!body) {
+      return errorResponse("Invalid JSON body", 400);
     }
 
-    const { refreshToken } = parseBody<{ refreshToken: string }>(event) || {};
+    const { refreshToken } = body;
 
     if (!refreshToken) {
-      return formatErrorResponse("Refresh token is required", 401);
+      return errorResponse("Refresh token is required", 401);
     }
 
     try {
@@ -56,30 +71,28 @@ export const handler = async (
       });
 
       if (!user) {
-        return formatErrorResponse("User not found", 404);
+        return errorResponse("User not found", 404);
       }
 
       // Generate new tokens
       const newAccessToken = generateAccessToken(user.id);
       const newRefreshToken = generateRefreshToken(user.id);
 
-      return formatJSONResponse({
+      return successResponse({
         accessToken: newAccessToken,
         refreshToken: newRefreshToken,
         user: user,
       });
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
-        return formatErrorResponse("Refresh token expired", 403);
+        return errorResponse("Refresh token expired", 403);
       } else if (error instanceof jwt.JsonWebTokenError) {
-        return formatErrorResponse("Invalid refresh token", 403);
+        return errorResponse("Invalid refresh token", 403);
       }
       throw error;
     }
   } catch (error) {
-    console.error("Token refresh error:", error);
-    return formatErrorResponse("Server error", 500);
-  } finally {
-    await closeConnection();
+    console.error("Error in refreshToken handler:", error);
+    return errorResponse("Server error", 500);
   }
 };

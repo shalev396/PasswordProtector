@@ -1,46 +1,37 @@
-import {
-  Table,
-  Column,
-  Model,
-  DataType,
-  HasMany,
-  PrimaryKey,
-  AutoIncrement,
-  Unique,
-  AllowNull,
-} from "sequelize-typescript";
-import Password from "./Password"; // Import the Password model
+import { DataTypes, Model } from "sequelize";
+import sequelize from "../config/sequelize.js";
 
-@Table({
-  tableName: "Users",
-  timestamps: true, // Enables createdAt and updatedAt fields
-})
-export class User extends Model<User> {
-  @PrimaryKey
-  @AutoIncrement
-  @Column(DataType.INTEGER)
-  id!: number;
-
-  @AllowNull(false)
-  @Unique // Ensure email addresses are unique
-  @Column(DataType.STRING(255))
-  email!: string;
-
-  @AllowNull(false)
-  @Column({
-    type: DataType.STRING(255),
-    field: "password_hash", // Explicitly map to the column name in the DB
-  })
-  passwordHash!: string;
-
-  // Define the one-to-many relationship with Passwords
-  @HasMany(() => Password)
-  passwords!: Password[];
-
-  // Timestamps are automatically handled by `timestamps: true`
-  // createdAt!: Date;
-  // updatedAt!: Date;
+export class User extends Model {
+  public id!: number;
+  public email!: string;
+  public passwordHash!: string;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
-// Export the model as default
+User.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    email: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      unique: true,
+    },
+    passwordHash: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      field: "password_hash",
+    },
+  },
+  {
+    sequelize,
+    tableName: "Users",
+    timestamps: true,
+  }
+);
+
 export default User;

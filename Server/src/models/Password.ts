@@ -1,65 +1,77 @@
-import {
-  Table,
-  Column,
-  Model,
-  DataType,
-  ForeignKey,
-  BelongsTo,
-  PrimaryKey,
-  AutoIncrement,
-  AllowNull,
-} from "sequelize-typescript";
-import User from "./User"; // Import the User model
+import { DataTypes, Model } from "sequelize";
+import sequelize from "../config/sequelize.js";
+import { User } from "./User.js";
 
-@Table({
-  tableName: "Passwords",
-  timestamps: true, // Enables createdAt and updatedAt fields
-})
-export class Password extends Model<Password> {
-  @PrimaryKey
-  @AutoIncrement
-  @Column(DataType.INTEGER)
-  id!: number;
-
-  // Define the foreign key relationship to User
-  @AllowNull(false)
-  @ForeignKey(() => User) // Establishes the foreign key constraint
-  @Column({
-    type: DataType.INTEGER,
-    field: "user_id", // Explicitly map to the column name in the DB
-  })
-  userId!: number;
-
-  // Define the many-to-one relationship back to User
-  @BelongsTo(() => User)
-  user!: User;
-
-  @AllowNull(false)
-  @Column(DataType.STRING(255))
-  title!: string;
-
-  @Column(DataType.STRING(255))
-  website?: string; // Optional field
-
-  @Column(DataType.STRING(255))
-  username?: string; // Optional field
-
-  @AllowNull(false)
-  @Column({
-    type: DataType.TEXT, // Use TEXT for potentially long passwords
-  })
-  password!: string;
-
-  @Column(DataType.TEXT) // Use TEXT for potentially long notes
-  notes?: string; // Optional field
-
-  @Column(DataType.STRING(100))
-  category?: string; // Optional field
-
-  // Timestamps are automatically handled by `timestamps: true`
-  // createdAt!: Date;
-  // updatedAt!: Date;
+export class Password extends Model {
+  public id!: number;
+  public userId!: number;
+  public title!: string;
+  public website?: string;
+  public username?: string;
+  public password!: string;
+  public notes?: string;
+  public category?: string;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
-// Export the model as default
+Password.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: "user_id",
+      references: {
+        model: "Users",
+        key: "id",
+      },
+    },
+    title: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+    website: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    username: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    password: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    notes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    category: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+  },
+  {
+    sequelize,
+    tableName: "Passwords",
+    timestamps: true,
+  }
+);
+
+// Define associations
+Password.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+});
+
+User.hasMany(Password, {
+  foreignKey: "userId",
+  as: "passwords",
+});
+
 export default Password;
