@@ -1,53 +1,49 @@
 const path = require("path");
 const fs = require("fs");
 const webpack = require("webpack");
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 // Function to find all handler files recursively
-function findHandlers(dir, basePath = "") {
-  const handlers = {};
-  const items = fs.readdirSync(dir);
+function findHandlers(dir) {
+  const entries = {};
 
-  items.forEach((item) => {
-    const fullPath = path.join(dir, item);
-    const stat = fs.statSync(fullPath);
-
-    if (stat.isDirectory()) {
-      // Recursively search subdirectories
-      Object.assign(
-        handlers,
-        findHandlers(fullPath, path.join(basePath, item))
-      );
-    } else if (item.endsWith(".ts") && !item.endsWith(".d.ts")) {
-      // Create entry name: auth/login, passwords/create, etc.
-      const entryName = basePath
-        ? `${basePath}/${path.parse(item).name}`
-        : path.parse(item).name;
-      handlers[entryName] = fullPath;
+  // First, check for .ts files directly in the handlers directory
+  fs.readdirSync(dir, { withFileTypes: true }).forEach((dirent) => {
+    if (
+      dirent.isFile() &&
+      dirent.name.endsWith(".ts") &&
+      !dirent.name.endsWith(".d.ts")
+    ) {
+      const name = path.parse(dirent.name).name;
+      entries[name] = path.join(dir, dirent.name);
     }
   });
 
-  return handlers;
+  // Then, list immediate subdirectories of src/handlers
+  fs.readdirSync(dir, { withFileTypes: true }).forEach((dirent) => {
+    if (!dirent.isDirectory()) return;
+    const sub = dirent.name;
+    const subdir = path.join(dir, sub);
+    // grab every .ts (not .d.ts) in that subfolder
+    fs.readdirSync(subdir).forEach((file) => {
+      if (file.endsWith(".ts") && !file.endsWith(".d.ts")) {
+        const name = `${sub}/${path.parse(file).name}`;
+        entries[name] = path.join(subdir, file);
+      }
+    });
+  });
+  return entries;
 }
-
-// Find all handlers in the src/handlers directory
 const handlersDir = path.resolve(__dirname, "src", "handlers");
 const handlers = findHandlers(handlersDir);
+console.log("Handler entries:", Object.keys(handlers));
 
-console.log("Found handlers:", Object.keys(handlers));
-
-// Create webpack entries from handlers
-const entries = {};
-Object.keys(handlers).forEach((entryName) => {
-  entries[entryName] = handlers[entryName];
-});
-
+// Function to create isolated webpack config for a single handler
 module.exports = {
   mode: "production",
   target: "node",
 
-  // Multiple entry points - one for each handler
-  entry: entries,
+  // Single entry point for complete isolation
+  entry: handlers,
 
   output: {
     path: path.resolve(__dirname, "build"),
@@ -55,9 +51,17 @@ module.exports = {
     library: {
       type: "module",
     },
-    clean: true,
+    clean: true, // Only clean on first build
+    chunkFormat: false, // Disable chunk format to prevent chunk creation
   },
-
+  externals: {
+    // Don't bundle AWS SDK - it's provided by Lambda runtime
+    "aws-sdk": "aws-sdk",
+    "@aws-sdk/client-s3": "commonjs @aws-sdk/client-s3",
+    "@aws-sdk/client-lambda": "commonjs @aws-sdk/client-lambda",
+    "@aws-sdk/client-sns": "commonjs @aws-sdk/client-sns",
+    "@aws-sdk/client-ses": "commonjs @aws-sdk/client-ses",
+  },
   resolve: {
     extensions: [".ts", ".js", ".json"],
     extensionAlias: {
@@ -101,13 +105,7 @@ module.exports = {
     ],
   },
 
-  // Bundle ALL dependencies - no externals needed
-  // The createRequire polyfill handles any CommonJS compatibility issues
-  externals: [],
-
   plugins: [
-    new CleanWebpackPlugin(),
-
     // Add a banner to make require() available in ES modules
     new webpack.BannerPlugin({
       banner: `import {createRequire} from 'module';const require=createRequire(import.meta.url);`,
@@ -116,9 +114,17 @@ module.exports = {
   ],
 
   optimization: {
-    minimize: true,
-    // Don't split chunks - each handler should be self-contained
+    minimize: false,
+    // Completely disable chunk splitting
     splitChunks: false,
+    // Disable runtime chunk
+    runtimeChunk: false,
+    // Disable module concatenation that could cause issues
+    concatenateModules: false,
+    // Disable side effects optimization that could split modules
+    sideEffects: false,
+    // Disable used exports optimization that could split modules
+    usedExports: false,
   },
 
   performance: {
