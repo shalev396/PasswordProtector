@@ -15,10 +15,10 @@ const sectionNavItems = [
 ] as const;
 
 const vaultEntries = [
-  { key: 'banking', color: 'text-green-400' },
   { key: 'email', color: 'text-blue-400' },
   { key: 'social', color: 'text-purple-400' },
-  { key: 'dev', color: 'text-orange-400' },
+  { key: 'api', color: 'text-orange-400' },
+  { key: 'secrets', color: 'text-green-400' },
 ] as const;
 
 export function LandingHero() {

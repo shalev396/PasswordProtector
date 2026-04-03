@@ -1,5 +1,16 @@
-<!-- Dark theme: primary background + black symbol, no extra halo -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-  <rect width="24" height="24" rx="6" fill="#8b5cf6"/>
-  <path d="M 13 2 L 3 14 h 9 l -1 8 10 -12 h -9 l 1 -8 z" fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <!-- Shield -->
+  <path d="M12 2L3 7v5c0 5.25 3.83 10.15 9 11.25C17.17 22.15 21 17.25 21 12V7L12 2z" fill="none" stroke="url(#grad)" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- Lock body -->
+  <rect x="9" y="11" width="6" height="5" rx="1" fill="none" stroke="url(#grad)" stroke-width="1.2"/>
+  <!-- Lock shackle -->
+  <path d="M10 11V9a2 2 0 0 1 4 0v2" fill="none" stroke="url(#grad)" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Keyhole -->
+  <circle cx="12" cy="13.5" r="0.75" fill="#8B5CF6"/>
 </svg>

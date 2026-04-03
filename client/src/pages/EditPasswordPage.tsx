@@ -120,7 +120,7 @@ export default function EditPasswordPage() {
   if (fetchError) {
     return (
       <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        <PageMetadata title={`${t('dashboard.form.editTitle')} | Elytra`} noIndex />
+        <PageMetadata title={`${t('dashboard.form.editTitle')} | Password Protector`} noIndex />
         <div className="max-w-2xl mx-auto rounded-md bg-destructive/10 p-6 text-center text-destructive">
           <p className="text-lg font-medium">{t('dashboard.errorLoading')}</p>
         </div>
@@ -132,7 +132,7 @@ export default function EditPasswordPage() {
   if (isLoadingState || !decryptedData) {
     return (
       <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        <PageMetadata title={`${t('dashboard.form.editTitle')} | Elytra`} noIndex />
+        <PageMetadata title={`${t('dashboard.form.editTitle')} | Password Protector`} noIndex />
         <div className="flex flex-col items-center justify-center gap-4 py-16">
           <div className="size-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           <p className="text-muted-foreground">{t('dashboard.loadingPassword')}</p>
@@ -143,7 +143,7 @@ export default function EditPasswordPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      <PageMetadata title={`${t('dashboard.form.editTitle')} | Elytra`} noIndex />
+      <PageMetadata title={`${t('dashboard.form.editTitle')} | Password Protector`} noIndex />
       <FadeContent>
         <PasswordForm
           mode="edit"

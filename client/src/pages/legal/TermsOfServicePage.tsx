@@ -19,11 +19,13 @@ export default function TermsOfServicePage() {
     'section4',
     'section5',
     'section6',
+    'section7',
+    'section8',
   ] as const;
 
   return (
     <Card>
-      <PageMetadata title="Terms of Service | Elytra" />
+      <PageMetadata title="Terms of Service | Password Protector" />
       <CardHeader>
         <CardTitle className="text-3xl">{t('legal.terms.title')}</CardTitle>
         <p className="text-sm text-muted-foreground">{t('legal.terms.lastUpdated')}</p>

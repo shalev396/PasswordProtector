@@ -10,10 +10,10 @@ export const landing = {
     vault: {
       title: 'My Vault',
       badge: 'AES-256 Encrypted',
-      banking: 'Banking',
       email: 'Email',
       social: 'Social Media',
-      dev: 'Dev Tools',
+      api: 'API Keys',
+      secrets: 'App Secrets',
     },
   },
   nav: {
@@ -58,8 +58,9 @@ export const landing = {
         'Access your vault from any modern browser. Your encrypted data syncs securely across devices.',
     },
     theme: {
-      title: 'Dark & Light Mode',
-      description: 'Full theme support with automatic detection. Easy on the eyes, day or night.',
+      title: 'Import & Export',
+      description:
+        'Import passwords from other managers or export your encrypted vault for backup.',
     },
   },
   tech: {
@@ -102,17 +103,27 @@ export const landing = {
     },
     retrieval: {
       title: 'Retrieval Journey',
-      step6: {
+      step1: {
         title: 'You Request a Password',
         description:
           'When you need a password, your browser sends an authenticated request to our servers.',
       },
-      step7: {
+      step2: {
+        title: 'Server Fetches Encrypted Data',
+        description:
+          'The doubly encrypted data is retrieved from the database. It remains fully protected at every moment.',
+      },
+      step3: {
         title: 'Server Removes Its Layer',
         description:
           'Our server decrypts its layer, leaving the data still encrypted with your personal key.',
       },
-      step8: {
+      step4: {
+        title: 'Transported Back Securely',
+        description:
+          'The still-encrypted data is sent back to your browser over HTTPS. Even if intercepted, it is unreadable.',
+      },
+      step5: {
         title: 'Your Browser Decrypts',
         description:
           'Your browser uses your secret key to decrypt the final layer. The plaintext appears only on your screen.',

@@ -4,7 +4,7 @@ import { PageMetadata } from '@/components/shared/PageMetadata';
 export default function ForgotPasswordPage() {
   return (
     <>
-      <PageMetadata title="Forgot Password | Elytra" noIndex />
+      <PageMetadata title="Forgot Password | Password Protector" noIndex />
       <ForgotPasswordForm />
     </>
   );

@@ -173,7 +173,7 @@ export default function DashboardPage() {
   if (!hasMasterPassword && !isLoading) {
     return (
       <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
-        <PageMetadata title="Dashboard | Elytra" noIndex />
+        <PageMetadata title="Dashboard | Password Protector" noIndex />
         <MasterPasswordPrompt onSubmit={handleMasterPasswordSubmit} />
       </div>
     );
@@ -181,7 +181,7 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
-      <PageMetadata title="Dashboard | Elytra" noIndex />
+      <PageMetadata title="Dashboard | Password Protector" noIndex />
 
       <FadeContent>
         <div className="flex flex-col gap-6">

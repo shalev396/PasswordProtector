@@ -1,6 +1,6 @@
 export const featuresPage = {
   title: 'Powerful features',
-  titleHighlight: 'for modern apps',
+  titleHighlight: 'for your passwords',
   subtitle:
-    'Everything you need to build production-ready serverless applications. No setup required.',
+    'Everything you need to securely store and manage your passwords with zero-knowledge encryption.',
 };

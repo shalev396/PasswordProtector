@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { environment } from '../config/environment.js';
 
 const PBKDF2_ITERATIONS = 100_000;
 const KEY_LENGTH = 32;
@@ -23,9 +24,13 @@ export function generateUserSeed(): string {
  * cannot derive the server key without the env var.
  */
 function deriveServerKey(userSeed: string): Buffer {
-  const serverSecret = process.env.SERVER_ENCRYPTION_SECRET;
-
-  return crypto.pbkdf2Sync(userSeed, serverSecret, PBKDF2_ITERATIONS, KEY_LENGTH, DIGEST);
+  return crypto.pbkdf2Sync(
+    userSeed,
+    environment.serverEncryptionSecret,
+    PBKDF2_ITERATIONS,
+    KEY_LENGTH,
+    DIGEST,
+  );
 }
 
 /**

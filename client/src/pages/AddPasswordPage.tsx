@@ -62,7 +62,7 @@ export default function AddPasswordPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      <PageMetadata title={`${t('dashboard.form.addTitle')} | Elytra`} noIndex />
+      <PageMetadata title={`${t('dashboard.form.addTitle')} | Password Protector`} noIndex />
       <FadeContent>
         <PasswordForm
           mode="add"

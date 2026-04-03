@@ -57,7 +57,7 @@ export default function ConfirmSignUpPage() {
   if (isConfirmed) {
     return (
       <>
-        <PageMetadata title="Confirm Sign Up | Elytra" noIndex />
+        <PageMetadata title="Confirm Sign Up | Password Protector" noIndex />
         <div className="flex flex-col gap-2 text-center">
           <h1 className="text-3xl font-bold bg-linear-to-r from-gradient-from to-gradient-to bg-clip-text text-transparent">
             {t('auth.confirm.title')}
@@ -75,7 +75,7 @@ export default function ConfirmSignUpPage() {
 
   return (
     <>
-      <PageMetadata title="Confirm Sign Up | Elytra" noIndex />
+      <PageMetadata title="Confirm Sign Up | Password Protector" noIndex />
       <div className="flex flex-col gap-2 text-center">
         <h1 className="text-3xl font-bold bg-linear-to-r from-gradient-from to-gradient-to bg-clip-text text-transparent">
           {t('auth.confirm.title')}

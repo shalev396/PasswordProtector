@@ -1,6 +1,6 @@
 export const auth = {
   branded: {
-    description: 'Your full-stack serverless platform',
+    description: 'Zero-knowledge password protection',
     comingSoon: 'Coming soon',
     confirmEmailSent:
       "We've sent a confirmation link to your email address. Please click the link to verify your account.",
@@ -26,9 +26,9 @@ export const auth = {
     termsOfService: 'Terms of Service',
     and: 'and',
     privacyPolicy: 'Privacy Policy',
-    feature1: 'Build serverless apps lightning fast',
-    feature2: 'Production-ready auth and file uploads',
-    feature3: 'Secure and easy to customize',
+    feature1: 'AES-256-GCM dual-layer encryption',
+    feature2: 'Zero-knowledge architecture — we can never see your passwords',
+    feature3: 'Open source and fully auditable',
   },
   signUp: {
     title: 'Create your account',

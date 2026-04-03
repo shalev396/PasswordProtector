@@ -5,11 +5,11 @@ import { app } from './app';
  * PageMetadata merges these with per-page overrides.
  */
 export const DEFAULT_METADATA = {
-  title: 'Elytra | Full-Stack Serverless Template',
+  title: 'Password Protector | Secure Password Manager',
   description:
-    'A production-ready full-stack serverless template with authentication, file uploads, and modern UI components. Built with React, TypeScript, AWS Lambda, and Tailwind CSS.',
-  keywords: 'serverless, react, typescript, aws, lambda, template, full-stack, authentication',
-  author: 'Elytra',
+    'A zero-knowledge password manager with client-side encryption. Securely store, generate, and manage your passwords with AES-256-GCM encryption.',
+  keywords: 'password manager, zero-knowledge, encryption, secure, AES-256, password generator',
+  author: 'Password Protector',
   image: '/og-default.png',
   robots: 'index, follow' as const,
   ogType: 'website',

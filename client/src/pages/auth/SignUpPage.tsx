@@ -49,7 +49,7 @@ export default function SignUpPage() {
 
   return (
     <>
-      <PageMetadata title="Sign Up | Elytra" noIndex />
+      <PageMetadata title="Sign Up | Password Protector" noIndex />
       <div className="flex flex-col gap-2 text-center">
         <h1 className="text-3xl font-bold bg-linear-to-r from-gradient-from to-gradient-to bg-clip-text text-transparent">
           {t('auth.signUp.title')}

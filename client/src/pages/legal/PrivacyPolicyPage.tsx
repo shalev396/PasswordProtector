@@ -19,11 +19,13 @@ export default function PrivacyPolicyPage() {
     'section4',
     'section5',
     'section6',
+    'section7',
+    'section8',
   ] as const;
 
   return (
     <Card>
-      <PageMetadata title="Privacy Policy | Elytra" />
+      <PageMetadata title="Privacy Policy | Password Protector" />
       <CardHeader>
         <CardTitle className="text-3xl">{t('legal.privacy.title')}</CardTitle>
         <p className="text-sm text-muted-foreground">{t('legal.privacy.lastUpdated')}</p>

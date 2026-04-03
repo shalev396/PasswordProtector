@@ -56,7 +56,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <PageMetadata title="Login | Elytra" noIndex />
+      <PageMetadata title="Login | Password Protector" noIndex />
       <div className="flex flex-col gap-2 text-center">
         <h1 className="text-3xl font-bold bg-linear-to-r from-gradient-from to-gradient-to bg-clip-text text-transparent">
           {t('auth.login.title')}

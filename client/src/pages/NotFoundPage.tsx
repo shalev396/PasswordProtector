@@ -13,7 +13,7 @@ export default function NotFoundPage() {
 
   return (
     <div className="flex min-h-svh flex-col">
-      <PageMetadata title="Page Not Found | Elytra" noIndex />
+      <PageMetadata title="Page Not Found | Password Protector" noIndex />
       <NavBar />
       <main className="flex flex-1 flex-col items-center justify-center gap-6 p-6">
         <div className="flex flex-col items-center gap-4 text-center">

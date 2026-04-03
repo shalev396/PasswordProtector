@@ -9,7 +9,7 @@ export function ShinyText({
 }) {
   return (
     <span
-      className={`inline-block bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] bg-clip-text text-transparent animate-[shine_3s_linear_infinite] ${className}`}
+      className={`inline-block overflow-visible leading-tight pb-1 bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] bg-clip-text text-transparent animate-[shine_3s_linear_infinite] ${className}`}
       style={{
         WebkitTextFillColor: 'transparent',
         WebkitBackgroundClip: 'text',

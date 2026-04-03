@@ -51,7 +51,7 @@ export default function App() {
   }, [isRestoringSession, dispatch]);
 
   return (
-    <ThemeProvider storageKey="elytra-ui-theme">
+    <ThemeProvider storageKey="password-protector-ui-theme">
       <DirectionalToaster />
       <AppRouter />
     </ThemeProvider>

@@ -5,6 +5,7 @@ import {
   Server,
   Database,
   MousePointer,
+  Download,
   Unlock,
   CheckCircle,
   ShieldAlert,
@@ -31,9 +32,11 @@ const encryptionSteps: StepConfig[] = [
 ];
 
 const retrievalSteps: StepConfig[] = [
-  { icon: MousePointer, translationKey: 'step6' },
-  { icon: Unlock, translationKey: 'step7' },
-  { icon: CheckCircle, translationKey: 'step8' },
+  { icon: MousePointer, translationKey: 'step1' },
+  { icon: Database, translationKey: 'step2' },
+  { icon: Unlock, translationKey: 'step3' },
+  { icon: Download, translationKey: 'step4' },
+  { icon: CheckCircle, translationKey: 'step5' },
 ];
 
 function StepCard({
@@ -101,23 +104,53 @@ export function LandingTech() {
           </p>
         </div>
 
-        <div className="mx-auto max-w-3xl">
-          {/* Encryption Journey */}
-          <FadeContent delay={100}>
-            <h3 className="mb-8 text-center text-xl font-bold sm:mb-10 sm:text-2xl">
-              <GradientText>{t('landing.tech.encryption.title')}</GradientText>
-            </h3>
-          </FadeContent>
+        <div className="mx-auto max-w-6xl">
+          {/* Side-by-side on lg+, stacked on mobile */}
+          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+            {/* Encryption Journey */}
+            <div>
+              <FadeContent delay={100}>
+                <h3 className="mb-8 text-center text-xl font-bold sm:mb-10 sm:text-2xl">
+                  <GradientText>{t('landing.tech.encryption.title')}</GradientText>
+                </h3>
+              </FadeContent>
 
-          <div className="mb-12">
-            {encryptionSteps.map((step, index) => (
-              <StepCard key={step.translationKey} step={step} index={index} section="encryption" />
-            ))}
+              <div className="mb-12 lg:mb-0">
+                {encryptionSteps.map((step, index) => (
+                  <StepCard
+                    key={step.translationKey}
+                    step={step}
+                    index={index}
+                    section="encryption"
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Retrieval Journey */}
+            <div>
+              <FadeContent delay={300}>
+                <h3 className="mb-8 text-center text-xl font-bold sm:mb-10 sm:text-2xl">
+                  <GradientText>{t('landing.tech.retrieval.title')}</GradientText>
+                </h3>
+              </FadeContent>
+
+              <div className="mb-12 lg:mb-0">
+                {retrievalSteps.map((step, index) => (
+                  <StepCard
+                    key={step.translationKey}
+                    step={step}
+                    index={index}
+                    section="retrieval"
+                  />
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Zero Knowledge Callout */}
+          {/* Zero Knowledge Callout - full width between columns */}
           <FadeContent delay={200}>
-            <ElectricBorder className="mb-16">
+            <ElectricBorder className="my-16">
               <SpotlightCard className="bg-card" spotlightColor="rgba(var(--primary-rgb), 0.2)">
                 <div className="flex flex-col items-center gap-4 p-6 text-center sm:p-10">
                   <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:size-16">
@@ -133,19 +166,6 @@ export function LandingTech() {
               </SpotlightCard>
             </ElectricBorder>
           </FadeContent>
-
-          {/* Retrieval Journey */}
-          <FadeContent delay={300}>
-            <h3 className="mb-8 text-center text-xl font-bold sm:mb-10 sm:text-2xl">
-              <GradientText>{t('landing.tech.retrieval.title')}</GradientText>
-            </h3>
-          </FadeContent>
-
-          <div className="mb-12">
-            {retrievalSteps.map((step, index) => (
-              <StepCard key={step.translationKey} step={step} index={index} section="retrieval" />
-            ))}
-          </div>
 
           {/* Final tagline */}
           <FadeContent delay={400}>

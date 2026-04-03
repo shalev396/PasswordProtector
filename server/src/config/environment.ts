@@ -1,5 +1,4 @@
-type DatabaseProvider = 'sequelize' | 'mongoose';
-type Env = 'dev' | 'qa' | 'prod';
+import type { DatabaseProvider, Env } from '../types/env.d.ts';
 
 class Environment {
   readonly #env: Env;
@@ -11,24 +10,26 @@ class Environment {
   readonly #cognitoUserPoolId: string;
   readonly #cognitoIssuer: string;
   readonly #domainName: string;
+  readonly #serverEncryptionSecret: string;
 
   constructor() {
     this.#env = process.env.ENV;
     this.#awsRegion = process.env.AWS_REGION;
 
+    // serverless-offline sets IS_OFFLINE=true at runtime.
+    // When running locally, swap to DATABASE_URL_LOCAL (bastion-forwarded endpoint).
     const isOffline = process.env.IS_OFFLINE === 'true';
-    this.#databaseUrl =
-      isOffline &&
-      process.env.DATABASE_URL_LOCAL !== undefined &&
-      process.env.DATABASE_URL_LOCAL !== ''
-        ? process.env.DATABASE_URL_LOCAL
-        : process.env.DATABASE_URL;
+    this.#databaseUrl = isOffline
+      ? (process.env.DATABASE_URL_LOCAL ?? '')
+      : process.env.DATABASE_URL;
+
     this.#databaseProvider = process.env.DATABASE_PROVIDER;
     this.#s3ClientBucketName = process.env.S3_CLIENT_BUCKET_NAME;
     this.#cognitoClientId = process.env.COGNITO_CLIENT_ID;
     this.#cognitoUserPoolId = process.env.COGNITO_USER_POOL_ID;
     this.#cognitoIssuer = process.env.COGNITO_ISSUER;
     this.#domainName = process.env.DOMAIN_NAME;
+    this.#serverEncryptionSecret = process.env.SERVER_ENCRYPTION_SECRET;
   }
 
   get env(): Env {
@@ -65,6 +66,10 @@ class Environment {
 
   get domainName(): string {
     return this.#domainName;
+  }
+
+  get serverEncryptionSecret(): string {
+    return this.#serverEncryptionSecret;
   }
 }
 

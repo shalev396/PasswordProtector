@@ -1,12 +1,14 @@
+export type Env = 'dev' | 'qa' | 'prod';
+export type DatabaseProvider = 'sequelize' | 'mongoose';
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      ENV: 'dev' | 'qa' | 'prod';
+      ENV: Env;
       AWS_REGION: string;
       DATABASE_URL: string;
       DATABASE_URL_LOCAL?: string;
       IS_OFFLINE?: string;
-      DATABASE_PROVIDER: 'mongoose' | 'sequelize';
+      DATABASE_PROVIDER: DatabaseProvider;
       S3_CLIENT_BUCKET_NAME: string;
       COGNITO_CLIENT_ID: string;
       COGNITO_USER_POOL_ID: string;
