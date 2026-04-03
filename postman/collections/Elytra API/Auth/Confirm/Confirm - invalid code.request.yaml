@@ -1,0 +1,21 @@
+$kind: http-request
+url: '{{baseUrl}}/public/auth/confirm'
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: '{}'
+scripts:
+  - type: beforeRequest
+    code: |-
+      const email = pm.collectionVariables.get('testEmail') || pm.environment.get('testEmail');
+      pm.request.body.raw = JSON.stringify({ email, code: '000000' });
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 400', function () {
+          pm.response.to.have.status(400);
+      });
+    language: text/javascript
+order: 3000

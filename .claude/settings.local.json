@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep:*)",
+      "Bash(cp /tmp/Elytra/package.json C:/Projects/Shalev396/PasswordProtector/)",
+      "Bash(cp /tmp/Elytra/prettier.config.js C:/Projects/Shalev396/PasswordProtector/)",
+      "Bash(cp /tmp/Elytra/.prettierignore C:/Projects/Shalev396/PasswordProtector/)",
+      "Bash(cp /tmp/Elytra/.gitignore C:/Projects/Shalev396/PasswordProtector/)",
+      "Bash(mkdir -p C:/Projects/Shalev396/PasswordProtector/.husky C:/Projects/Shalev396/PasswordProtector/.vscode)",
+      "Bash(cp /tmp/Elytra/server/webpack.config.cjs C:/Projects/Shalev396/PasswordProtector/server/)",
+      "Bash(cp /tmp/Elytra/server/eslint.config.js C:/Projects/Shalev396/PasswordProtector/server/)",
+      "Bash(cp /tmp/Elytra/server/tsconfig.json C:/Projects/Shalev396/PasswordProtector/server/)",
+      "Bash(cp /tmp/Elytra/server/src/config/providers/sequelize.ts C:/Projects/Shalev396/PasswordProtector/server/src/config/providers/)",
+      "Bash(cp /tmp/Elytra/server/src/config/providers/mongoose.ts C:/Projects/Shalev396/PasswordProtector/server/src/config/providers/)",
+      "Bash(npm install:*)"
+    ]
+  }
+}

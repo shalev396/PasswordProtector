@@ -24,13 +24,13 @@ A zero-knowledge password manager. The server never sees plaintext passwords —
 
 ### Password Vault (CRUD)
 
-| Operation | Endpoint                    | Auth     | Notes                                      |
-| --------- | --------------------------- | -------- | ------------------------------------------ |
-| List all  | `GET /api/private/passwords`      | Required | Returns all passwords for the authenticated user |
-| Get one   | `GET /api/private/passwords/:id`  | Required | Ownership verified server-side             |
-| Create    | `POST /api/private/passwords`     | Required | Password field is already encrypted client-side |
-| Update    | `PUT /api/private/passwords/:id`  | Required | Ownership verified; re-encrypted if changed |
-| Delete    | `DELETE /api/private/passwords/:id` | Required | Ownership verified; hard delete            |
+| Operation | Endpoint                            | Auth     | Notes                                            |
+| --------- | ----------------------------------- | -------- | ------------------------------------------------ |
+| List all  | `GET /api/private/passwords`        | Required | Returns all passwords for the authenticated user |
+| Get one   | `GET /api/private/passwords/:id`    | Required | Ownership verified server-side                   |
+| Create    | `POST /api/private/passwords`       | Required | Password field is already encrypted client-side  |
+| Update    | `PUT /api/private/passwords/:id`    | Required | Ownership verified; re-encrypted if changed      |
+| Delete    | `DELETE /api/private/passwords/:id` | Required | Ownership verified; hard delete                  |
 
 ### Password Generator
 
@@ -52,30 +52,30 @@ A zero-knowledge password manager. The server never sees plaintext passwords —
 
 ### Users
 
-| Column     | Type         | Notes                    |
-| ---------- | ------------ | ------------------------ |
-| id         | UUID (PK)    | Auto-generated           |
-| cognitoSub | VARCHAR      | Unique, from Cognito     |
-| name       | VARCHAR      | Nullable                 |
-| email      | VARCHAR      | From Cognito ID token    |
-| lastLoginAt| TIMESTAMP    | Updated on each login    |
-| createdAt  | TIMESTAMP    | Auto                     |
-| updatedAt  | TIMESTAMP    | Auto                     |
+| Column      | Type      | Notes                 |
+| ----------- | --------- | --------------------- |
+| id          | UUID (PK) | Auto-generated        |
+| cognitoSub  | VARCHAR   | Unique, from Cognito  |
+| name        | VARCHAR   | Nullable              |
+| email       | VARCHAR   | From Cognito ID token |
+| lastLoginAt | TIMESTAMP | Updated on each login |
+| createdAt   | TIMESTAMP | Auto                  |
+| updatedAt   | TIMESTAMP | Auto                  |
 
 ### Passwords
 
-| Column   | Type         | Notes                              |
-| -------- | ------------ | ---------------------------------- |
-| id       | UUID (PK)    | Auto-generated                     |
-| userId   | UUID (FK)    | References Users.id, cascade delete |
-| title    | VARCHAR(255) | Required                           |
-| username | VARCHAR(255) | Nullable                           |
-| password | TEXT         | Encrypted ciphertext (required)    |
-| website  | VARCHAR(255) | Nullable                           |
-| notes    | TEXT         | Nullable                           |
-| category | VARCHAR(100) | Nullable                           |
-| createdAt| TIMESTAMP    | Auto                               |
-| updatedAt| TIMESTAMP    | Auto                               |
+| Column    | Type         | Notes                               |
+| --------- | ------------ | ----------------------------------- |
+| id        | UUID (PK)    | Auto-generated                      |
+| userId    | UUID (FK)    | References Users.id, cascade delete |
+| title     | VARCHAR(255) | Required                            |
+| username  | VARCHAR(255) | Nullable                            |
+| password  | TEXT         | Encrypted ciphertext (required)     |
+| website   | VARCHAR(255) | Nullable                            |
+| notes     | TEXT         | Nullable                            |
+| category  | VARCHAR(100) | Nullable                            |
+| createdAt | TIMESTAMP    | Auto                                |
+| updatedAt | TIMESTAMP    | Auto                                |
 
 ## Infrastructure
 
