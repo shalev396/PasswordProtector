@@ -6,8 +6,7 @@ import { FadeContent } from '@/components/animations/FadeContent';
 import { SpotlightCard } from '@/components/ui/spotlight-card';
 import { pathTo, ROUTES } from '@/router/routes';
 import { useLanguage } from '@/hooks/useLanguage';
-import { Code } from 'lucide-react';
-import { app } from '@/data';
+import { ShieldCheck } from 'lucide-react';
 
 export function LandingCta() {
   const { t } = useTranslation();
@@ -25,15 +24,12 @@ export function LandingCta() {
             <p className="text-muted-foreground mx-auto mt-3 max-w-2xl text-base sm:mt-4 sm:text-lg">
               {t('landing.cta.description')}
             </p>
-            <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:justify-center sm:gap-4">
+            <div className="mt-6 flex justify-center sm:mt-8">
               <Button size="lg" asChild className="w-full sm:w-auto">
-                <Link to={pathTo(ROUTES.AUTH.SIGNUP, language)}>{t('landing.cta.button')}</Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
-                <a href={app.repoUrl} target="_blank" rel="noopener noreferrer">
-                  <Code className="me-2 size-4" />
-                  {t('landing.hero.viewGithub')}
-                </a>
+                <Link to={pathTo(ROUTES.AUTH.SIGNUP, language)}>
+                  <ShieldCheck className="me-2 size-5" />
+                  {t('landing.cta.button')}
+                </Link>
               </Button>
             </div>
           </div>

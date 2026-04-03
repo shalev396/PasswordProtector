@@ -96,6 +96,7 @@ provider:
     COGNITO_USER_POOL_ID: ${self:custom.cognitoEnv.userPoolId}
     COGNITO_ISSUER: ${self:custom.cognitoEnv.issuer}
     DOMAIN_NAME: ${env:DOMAIN_NAME}
+    SERVER_ENCRYPTION_SECRET: ${env:SERVER_ENCRYPTION_SECRET}
 
   iam:
     role:

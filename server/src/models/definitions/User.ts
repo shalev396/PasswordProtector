@@ -3,6 +3,7 @@ export interface UserData {
   cognitoSub: string;
   name: string | null;
   email: string | null;
+  encryptionSeed: string | null;
   lastLoginAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -17,7 +18,7 @@ export interface IUserRepository {
     name: string | null;
     lastLoginAt: Date;
   }): Promise<UserData>;
-  updateProfile(id: string, data: { name?: string }): Promise<UserData>;
+  updateProfile(id: string, data: { name?: string; encryptionSeed?: string }): Promise<UserData>;
   deleteById(id: string): Promise<void>;
 }
 

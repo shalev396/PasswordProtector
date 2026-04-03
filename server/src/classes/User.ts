@@ -5,6 +5,7 @@ export class User {
   private readonly _cognitoSub: string;
   private readonly _name: string | null;
   private readonly _email: string | null;
+  private readonly _encryptionSeed: string | null;
   private readonly _lastLoginAt: Date | null;
   private readonly _createdAt: Date;
   private readonly _updatedAt: Date;
@@ -14,6 +15,7 @@ export class User {
     this._cognitoSub = data.cognitoSub;
     this._name = data.name;
     this._email = data.email;
+    this._encryptionSeed = data.encryptionSeed;
     this._lastLoginAt = data.lastLoginAt;
     this._createdAt = data.createdAt;
     this._updatedAt = data.updatedAt;
@@ -35,6 +37,10 @@ export class User {
     return this._email;
   }
 
+  get encryptionSeed(): string | null {
+    return this._encryptionSeed;
+  }
+
   get lastLoginAt(): Date | null {
     return this._lastLoginAt;
   }
@@ -53,6 +59,7 @@ export class User {
       cognitoSub: this._cognitoSub,
       name: this._name,
       email: this._email,
+      encryptionSeed: this._encryptionSeed,
       lastLoginAt: this._lastLoginAt,
       createdAt: this._createdAt,
       updatedAt: this._updatedAt,
@@ -86,7 +93,10 @@ export class User {
     return new User(data);
   }
 
-  static async updateProfile(userId: string, data: { name?: string }): Promise<User> {
+  static async updateProfile(
+    userId: string,
+    data: { name?: string; encryptionSeed?: string },
+  ): Promise<User> {
     const repo = await getUserRepository();
     const updated = await repo.updateProfile(userId, data);
     return new User(updated);

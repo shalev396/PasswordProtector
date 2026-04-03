@@ -12,6 +12,7 @@ declare global {
       DOMAIN_NAME: string;
       LAMBDA_SECURITY_GROUP_ID: string;
       LAMBDA_SUBNET_ID: string;
+      SERVER_ENCRYPTION_SECRET: string;
     }
   }
 }

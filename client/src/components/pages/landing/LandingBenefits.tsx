@@ -3,29 +3,30 @@ import { CardContent } from '@/components/ui/card';
 import { GradientText } from '@/components/animations/text/GradientText';
 import { FadeContent } from '@/components/animations/FadeContent';
 import { BounceCards, BounceCard } from '@/components/ui/bounce-cards';
-import { Zap, Search, Smartphone } from 'lucide-react';
+import { Sparkles, Search, Monitor, Moon } from 'lucide-react';
+
+const benefits = [
+  { icon: Sparkles, key: 'generator' },
+  { icon: Search, key: 'search' },
+  { icon: Monitor, key: 'device' },
+  { icon: Moon, key: 'theme' },
+] as const;
 
 export function LandingBenefits() {
   const { t } = useTranslation();
-
-  const benefits = [
-    { icon: Zap, key: 'instant' },
-    { icon: Search, key: 'seo' },
-    { icon: Smartphone, key: 'responsive' },
-  ] as const;
 
   return (
     <FadeContent>
       <section
         id="benefits"
-        className="container mx-auto px-4 py-12 sm:px-6 sm:py-16 lg:px-8 scroll-mt-20"
+        className="container mx-auto scroll-mt-20 px-4 py-12 sm:px-6 sm:py-16 lg:px-8"
       >
         <div className="mb-8 text-center sm:mb-12">
           <h2 className="text-xl font-bold tracking-tight sm:text-2xl md:text-3xl">
             <GradientText>{t('landing.benefits.title')}</GradientText>
           </h2>
         </div>
-        <BounceCards>
+        <BounceCards className="lg:grid-cols-4">
           {benefits.map(({ icon: Icon, key }) => (
             <BounceCard key={key}>
               <CardContent className="p-6 text-center sm:p-8">
@@ -33,7 +34,7 @@ export function LandingBenefits() {
                 <h3 className="mb-2 text-base font-semibold sm:text-lg">
                   {t(`landing.benefits.${key}.title`)}
                 </h3>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-sm text-muted-foreground">
                   {t(`landing.benefits.${key}.description`)}
                 </p>
               </CardContent>

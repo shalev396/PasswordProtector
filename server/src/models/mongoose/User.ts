@@ -7,6 +7,7 @@ interface UserFields {
   cognitoSub: string;
   name: string | null;
   email: string | null;
+  encryptionSeed: string | null;
   lastLoginAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -35,6 +36,10 @@ const userSchema = new mongoose.Schema<UserDocument>(
       default: null,
       index: true,
     },
+    encryptionSeed: {
+      type: String,
+      default: null,
+    },
     lastLoginAt: {
       type: Date,
       default: null,
@@ -54,6 +59,7 @@ function toUserData(doc: UserDocument): UserData {
     cognitoSub: doc.cognitoSub,
     name: doc.name,
     email: doc.email,
+    encryptionSeed: doc.encryptionSeed,
     lastLoginAt: doc.lastLoginAt,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
@@ -94,9 +100,13 @@ export const UserRepository: IUserRepository = {
     return toUserData(doc);
   },
 
-  async updateProfile(id: string, data: { name?: string }): Promise<UserData> {
+  async updateProfile(
+    id: string,
+    data: { name?: string; encryptionSeed?: string },
+  ): Promise<UserData> {
     const update: Record<string, unknown> = {};
     if (data.name !== undefined) update['name'] = data.name;
+    if (data.encryptionSeed !== undefined) update['encryptionSeed'] = data.encryptionSeed;
 
     const doc = await UserMongoModel.findByIdAndUpdate(id, { $set: update }, { new: true });
     if (doc === null) throw new Error('User not found');

@@ -1,107 +1,129 @@
 export const landing = {
   hero: {
-    badge: 'Open Source Full-Stack Template',
-    title: 'Build Serverless Apps',
-    titleHighlight: 'Lightning Fast',
+    badge: 'AES-256-GCM Encrypted',
+    title: 'Your Passwords. Your Control.',
+    titleHighlight: 'Zero Knowledge.',
     description:
-      'A production-ready full-stack serverless template with authentication, file uploads, and modern UI components. Start building your next project in minutes, not weeks.',
-    cta: 'Try It Now',
-    viewGithub: 'View on GitHub',
-    exploreLabel: 'Explore',
+      'Military-grade AES-256-GCM encryption with dual-layer protection. Your passwords are encrypted in your browser before they ever leave your device. We literally cannot read them.',
+    cta: 'Get Started Free',
+    seeHow: 'See How It Works',
+    vault: {
+      title: 'My Vault',
+      badge: 'AES-256 Encrypted',
+      banking: 'Banking',
+      email: 'Email',
+      social: 'Social Media',
+      dev: 'Dev Tools',
+    },
   },
   nav: {
     benefits: 'Benefits',
-    features: 'Features',
-    tech: 'Tech Stack',
-    pricing: 'Pricing',
-  },
-  benefits: {
-    title: 'Why Choose {{appName}}',
-    instant: {
-      title: 'Instant Loading',
-      description: 'Optimized for performance with sub-second load times',
-    },
-    seo: {
-      title: 'SEO Friendly',
-      description: 'Built-in SEO best practices for better discoverability',
-    },
-    responsive: {
-      title: 'Fully Responsive',
-      description: 'Works perfectly from 320px mobile to 4K displays',
-    },
+    features: 'Security',
+    tech: 'How It Works',
   },
   features: {
-    title: 'Everything You Need to Build',
-    titleHighlight: 'Fast',
-    subtitle: 'Production-ready features out of the box',
-    auth: {
-      title: 'Authentication Ready',
+    title: 'Security',
+    titleHighlight: 'By Design',
+    subtitle: 'Every layer of Password Protector is built to keep your data safe.',
+    clientSide: {
+      title: 'Client-Side Encryption',
       description:
-        'AWS Cognito integration with Google and Apple sign-in. Secure, scalable, and easy to customize.',
+        'Your passwords are encrypted in your browser before they leave your device. The plaintext never touches our servers.',
     },
-    s3: {
-      title: 'S3 File Uploads',
+    zeroKnowledge: {
+      title: 'Zero Knowledge',
       description:
-        'Direct S3 uploads with presigned URLs. Optimized for images with automatic compression and resizing.',
+        "We can't read your passwords. Ever. Not even if we wanted to. Your secret key never leaves your browser.",
     },
-    serverless: {
-      title: 'Serverless Architecture',
+    dualLayer: {
+      title: 'Dual-Layer Protection',
       description:
-        'Built on AWS Lambda with API Gateway. Pay only for what you use with automatic scaling.',
+        'Encrypted twice: once with your personal secret key, and once on our servers. No single key can unlock your data.',
     },
-    cicd: {
-      title: 'CI/CD Pipeline',
+  },
+  benefits: {
+    title: 'Everything You Need',
+    generator: {
+      title: 'Password Generator',
       description:
-        'Automated deployments with GitHub Actions. Test, build, and deploy with confidence.',
+        'Generate cryptographically secure passwords with configurable length, symbols, and complexity.',
     },
-    state: {
-      title: 'State Management',
+    search: {
+      title: 'Search & Organize',
+      description: 'Organize passwords by category. Search, sort, and find credentials instantly.',
+    },
+    device: {
+      title: 'Any Device',
       description:
-        'Redux Toolkit with TypeScript. Single source of truth with optimized selectors and middleware.',
+        'Access your vault from any modern browser. Your encrypted data syncs securely across devices.',
     },
-    i18n: {
-      title: 'Internationalization',
-      description:
-        'Supports RTL and LTR languages. Built-in support for English and Hebrew with easy extensibility.',
-    },
-    email: {
-      title: 'Email Sending',
-      description:
-        'AWS SES integration for transactional emails. Templates, scheduling, and tracking included.',
-    },
-    mfa: {
-      title: 'Multi-Factor Auth',
-      description: 'TOTP-based MFA with QR codes. SMS backup codes for enhanced security.',
-    },
-    monitoring: {
-      title: 'Monitoring & Observability',
-      description:
-        "Track performance and errors with built-in logging and metrics. Stay on top of your app's health.",
+    theme: {
+      title: 'Dark & Light Mode',
+      description: 'Full theme support with automatic detection. Easy on the eyes, day or night.',
     },
   },
   tech: {
-    title: 'Built with',
-    titleHighlight: 'Modern Technologies',
-    subtitle: 'Industry-standard tools and frameworks',
-    react: { name: 'React 19', description: 'Latest React with Hooks' },
-    typescript: { name: 'TypeScript', description: 'Type-safe development' },
-    vite: { name: 'Vite', description: 'Lightning-fast builds' },
-    tailwind: { name: 'Tailwind CSS', description: 'Utility-first styling' },
-    shadcn: { name: 'shadcn/ui', description: 'Beautiful UI components' },
-    reactBits: { name: 'React Bits', description: 'Animated UI components' },
-    lambda: { name: 'AWS Lambda', description: 'Serverless compute' },
-    redux: { name: 'Redux Toolkit', description: 'State management' },
-    query: { name: 'React Query', description: 'Server state sync' },
-    axios: { name: 'Axios', description: 'HTTP client' },
-    serverless: { name: 'AWS Serverless', description: 'Serverless framework' },
-    aws: { name: 'AWS', description: 'Cloud infrastructure' },
+    title: 'How Your Passwords',
+    titleHighlight: 'Stay Safe',
+    subtitle:
+      'A detailed look at the encryption journey your passwords take from your browser to our database and back.',
+    encryption: {
+      title: 'Encryption Journey',
+      step1: {
+        title: 'You Enter a Password',
+        description:
+          'Your password starts as plaintext, but only on your device. It never leaves your browser unprotected.',
+      },
+      step2: {
+        title: 'Encrypted With YOUR Secret Key',
+        description: 'AES-256-GCM encryption with a key only you know. We never see it.',
+        sub: 'Secret Key \u2192 PBKDF2 (100,000 iterations) \u2192 AES-256-GCM',
+      },
+      step3: {
+        title: 'Transported Securely',
+        description:
+          'The encrypted data travels over HTTPS. Even if intercepted, it is completely unreadable.',
+      },
+      step4: {
+        title: 'Encrypted AGAIN on Our Servers',
+        description:
+          'A second AES-256-GCM layer using your unique account seed combined with our server secret.',
+      },
+      step5: {
+        title: 'Stored Safely',
+        description:
+          'Doubly encrypted data at rest. No single key can unlock it. Even a full database breach reveals nothing.',
+      },
+    },
+    zeroKnowledge: {
+      title: 'Zero Knowledge Architecture',
+      description:
+        'Even if our entire database is stolen, your passwords remain safe. We literally cannot read them \u2014 that is zero knowledge.',
+    },
+    retrieval: {
+      title: 'Retrieval Journey',
+      step6: {
+        title: 'You Request a Password',
+        description:
+          'When you need a password, your browser sends an authenticated request to our servers.',
+      },
+      step7: {
+        title: 'Server Removes Its Layer',
+        description:
+          'Our server decrypts its layer, leaving the data still encrypted with your personal key.',
+      },
+      step8: {
+        title: 'Your Browser Decrypts',
+        description:
+          'Your browser uses your secret key to decrypt the final layer. The plaintext appears only on your screen.',
+      },
+    },
+    tagline: 'From browser to database and back \u2014 your password is never exposed.',
   },
   cta: {
-    title: 'Ready to Start',
-    titleHighlight: 'Building?',
-    description:
-      'Join developers who are shipping faster with {{appName}}. Free, open source, and ready for production.',
-    button: 'Create Account',
-    docs: 'Read Documentation',
+    title: 'Start Protecting Your Passwords',
+    titleHighlight: 'Today',
+    description: 'Zero knowledge encryption. Free to use. Your passwords deserve real protection.',
+    button: 'Create Free Account',
   },
 };

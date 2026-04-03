@@ -1,37 +1,85 @@
-import type { LucideIcon } from 'lucide-react';
 import {
-  Code2,
-  FileCode,
-  Zap,
-  Paintbrush,
-  Layout,
-  Sparkles,
-  FunctionSquare,
-  Database,
-  RefreshCw,
-  Globe,
+  Keyboard,
+  Key,
+  Send,
   Server,
-  Cloud,
+  Database,
+  MousePointer,
+  Unlock,
+  CheckCircle,
+  ShieldAlert,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { GradientText } from '@/components/animations/text/GradientText';
 import { FadeContent } from '@/components/animations/FadeContent';
-import { TechCard } from '@/components/pages/landing/TechCard';
+import { SpotlightCard } from '@/components/ui/spotlight-card';
+import { ElectricBorder } from '@/components/animations/ElectricBorder';
 
-const TECHNOLOGIES: { slug: string; url: string; icon: LucideIcon }[] = [
-  { slug: 'react', url: 'https://react.dev', icon: Code2 },
-  { slug: 'typescript', url: 'https://www.typescriptlang.org', icon: FileCode },
-  { slug: 'vite', url: 'https://vitejs.dev', icon: Zap },
-  { slug: 'tailwind', url: 'https://tailwindcss.com', icon: Paintbrush },
-  { slug: 'shadcn', url: 'https://ui.shadcn.com', icon: Layout },
-  { slug: 'reactBits', url: 'https://reactbits.dev', icon: Sparkles },
-  { slug: 'lambda', url: 'https://aws.amazon.com/lambda', icon: FunctionSquare },
-  { slug: 'redux', url: 'https://redux-toolkit.js.org', icon: Database },
-  { slug: 'query', url: 'https://tanstack.com/query', icon: RefreshCw },
-  { slug: 'axios', url: 'https://axios-http.com', icon: Globe },
-  { slug: 'serverless', url: 'https://www.serverless.com', icon: Server },
-  { slug: 'aws', url: 'https://aws.amazon.com', icon: Cloud },
+interface StepConfig {
+  icon: LucideIcon;
+  translationKey: string;
+  hasSub?: boolean;
+}
+
+const encryptionSteps: StepConfig[] = [
+  { icon: Keyboard, translationKey: 'step1' },
+  { icon: Key, translationKey: 'step2', hasSub: true },
+  { icon: Send, translationKey: 'step3' },
+  { icon: Server, translationKey: 'step4' },
+  { icon: Database, translationKey: 'step5' },
 ];
+
+const retrievalSteps: StepConfig[] = [
+  { icon: MousePointer, translationKey: 'step6' },
+  { icon: Unlock, translationKey: 'step7' },
+  { icon: CheckCircle, translationKey: 'step8' },
+];
+
+function StepCard({
+  step,
+  index,
+  section,
+}: {
+  step: StepConfig;
+  index: number;
+  section: 'encryption' | 'retrieval';
+}) {
+  const { t } = useTranslation();
+  const Icon = step.icon;
+
+  return (
+    <FadeContent delay={index * 100}>
+      <div className="group relative flex gap-4 sm:gap-6">
+        {/* Timeline connector */}
+        <div className="flex flex-col items-center">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-4 ring-background transition-transform duration-200 group-hover:scale-110 sm:size-14">
+            <Icon className="size-6 sm:size-7" />
+          </div>
+          <div className="mt-2 w-px flex-1 bg-gradient-to-b from-primary/40 to-transparent" />
+        </div>
+
+        {/* Content */}
+        <div className="pb-10 pt-1">
+          <div className="mb-1 text-xs font-semibold uppercase tracking-widest text-primary">
+            {t(`landing.tech.${section}.title`)} {index + 1}
+          </div>
+          <h4 className="mb-2 text-lg font-bold sm:text-xl">
+            {t(`landing.tech.${section}.${step.translationKey}.title`)}
+          </h4>
+          <p className="max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
+            {t(`landing.tech.${section}.${step.translationKey}.description`)}
+          </p>
+          {step.hasSub && (
+            <div className="mt-3 inline-block rounded-lg bg-muted/50 px-3 py-2 font-mono text-xs text-muted-foreground sm:text-sm">
+              {t(`landing.tech.${section}.${step.translationKey}.sub`)}
+            </div>
+          )}
+        </div>
+      </div>
+    </FadeContent>
+  );
+}
 
 export function LandingTech() {
   const { t } = useTranslation();
@@ -40,34 +88,71 @@ export function LandingTech() {
     <FadeContent delay={400}>
       <section
         id="tech"
-        className="container mx-auto px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24 scroll-mt-20"
+        className="container mx-auto scroll-mt-20 px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24"
       >
-        <div className="mb-12 text-center sm:mb-16">
+        {/* Section header */}
+        <div className="mb-16 text-center sm:mb-20">
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
             {t('landing.tech.title')}{' '}
             <GradientText>{t('landing.tech.titleHighlight')}</GradientText>
           </h2>
-          <p className="text-muted-foreground mt-3 text-base sm:mt-4 sm:text-lg">
+          <p className="text-muted-foreground mx-auto mt-3 max-w-2xl text-base sm:mt-4 sm:text-lg">
             {t('landing.tech.subtitle')}
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
-          {TECHNOLOGIES.map((tech) => (
-            <a
-              key={tech.slug}
-              href={tech.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block"
-            >
-              <TechCard
-                icon={tech.icon}
-                title={t(`landing.tech.${tech.slug}.name`)}
-                description={t(`landing.tech.${tech.slug}.description`)}
-              />
-            </a>
-          ))}
+        <div className="mx-auto max-w-3xl">
+          {/* Encryption Journey */}
+          <FadeContent delay={100}>
+            <h3 className="mb-8 text-center text-xl font-bold sm:mb-10 sm:text-2xl">
+              <GradientText>{t('landing.tech.encryption.title')}</GradientText>
+            </h3>
+          </FadeContent>
+
+          <div className="mb-12">
+            {encryptionSteps.map((step, index) => (
+              <StepCard key={step.translationKey} step={step} index={index} section="encryption" />
+            ))}
+          </div>
+
+          {/* Zero Knowledge Callout */}
+          <FadeContent delay={200}>
+            <ElectricBorder className="mb-16">
+              <SpotlightCard className="bg-card" spotlightColor="rgba(var(--primary-rgb), 0.2)">
+                <div className="flex flex-col items-center gap-4 p-6 text-center sm:p-10">
+                  <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:size-16">
+                    <ShieldAlert className="size-7 sm:size-8" />
+                  </div>
+                  <h3 className="text-xl font-bold sm:text-2xl">
+                    <GradientText>{t('landing.tech.zeroKnowledge.title')}</GradientText>
+                  </h3>
+                  <p className="max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                    {t('landing.tech.zeroKnowledge.description')}
+                  </p>
+                </div>
+              </SpotlightCard>
+            </ElectricBorder>
+          </FadeContent>
+
+          {/* Retrieval Journey */}
+          <FadeContent delay={300}>
+            <h3 className="mb-8 text-center text-xl font-bold sm:mb-10 sm:text-2xl">
+              <GradientText>{t('landing.tech.retrieval.title')}</GradientText>
+            </h3>
+          </FadeContent>
+
+          <div className="mb-12">
+            {retrievalSteps.map((step, index) => (
+              <StepCard key={step.translationKey} step={step} index={index} section="retrieval" />
+            ))}
+          </div>
+
+          {/* Final tagline */}
+          <FadeContent delay={400}>
+            <p className="text-center text-lg font-semibold italic text-muted-foreground sm:text-xl">
+              {t('landing.tech.tagline')}
+            </p>
+          </FadeContent>
         </div>
       </section>
     </FadeContent>

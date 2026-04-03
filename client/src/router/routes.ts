@@ -6,6 +6,8 @@ const LEGAL_BASE = 'legal' as const;
 export const ROUTES = {
   HOME: '',
   DASHBOARD: 'dashboard',
+  ADD_PASSWORD: 'dashboard/add',
+  EDIT_PASSWORD: 'dashboard/edit',
   AUTH: {
     BASE: AUTH_BASE,
     SEGMENTS: {

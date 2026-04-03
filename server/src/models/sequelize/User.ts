@@ -7,6 +7,7 @@ class UserModel extends Model {
   declare cognitoSub: string;
   declare name: string | null;
   declare email: string | null;
+  declare encryptionSeed: string | null;
   declare lastLoginAt: Date | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -36,6 +37,11 @@ UserModel.init(
         isEmail: true,
       },
     },
+    encryptionSeed: {
+      type: DataTypes.STRING(64),
+      allowNull: true,
+      defaultValue: null,
+    },
     lastLoginAt: {
       type: DataTypes.DATE,
       allowNull: true,
@@ -63,6 +69,7 @@ function toUserData(model: UserModel): UserData {
     cognitoSub: model.cognitoSub,
     name: model.name,
     email: model.email,
+    encryptionSeed: model.encryptionSeed,
     lastLoginAt: model.lastLoginAt,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
@@ -95,9 +102,13 @@ export const UserRepository: IUserRepository = {
     return toUserData(record);
   },
 
-  async updateProfile(id: string, data: { name?: string }): Promise<UserData> {
-    const update: Partial<Pick<UserModel, 'name'>> = {};
+  async updateProfile(
+    id: string,
+    data: { name?: string; encryptionSeed?: string },
+  ): Promise<UserData> {
+    const update: Partial<Pick<UserModel, 'name' | 'encryptionSeed'>> = {};
     if (data.name !== undefined) update.name = data.name;
+    if (data.encryptionSeed !== undefined) update.encryptionSeed = data.encryptionSeed;
 
     const [affectedCount] = await UserModel.update(update, { where: { id } });
     if (affectedCount === 0) throw new Error('User not found');
