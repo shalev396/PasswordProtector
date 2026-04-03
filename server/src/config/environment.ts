@@ -1,0 +1,76 @@
+import type { DatabaseProvider, Env } from '../types/env.d.ts';
+
+class Environment {
+  readonly #env: Env;
+  readonly #awsRegion: string;
+  readonly #databaseUrl: string;
+  readonly #databaseProvider: DatabaseProvider;
+  readonly #s3ClientBucketName: string;
+  readonly #cognitoClientId: string;
+  readonly #cognitoUserPoolId: string;
+  readonly #cognitoIssuer: string;
+  readonly #domainName: string;
+  readonly #serverEncryptionSecret: string;
+
+  constructor() {
+    this.#env = process.env.ENV;
+    this.#awsRegion = process.env.AWS_REGION;
+
+    // serverless-offline sets IS_OFFLINE=true at runtime.
+    // When running locally, swap to DATABASE_URL_LOCAL (bastion-forwarded endpoint).
+    const isOffline = process.env.IS_OFFLINE === 'true';
+    this.#databaseUrl = isOffline
+      ? (process.env.DATABASE_URL_LOCAL ?? '')
+      : process.env.DATABASE_URL;
+
+    this.#databaseProvider = process.env.DATABASE_PROVIDER;
+    this.#s3ClientBucketName = process.env.S3_CLIENT_BUCKET_NAME;
+    this.#cognitoClientId = process.env.COGNITO_CLIENT_ID;
+    this.#cognitoUserPoolId = process.env.COGNITO_USER_POOL_ID;
+    this.#cognitoIssuer = process.env.COGNITO_ISSUER;
+    this.#domainName = process.env.DOMAIN_NAME;
+    this.#serverEncryptionSecret = process.env.SERVER_ENCRYPTION_SECRET;
+  }
+
+  get env(): Env {
+    return this.#env;
+  }
+
+  get awsRegion(): string {
+    return this.#awsRegion;
+  }
+
+  get databaseUrl(): string {
+    return this.#databaseUrl;
+  }
+
+  get databaseProvider(): DatabaseProvider {
+    return this.#databaseProvider;
+  }
+
+  get s3ClientBucketName(): string {
+    return this.#s3ClientBucketName;
+  }
+
+  get cognitoClientId(): string {
+    return this.#cognitoClientId;
+  }
+
+  get cognitoUserPoolId(): string | undefined {
+    return this.#cognitoUserPoolId;
+  }
+
+  get cognitoIssuer(): string {
+    return this.#cognitoIssuer;
+  }
+
+  get domainName(): string {
+    return this.#domainName;
+  }
+
+  get serverEncryptionSecret(): string {
+    return this.#serverEncryptionSecret;
+  }
+}
+
+export const environment = new Environment();

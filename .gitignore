@@ -1,13 +1,31 @@
-# Dependencies
 *node_modules
-
-# Production
 *dist
-*build
 
-# Environment variables
-*.env
+# Server build artifacts
+*build/
+*.serverless/
+
+# Environment files (secrets)
+.env
+*.env.dev
+*.env.qa
 *.env.prod
+*.env.local
 
-# Serverless
-*.serverless
+# Test artifacts (contains tokens)
+**exported.postman_environment.json
+
+# Local Postman environment (user copy with baseUrl/secrets); use qa.template.json as reference
+**/postman/environments/*.postman_environment.json
+
+# Postman CLI test results (CI)
+postman-results.xml
+
+# Playwright E2E artifacts
+*artifacts
+*translations.json
+
+# Python venv
+*.venv
+*__pycache__
+*.DS_Store
