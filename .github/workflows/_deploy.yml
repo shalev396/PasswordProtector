@@ -1,8 +1,4 @@
 # Reusable workflow: Deploy backend + frontend to specified stage
-# Repository secrets: AWS_ACCOUNT_ID, SERVERLESS_ACCESS_KEY, HOSTED_ZONE_ID, CERTIFICATE_ARN
-# Environment secrets (per stage): COGNITO_CLIENT_ID, COGNITO_ISSUER, COGNITO_USER_POOL_ID, DATABASE_URL, DOMAIN_NAME
-# Repository variables: AWS_REGION
-# Environment variables: DATABASE_PROVIDER, ENV
 name: Deploy
 
 on:
@@ -34,10 +30,14 @@ jobs:
       # Environment secrets (accessed via environment: name)
       DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_URL_LOCAL: ${{ secrets.DATABASE_URL_LOCAL }}
       COGNITO_CLIENT_ID: ${{ secrets.COGNITO_CLIENT_ID }}
       COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
       COGNITO_ISSUER: ${{ secrets.COGNITO_ISSUER }}
-      # Environment variables
+      LAMBDA_SECURITY_GROUP_ID: ${{ secrets.LAMBDA_SECURITY_GROUP_ID }}
+      LAMBDA_SUBNET_ID: ${{ secrets.LAMBDA_SUBNET_ID }}
+      SERVER_ENCRYPTION_SECRET: ${{ secrets.SERVER_ENCRYPTION_SECRET }}
+      # Environment variables (non-sensitive; GitHub Environment → vars)
       ENV: ${{ vars.ENV }}
       DATABASE_PROVIDER: ${{ vars.DATABASE_PROVIDER }}
       APP_NAME: ${{ vars.APP_NAME }}

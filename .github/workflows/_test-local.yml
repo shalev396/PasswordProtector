@@ -1,6 +1,4 @@
 # Reusable workflow: Run tests against local servers (serverless offline + Vite)
-# Tests run SEQUENTIALLY: backend first, then frontend (serverless offline can't run twice)
-# Reset and Send Test Email use S3, Cognito, SES — requires AWS credentials in CI
 name: Test Local
 
 on:
@@ -28,8 +26,13 @@ jobs:
       HOSTED_ZONE_ID: ${{ secrets.HOSTED_ZONE_ID }}
       CERTIFICATE_ARN: ${{ secrets.CERTIFICATE_ARN }}
       AWS_REGION: ${{ vars.AWS_REGION }}
+      ENV: ${{ vars.ENV }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_URL_LOCAL: ${{ secrets.DATABASE_URL_LOCAL }}
       DATABASE_PROVIDER: ${{ vars.DATABASE_PROVIDER }}
+      LAMBDA_SECURITY_GROUP_ID: ${{ secrets.LAMBDA_SECURITY_GROUP_ID }}
+      LAMBDA_SUBNET_ID: ${{ secrets.LAMBDA_SUBNET_ID }}
+      SERVER_ENCRYPTION_SECRET: ${{ secrets.SERVER_ENCRYPTION_SECRET }}
       COGNITO_CLIENT_ID: ${{ secrets.COGNITO_CLIENT_ID }}
       COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
       COGNITO_ISSUER: ${{ secrets.COGNITO_ISSUER }}
@@ -79,8 +82,13 @@ jobs:
       HOSTED_ZONE_ID: ${{ secrets.HOSTED_ZONE_ID }}
       CERTIFICATE_ARN: ${{ secrets.CERTIFICATE_ARN }}
       AWS_REGION: ${{ vars.AWS_REGION }}
+      ENV: ${{ vars.ENV }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_URL_LOCAL: ${{ secrets.DATABASE_URL_LOCAL }}
       DATABASE_PROVIDER: ${{ vars.DATABASE_PROVIDER }}
+      LAMBDA_SECURITY_GROUP_ID: ${{ secrets.LAMBDA_SECURITY_GROUP_ID }}
+      LAMBDA_SUBNET_ID: ${{ secrets.LAMBDA_SUBNET_ID }}
+      SERVER_ENCRYPTION_SECRET: ${{ secrets.SERVER_ENCRYPTION_SECRET }}
       COGNITO_CLIENT_ID: ${{ secrets.COGNITO_CLIENT_ID }}
       COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
       COGNITO_ISSUER: ${{ secrets.COGNITO_ISSUER }}

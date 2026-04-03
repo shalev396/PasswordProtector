@@ -1,6 +1,4 @@
 # Reusable workflow: Run tests against live QA environment
-# Tests run SEQUENTIALLY: backend first, then frontend
-# Uses qa environment to get DOMAIN_NAME (qa.elytra.shalev396.com)
 name: Test QA
 
 on:
