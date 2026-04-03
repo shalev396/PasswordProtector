@@ -42,7 +42,7 @@ frameworkVersion: ^4.0.0
 
 provider:
   name: aws
-  stage: ${opt:stage, 'dev'}
+  stage: ${opt:stage}
   runtime: nodejs22.x
   timeout: 30
   memorySize: 160
@@ -88,7 +88,7 @@ provider:
           - Ref: CognitoUserPoolClient
 
   environment:
-    ENV: ${opt:stage, 'dev'}
+    ENV: ${opt:stage}
     DATABASE_URL: ${env:DATABASE_URL}
     DATABASE_PROVIDER: ${env:DATABASE_PROVIDER}
     S3_CLIENT_BUCKET_NAME: ${self:custom.clientBucketName}
@@ -357,6 +357,10 @@ resources:
 
     CloudFrontDistribution:
       Type: AWS::CloudFront::Distribution
+      DependsOn:
+        - SesDkimRecord1
+        - SesDkimRecord2
+        - SesDkimRecord3
       Properties:
         DistributionConfig:
           Comment: ${self:custom.distributionComment.${self:provider.stage}}
@@ -453,6 +457,7 @@ resources:
         - SesDkimRecord2
         - SesDkimRecord3
         - CloudFrontDistribution
+        - Route53Record
       Properties:
         UserPoolName: ${self:custom.appName}-${self:provider.stage}
         UserPoolTier: ESSENTIALS

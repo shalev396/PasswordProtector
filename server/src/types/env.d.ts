@@ -4,6 +4,8 @@ declare global {
       ENV: 'dev' | 'qa' | 'prod';
       AWS_REGION: string;
       DATABASE_URL: string;
+      DATABASE_URL_LOCAL?: string;
+      IS_OFFLINE?: string;
       DATABASE_PROVIDER: 'mongoose' | 'sequelize';
       S3_CLIENT_BUCKET_NAME: string;
       COGNITO_CLIENT_ID: string;

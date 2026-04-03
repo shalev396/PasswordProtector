@@ -15,7 +15,14 @@ class Environment {
   constructor() {
     this.#env = process.env.ENV;
     this.#awsRegion = process.env.AWS_REGION;
-    this.#databaseUrl = process.env.DATABASE_URL;
+
+    const isOffline = process.env.IS_OFFLINE === 'true';
+    this.#databaseUrl =
+      isOffline &&
+      process.env.DATABASE_URL_LOCAL !== undefined &&
+      process.env.DATABASE_URL_LOCAL !== ''
+        ? process.env.DATABASE_URL_LOCAL
+        : process.env.DATABASE_URL;
     this.#databaseProvider = process.env.DATABASE_PROVIDER;
     this.#s3ClientBucketName = process.env.S3_CLIENT_BUCKET_NAME;
     this.#cognitoClientId = process.env.COGNITO_CLIENT_ID;
