@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDashboard, getMe, deleteAccount } from '@/api/services/userService';
+import { getMe, deleteAccount } from '@/api/services/userService';
 import {
   getPasswords,
   getPassword,
@@ -14,7 +14,6 @@ import type {
 
 export const queryKeys = {
   me: ['me'] as const,
-  dashboard: ['dashboard'] as const,
 };
 
 export function useMe() {
@@ -31,16 +30,6 @@ export function useDeleteAccount() {
   return useMutation({
     mutationFn: async () => {
       const response = await deleteAccount();
-      return response.data;
-    },
-  });
-}
-
-export function useDashboard() {
-  return useQuery({
-    queryKey: queryKeys.dashboard,
-    queryFn: async () => {
-      const response = await getDashboard();
       return response.data;
     },
   });

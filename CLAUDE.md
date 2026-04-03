@@ -69,7 +69,7 @@ Husky runs on every commit: `prettier format`, then if client/ changed: `build +
 ### API Endpoints
 
 - Public: `POST /api/public/auth/{signup,confirm,login,forgot-password,reset-password,refresh,resend-confirmation}`
-- Private: `GET|POST /api/private/passwords`, `GET|PUT|DELETE /api/private/passwords/:id`, `GET /api/private/me`, `DELETE /api/private/delete`, `GET /api/private/dashboard`
+- Private: `GET|POST /api/private/passwords`, `GET|PUT|DELETE /api/private/passwords/:id`, `GET /api/private/me`, `DELETE /api/private/delete`
 - Dev: `POST /api/dev/{sync-db,reset}`
 
 ## Deployment

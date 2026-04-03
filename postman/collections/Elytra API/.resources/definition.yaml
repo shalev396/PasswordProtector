@@ -1,7 +1,7 @@
 $kind: collection
 name: Elytra API
 description: 'Elytra API tests. Setup: resets DB and Cognito. Auth: signup
-  (Mail.tm), login, refresh, password. User: me, dashboard.'
+  (Mail.tm), login, refresh, password. User: me.'
 variables:
   baseUrl: https://qa.elytra.shalev396.com/api
   testEmail: ''

@@ -18,7 +18,6 @@ export type {
   RefreshTokenResponseData,
   MeResponseData,
   DeleteUserResponseData,
-  DashboardResponseData,
   PasswordResponseData,
   PasswordListResponseData,
   CreatePasswordRequestBody,

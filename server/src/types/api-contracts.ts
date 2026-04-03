@@ -15,8 +15,6 @@ export type {
 
 export type { MeResponseData, DeleteUserResponseData } from '../routes/private/account.js';
 
-export type { DashboardResponseData } from '../routes/private/dashboard.js';
-
 export type {
   PasswordResponseData,
   PasswordListResponseData,

@@ -29,7 +29,7 @@ In your active environment, set `baseUrl`:
 
 Tokens are set automatically when you run the collection (Login and Mail.tm flows save them). If you run individual requests or your environment resets:
 
-- `idToken` -- From login; used for Elytra API (`/private/me`, `/private/me/export`, `/private/dashboard`)
+- `idToken` -- From login; used for Elytra API (`/private/me`, `/private/me/export`)
 - `mailTmToken` -- From Mail.tm Get Token; used for `api.mail.tm` (Poll Inbox, Read Message)
 
 Paste values into the environment if needed. The collection uses beforeRequest scripts to add `Authorization: Bearer <token>` from these variables.
@@ -78,13 +78,7 @@ Endpoint coverage for private account routes (all require `Authorization: Bearer
 | **Export Me**       | `GET /private/me/export`      | 2 (valid token, no token)                           |
 | **Delete Account**  | `DELETE /private/delete`      | 1 (no token -- expects 401)                         |
 
-### 4. Dashboard (2 requests)
-
-| Endpoint                 | Requests                  |
-| ------------------------ | ------------------------- |
-| `GET /private/dashboard` | 2 (valid token, no token) |
-
-### 5. Flows (21 requests)
+### 4. Flows (21 requests)
 
 User interaction flows that mimic real user journeys, organized by topic:
 
@@ -113,7 +107,7 @@ Successful responses use `{ data: T }` (no `success` field). Error responses use
 
 ### 401 Response Format: Local vs QA/Prod
 
-Protected routes (`/private/*`, `/private/dashboard`) use the **API Gateway Cognito JWT authorizer** when deployed. The "Response indicates failure" assertion in no-token and invalid-token tests checks for a non-2xx status and an error-style body (typically `{ message: ... }`).
+Protected routes (`/private/*`) use the **API Gateway Cognito JWT authorizer** when deployed. The "Response indicates failure" assertion in no-token and invalid-token tests checks for a non-2xx status and an error-style body (typically `{ message: ... }`).
 
 | Environment                    | Who responds                                   | Body (typical)                |
 | ------------------------------ | ---------------------------------------------- | ----------------------------- |
@@ -122,12 +116,11 @@ Protected routes (`/private/*`, `/private/dashboard`) use the **API Gateway Cogn
 
 Local tests hit the Lambda because serverless-offline bypasses the authorizer (`noAuth: true`). In QA/prod, the authorizer rejects invalid/missing tokens before the Lambda is invoked, so the response comes from API Gateway, not our app.
 
-## Total: 62 requests
+## Total: 60 requests
 
 - Setup: 9
 - Auth: 27
 - User: 12
-- Dashboard: 2
 - Flows: 22 (Auth: 18 + User: 4)
 
 Note: The Setup account is not explicitly deleted -- it is cleaned up by the "Reset Database" step at the start of the next run. The Signup flow creates a separate account for flow testing, which is deleted by the Delete Account flow at the end.
