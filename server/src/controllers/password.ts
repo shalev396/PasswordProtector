@@ -9,7 +9,13 @@ import type {
   DeletePasswordResponseData,
 } from '../routes/private/passwords.js';
 import { serverEncrypt, serverDecrypt, generateUserSeed } from '../utils/encryption.js';
-import type { PasswordData } from '../models/index.js';
+import type { PasswordData, PasswordListItemData } from '../models/index.js';
+
+function toListItem(pw: PasswordData): PasswordListItemData {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password, ...rest } = pw;
+  return rest;
+}
 
 async function getUserSeed(userId: string): Promise<string> {
   const user = await User.findById(userId);
@@ -39,11 +45,10 @@ const getAll: RequestHandler = async (req, res): Promise<void> => {
     const authReq = req as AuthenticatedRequest;
     const userId = authReq.user.id;
 
-    const seed = await getUserSeed(userId);
     const passwords = await Password.findAllByUserId(userId);
 
     const data: PasswordListResponseData = {
-      passwords: passwords.map((p) => decryptPasswordData(p.toJSON(), seed)),
+      passwords: passwords.map((p) => toListItem(p.toJSON())),
     };
 
     res.success(data);
@@ -115,6 +120,7 @@ const create: RequestHandler = async (req, res): Promise<void> => {
       website: body.website ?? null,
       notes: body.notes ?? null,
       category: body.category ?? null,
+      tags: body.tags ?? [],
     });
 
     // Return with server layer decrypted (client still needs to decrypt layer 1)
@@ -160,6 +166,7 @@ const update: RequestHandler = async (req, res): Promise<void> => {
       website: string | null;
       notes: string | null;
       category: string | null;
+      tags: string[];
     }> = {};
 
     if (body.title !== undefined) updateData.title = body.title;
@@ -167,6 +174,7 @@ const update: RequestHandler = async (req, res): Promise<void> => {
     if (body.website !== undefined) updateData.website = body.website;
     if (body.notes !== undefined) updateData.notes = body.notes;
     if (body.category !== undefined) updateData.category = body.category;
+    if (body.tags !== undefined) updateData.tags = body.tags;
 
     // Re-encrypt password with server layer if it changed
     const seed = await getUserSeed(userId);

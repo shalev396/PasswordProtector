@@ -3,13 +3,13 @@ import { CardContent } from '@/components/ui/card';
 import { GradientText } from '@/components/animations/text/GradientText';
 import { FadeContent } from '@/components/animations/FadeContent';
 import { BounceCards, BounceCard } from '@/components/ui/bounce-cards';
-import { Sparkles, Search, Monitor, ArrowUpDown } from 'lucide-react';
+import { Sparkles, Search, Monitor, Terminal } from 'lucide-react';
 
 const benefits = [
   { icon: Sparkles, key: 'generator' },
   { icon: Search, key: 'search' },
   { icon: Monitor, key: 'device' },
-  { icon: ArrowUpDown, key: 'theme' },
+  { icon: Terminal, key: 'cli' },
 ] as const;
 
 export function LandingBenefits() {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -7,8 +7,9 @@ import { PageMetadata } from '@/components/shared/PageMetadata';
 import { PasswordForm } from '@/components/passwords/PasswordForm';
 import type { PasswordFormData } from '@/components/passwords/PasswordForm';
 import { FadeContent } from '@/components/animations/FadeContent';
-import { useCreatePassword } from '@/api/queries';
-import { selectUser, selectMasterPassword } from '@/store/userSlice';
+import { useCreatePassword, usePasswords } from '@/api/queries';
+import { selectUser } from '@/store/userSlice';
+import { selectMasterPassword } from '@/store/masterPasswordSlice';
 import { deriveKey, encryptData } from '@/lib/crypto';
 import { useLanguage } from '@/hooks/useLanguage';
 import { pathTo, ROUTES } from '@/router/routes';
@@ -18,20 +19,33 @@ export default function AddPasswordPage() {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const user = useSelector(selectUser);
+  const masterPassword = useSelector(selectMasterPassword);
   const createPassword = useCreatePassword();
+  const { data: passwordsData } = usePasswords();
 
-  // Redirect to dashboard if no master password in session
+  const existingTags = useMemo(() => {
+    if (passwordsData === undefined) {
+      return [];
+    }
+    const tagSet = new Set<string>();
+    for (const pw of passwordsData.passwords) {
+      for (const tag of pw.tags) {
+        tagSet.add(tag);
+      }
+    }
+    return Array.from(tagSet).sort();
+  }, [passwordsData]);
+
+  // Redirect to dashboard if no master password in memory
   useEffect(() => {
-    const masterPassword = selectMasterPassword();
     if (!masterPassword) {
       toast.error(t('dashboard.toast.noMasterPassword'));
       void navigate(pathTo(ROUTES.DASHBOARD, language));
     }
-  }, [navigate, language, t]);
+  }, [masterPassword, navigate, language, t]);
 
   const handleSubmit = useCallback(
     async (data: PasswordFormData) => {
-      const masterPassword = selectMasterPassword();
       if (!masterPassword || !user?.email) {
         toast.error(t('dashboard.toast.noMasterPassword'));
         void navigate(pathTo(ROUTES.DASHBOARD, language));
@@ -49,6 +63,7 @@ export default function AddPasswordPage() {
           website: data.website || null,
           notes: data.notes || null,
           category: data.category || null,
+          tags: data.tags,
         });
 
         toast.success(t('dashboard.toast.createSuccess'));
@@ -57,7 +72,7 @@ export default function AddPasswordPage() {
         toast.error(t('dashboard.toast.encryptionError'));
       }
     },
-    [user, createPassword, navigate, language, t],
+    [user, masterPassword, createPassword, navigate, language, t],
   );
 
   return (
@@ -68,6 +83,7 @@ export default function AddPasswordPage() {
           mode="add"
           onSubmit={(data) => void handleSubmit(data)}
           isLoading={createPassword.isPending}
+          existingTags={existingTags}
         />
       </FadeContent>
     </div>

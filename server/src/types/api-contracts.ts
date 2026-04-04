@@ -27,3 +27,5 @@ export type {
   UpdatePasswordRequestBody,
   DeletePasswordResponseData,
 } from '../routes/private/passwords.js';
+
+export type { PasswordListItemData } from '../models/index.js';

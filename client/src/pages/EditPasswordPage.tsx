@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -7,8 +7,9 @@ import { PageMetadata } from '@/components/shared/PageMetadata';
 import { PasswordForm } from '@/components/passwords/PasswordForm';
 import type { PasswordFormData } from '@/components/passwords/PasswordForm';
 import { FadeContent } from '@/components/animations/FadeContent';
-import { usePassword, useUpdatePassword } from '@/api/queries';
-import { selectUser, selectMasterPassword } from '@/store/userSlice';
+import { usePassword, useUpdatePassword, usePasswords } from '@/api/queries';
+import { selectUser } from '@/store/userSlice';
+import { selectMasterPassword } from '@/store/masterPasswordSlice';
 import { deriveKey, encryptData, decryptData } from '@/lib/crypto';
 import { useLanguage } from '@/hooks/useLanguage';
 import { pathTo, ROUTES } from '@/router/routes';
@@ -19,7 +20,22 @@ export default function EditPasswordPage() {
   const { language } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const user = useSelector(selectUser);
+  const masterPassword = useSelector(selectMasterPassword);
   const updatePassword = useUpdatePassword();
+  const { data: passwordsData } = usePasswords();
+
+  const existingTags = useMemo(() => {
+    if (passwordsData === undefined) {
+      return [];
+    }
+    const tagSet = new Set<string>();
+    for (const pw of passwordsData.passwords) {
+      for (const tag of pw.tags) {
+        tagSet.add(tag);
+      }
+    }
+    return Array.from(tagSet).sort();
+  }, [passwordsData]);
 
   const { data: passwordData, isLoading: isFetching, error: fetchError } = usePassword(id ?? '');
 
@@ -28,12 +44,11 @@ export default function EditPasswordPage() {
 
   // Redirect to dashboard if no master password
   useEffect(() => {
-    const masterPassword = selectMasterPassword();
     if (!masterPassword) {
       toast.error(t('dashboard.toast.noMasterPassword'));
       void navigate(pathTo(ROUTES.DASHBOARD, language));
     }
-  }, [navigate, language, t]);
+  }, [masterPassword, navigate, language, t]);
 
   // Decrypt password data once fetched
   useEffect(() => {
@@ -41,7 +56,6 @@ export default function EditPasswordPage() {
       return;
     }
 
-    const masterPassword = selectMasterPassword();
     if (!masterPassword || !user?.email) {
       return;
     }
@@ -62,6 +76,7 @@ export default function EditPasswordPage() {
             website: passwordData.website ?? '',
             notes: passwordData.notes ?? '',
             category: passwordData.category ?? '',
+            tags: (passwordData as { tags?: string[] }).tags ?? [],
           });
         }
       } catch {
@@ -78,11 +93,10 @@ export default function EditPasswordPage() {
     return () => {
       status.cancelled = true;
     };
-  }, [passwordData, user, t]);
+  }, [passwordData, masterPassword, user, t]);
 
   const handleSubmit = useCallback(
     async (data: PasswordFormData) => {
-      const masterPassword = selectMasterPassword();
       if (!masterPassword || !user?.email || !id) {
         toast.error(t('dashboard.toast.noMasterPassword'));
         void navigate(pathTo(ROUTES.DASHBOARD, language));
@@ -102,6 +116,7 @@ export default function EditPasswordPage() {
             website: data.website || null,
             notes: data.notes || null,
             category: data.category || null,
+            tags: data.tags,
           },
         });
 
@@ -111,7 +126,7 @@ export default function EditPasswordPage() {
         toast.error(t('dashboard.toast.encryptionError'));
       }
     },
-    [user, id, updatePassword, navigate, language, t],
+    [user, masterPassword, id, updatePassword, navigate, language, t],
   );
 
   const isLoadingState = isFetching || isDecrypting;
@@ -150,6 +165,7 @@ export default function EditPasswordPage() {
           initialData={decryptedData}
           onSubmit={(data) => void handleSubmit(data)}
           isLoading={updatePassword.isPending}
+          existingTags={existingTags}
         />
       </FadeContent>
     </div>

@@ -15,6 +15,7 @@ class PasswordModel extends Model {
   declare website: string | null;
   declare notes: string | null;
   declare category: string | null;
+  declare tags: string[];
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -64,6 +65,22 @@ PasswordModel.init(
       allowNull: true,
       defaultValue: null,
     },
+    tags: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: '[]',
+      get(): string[] {
+        const raw = this.getDataValue('tags') as string;
+        try {
+          return JSON.parse(raw) as string[];
+        } catch {
+          return [];
+        }
+      },
+      set(value: string[]) {
+        this.setDataValue('tags', JSON.stringify(value));
+      },
+    },
   },
   {
     sequelize,
@@ -87,6 +104,7 @@ function toPasswordData(model: PasswordModel): PasswordData {
     website: model.website,
     notes: model.notes,
     category: model.category,
+    tags: model.tags,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
   };
@@ -111,6 +129,7 @@ export const PasswordRepository: IPasswordRepository = {
     website: string | null;
     notes: string | null;
     category: string | null;
+    tags: string[];
   }): Promise<PasswordData> {
     const record = await PasswordModel.create({
       userId: data.userId,
@@ -120,6 +139,7 @@ export const PasswordRepository: IPasswordRepository = {
       website: data.website,
       notes: data.notes,
       category: data.category,
+      tags: data.tags,
     });
     return toPasswordData(record);
   },
@@ -133,10 +153,14 @@ export const PasswordRepository: IPasswordRepository = {
       website: string | null;
       notes: string | null;
       category: string | null;
+      tags: string[];
     }>,
   ): Promise<PasswordData> {
     const update: Partial<
-      Pick<PasswordModel, 'title' | 'username' | 'password' | 'website' | 'notes' | 'category'>
+      Pick<
+        PasswordModel,
+        'title' | 'username' | 'password' | 'website' | 'notes' | 'category' | 'tags'
+      >
     > = {};
     if (data.title !== undefined) update.title = data.title;
     if (data.username !== undefined) update.username = data.username;
@@ -144,6 +168,7 @@ export const PasswordRepository: IPasswordRepository = {
     if (data.website !== undefined) update.website = data.website;
     if (data.notes !== undefined) update.notes = data.notes;
     if (data.category !== undefined) update.category = data.category;
+    if (data.tags !== undefined) update.tags = data.tags;
 
     const [affectedCount] = await PasswordModel.update(update, { where: { id } });
     if (affectedCount === 0) throw new Error('Password not found');

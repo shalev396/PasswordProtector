@@ -12,9 +12,16 @@ export const dashboard = {
   category: {
     all: 'All Categories',
     login: 'Login',
+    api_key: 'API Key',
+    environment: 'Environment',
+    secure_note: 'Secure Note',
+    // legacy
     card: 'Card',
     note: 'Secure Note',
     other: 'Other',
+  },
+  tags: {
+    all: 'All Tags',
   },
   sort: {
     recent: 'Recent',
@@ -46,6 +53,22 @@ export const dashboard = {
     placeholder: 'Enter secret key...',
     submit: 'Unlock Vault',
     warning: 'This key is never stored. You must re-enter it each session.',
+    wrongKeyWarning:
+      'There is no way to verify your secret key. If entered incorrectly, your passwords will fail to decrypt. You can re-enter it at any time from the dashboard.',
+    validFor: 'Secret key valid for',
+    expired: 'Your secret key has expired.',
+    reenter: 'Re-enter Key',
+  },
+  decrypt: {
+    show: 'Show Password',
+    showKey: 'Show API Key',
+    showEnv: 'Show Value',
+    showNote: 'Show Note',
+    description:
+      'This value is decrypted in your browser and forgotten when you close this dialog.',
+    loading: 'Decrypting...',
+    error: 'Decryption failed.',
+    errorHint: 'Please verify that your master password is correct and try again.',
   },
   form: {
     addTitle: 'Add Password',
@@ -56,6 +79,12 @@ export const dashboard = {
     usernamePlaceholder: 'e.g. john@example.com',
     password: 'Password',
     passwordPlaceholder: 'Enter or generate a password',
+    apiKey: 'API Key',
+    apiKeyPlaceholder: 'Enter your API key',
+    envValue: 'Value',
+    envValuePlaceholder: 'Paste your environment variables...',
+    noteContent: 'Content',
+    noteContentPlaceholder: 'Enter your secure note...',
     generate: 'Generate',
     website: 'Website URL',
     websitePlaceholder: 'https://example.com',
@@ -63,6 +92,9 @@ export const dashboard = {
     notesPlaceholder: 'Optional notes...',
     category: 'Category',
     categoryPlaceholder: 'Select a category',
+    tags: 'Tags',
+    tagsPlaceholder: 'Add a tag and press Enter...',
+    addTag: 'Add',
     save: 'Save Password',
     update: 'Update Password',
     cancel: 'Cancel',
