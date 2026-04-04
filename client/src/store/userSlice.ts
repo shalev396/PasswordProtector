@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import type { User } from '@/types';
+import type { User, UserProfile } from '@/types';
 import type { RootState } from './index';
 
 // ---------------------------------------------------------------------------
@@ -23,7 +23,6 @@ function decodeUserFromIdToken(idToken: string): User | null {
     const decoded = JSON.parse(atob(payload)) as {
       sub?: string;
       email?: string;
-      name?: string;
     };
     if (!decoded.sub) {
       return null;
@@ -31,7 +30,6 @@ function decodeUserFromIdToken(idToken: string): User | null {
     return {
       id: decoded.sub,
       email: decoded.email ?? '',
-      name: decoded.name ?? '',
     };
   } catch {
     return null;
@@ -43,11 +41,13 @@ function decodeUserFromIdToken(idToken: string): User | null {
 // ---------------------------------------------------------------------------
 interface UserState {
   user: User | null;
+  profile: UserProfile | null;
   isRestoringSession: boolean;
 }
 
 const initialState: UserState = {
   user: null,
+  profile: null,
   isRestoringSession: false,
 };
 
@@ -100,10 +100,19 @@ const userSlice = createSlice({
     },
 
     /**
+     * Stores the full user profile fetched from GET /api/private/me.
+     * This is the single source of truth for display data (name, email, etc.).
+     */
+    setProfile: (state, action: PayloadAction<UserProfile>) => {
+      state.profile = action.payload;
+    },
+
+    /**
      * Clears all auth state and storage.
      */
     logout: (state) => {
       state.user = null;
+      state.profile = null;
       state.isRestoringSession = false;
       sessionStorage.removeItem(ID_TOKEN_KEY);
       sessionStorage.removeItem(MASTER_PASSWORD_KEY);
@@ -141,10 +150,17 @@ const userSlice = createSlice({
 // ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
-export const { setAuthData, updateTokens, logout, loadFromStorage, setRestoringSession } =
-  userSlice.actions;
+export const {
+  setAuthData,
+  updateTokens,
+  setProfile,
+  logout,
+  loadFromStorage,
+  setRestoringSession,
+} = userSlice.actions;
 
 export const selectUser = (state: RootState) => state.user.user;
+export const selectProfile = (state: RootState) => state.user.profile;
 export const selectIsAuthenticated = (state: RootState) => state.user.user !== null;
 export const selectIsRestoringSession = (state: RootState) => state.user.isRestoringSession;
 export const selectHasMasterPassword = () => sessionStorage.getItem(MASTER_PASSWORD_KEY) !== null;

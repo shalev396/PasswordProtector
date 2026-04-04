@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getMe, deleteAccount } from '@/api/services/userService';
+import { getMe, updateMe, exportMyData, deleteAccount } from '@/api/services/userService';
 import {
   getPasswords,
   getPassword,
@@ -10,6 +10,7 @@ import {
 import type {
   CreatePasswordRequestBody,
   UpdatePasswordRequestBody,
+  UpdateMeRequestBody,
 } from '@api-types/api-contracts';
 
 export const queryKeys = {
@@ -22,6 +23,28 @@ export function useMe() {
     queryFn: async () => {
       const response = await getMe();
       return response.data;
+    },
+  });
+}
+
+export function useUpdateMe() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: UpdateMeRequestBody) => {
+      const response = await updateMe(data);
+      return response.data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.me });
+    },
+  });
+}
+
+export function useExportMyData() {
+  return useMutation({
+    mutationFn: async () => {
+      await exportMyData();
     },
   });
 }

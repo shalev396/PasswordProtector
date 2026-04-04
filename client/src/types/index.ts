@@ -1,6 +1,7 @@
-import type { LoginResponseData } from '@api-types/api-contracts';
+import type { LoginResponseData, MeResponseData } from '@api-types/api-contracts';
 
-export type User = LoginResponseData['user'];
+export type User = Omit<LoginResponseData['user'], 'name'>;
+export type { MeResponseData as UserProfile };
 
 export interface ApiRequestConfig {
   suppressErrorToast?: boolean;

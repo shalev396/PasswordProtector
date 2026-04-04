@@ -13,7 +13,12 @@ export type {
   RefreshTokenResponseData,
 } from '../routes/public/auth/index.js';
 
-export type { MeResponseData, DeleteUserResponseData } from '../routes/private/account.js';
+export type {
+  MeResponseData,
+  UpdateMeRequestBody,
+  UpdateMeResponseData,
+  DeleteUserResponseData,
+} from '../routes/private/account.js';
 
 export type {
   PasswordResponseData,

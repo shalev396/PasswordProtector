@@ -17,6 +17,21 @@ export interface MeResponseData {
 
 router.get('/me', AccountController.getMe);
 
+// ─── PUT /api/private/me ────────────────────────────────────────────────────
+
+export interface UpdateMeRequestBody {
+  name?: string;
+}
+
+export type UpdateMeResponseData = MeResponseData;
+
+router.put('/me', AccountController.updateMe);
+
+// ─── GET /api/private/me/export ──────────────────────────────────────────────
+// Returns binary ZIP (application/zip) with Content-Disposition: attachment
+
+router.get('/me/export', AccountController.exportMyData);
+
 // ─── DELETE /api/private/delete ─────────────────────────────────────────────
 
 export interface DeleteUserResponseData {
