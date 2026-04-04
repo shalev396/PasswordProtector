@@ -10,7 +10,13 @@
       "mcp__playwright__browser_take_screenshot",
       "WebSearch",
       "mcp__playwright__browser_press_key",
-      "mcp__playwright__browser_resize"
+      "mcp__playwright__browser_resize",
+      "mcp__github__search_repositories",
+      "mcp__github__get_file_contents",
+      "Bash(find:*)",
+      "Bash(npm run verify)",
+      "Bash(npm run test:local)",
+      "Bash(curl:*)"
     ]
   }
 }

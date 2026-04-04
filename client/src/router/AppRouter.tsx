@@ -4,11 +4,11 @@ import { ProtectedRoute } from '@/router/ProtectedRoute';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { ROUTES } from '@/router/routes';
 
-const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
-const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
-const EditProfilePage = lazy(() => import('@/pages/EditProfilePage'));
-const AddPasswordPage = lazy(() => import('@/pages/AddPasswordPage'));
-const EditPasswordPage = lazy(() => import('@/pages/EditPasswordPage'));
+const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'));
+const ProfilePage = lazy(() => import('@/pages/profile/ProfilePage'));
+const EditProfilePage = lazy(() => import('@/pages/profile/EditProfilePage'));
+const AddPasswordPage = lazy(() => import('@/pages/dashboard/AddPasswordPage'));
+const EditPasswordPage = lazy(() => import('@/pages/dashboard/EditPasswordPage'));
 
 export const appRoutes = (
   <>
