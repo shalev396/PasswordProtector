@@ -1,6 +1,6 @@
 """
 Mail.tm helper for E2E tests - creates temp email, signup, confirms, and returns credentials.
-Reuses the Postman flow logic.
+Reuses the Postman flow logic for PasswordProtector.
 """
 import os
 import re
@@ -75,7 +75,7 @@ def get_mailtm_token(email: str, mailtm_password: str) -> str:
     return token
 
 
-def signup_elytra(api_base_url: str, email: str, password: str, name: str = "Test User") -> None:
+def signup_app(api_base_url: str, email: str, password: str, name: str = "Test User") -> None:
     r = requests.post(
         f"{api_base_url}/public/auth/signup",
         json={"email": email, "password": password, "name": name},
@@ -83,7 +83,7 @@ def signup_elytra(api_base_url: str, email: str, password: str, name: str = "Tes
         timeout=15,
     )
     if r.status_code != 200:
-        raise RuntimeError(f"Elytra signup failed: {r.status_code} {r.text}")
+        raise RuntimeError(f"Signup failed: {r.status_code} {r.text}")
 
 
 def poll_inbox_and_get_code(mailtm_token: str) -> str:
@@ -115,7 +115,7 @@ def poll_inbox_and_get_code(mailtm_token: str) -> str:
     raise RuntimeError(f"No confirmation code received after {POLL_MAX_RETRIES} retries")
 
 
-def confirm_signup_elytra(api_base_url: str, email: str, code: str) -> None:
+def confirm_signup_app(api_base_url: str, email: str, code: str) -> None:
     r = requests.post(
         f"{api_base_url}/public/auth/confirm",
         json={"email": email, "code": code},
@@ -123,10 +123,10 @@ def confirm_signup_elytra(api_base_url: str, email: str, code: str) -> None:
         timeout=15,
     )
     if r.status_code != 200:
-        raise RuntimeError(f"Elytra confirm failed: {r.status_code} {r.text}")
+        raise RuntimeError(f"Confirm failed: {r.status_code} {r.text}")
 
 
-def login_elytra(api_base_url: str, email: str, password: str) -> tuple[str, str]:
+def login_app(api_base_url: str, email: str, password: str) -> tuple[str, str]:
     r = requests.post(
         f"{api_base_url}/public/auth/login",
         json={"email": email, "password": password},
@@ -134,7 +134,7 @@ def login_elytra(api_base_url: str, email: str, password: str) -> tuple[str, str
         timeout=15,
     )
     if r.status_code != 200:
-        raise RuntimeError(f"Elytra login failed: {r.status_code} {r.text}")
+        raise RuntimeError(f"Login failed: {r.status_code} {r.text}")
     data = r.json()
     tokens = data["data"].get("tokens", {})
     id_token = tokens.get("idToken")
@@ -149,10 +149,10 @@ def create_test_user(api_base_url: str) -> TestUser:
     domain = get_mailtm_domain()
     email, mailtm_password, app_password = create_mailtm_account(domain)
     mailtm_token = get_mailtm_token(email, mailtm_password)
-    signup_elytra(api_base_url, email, app_password)
+    signup_app(api_base_url, email, app_password)
     code = poll_inbox_and_get_code(mailtm_token)
-    confirm_signup_elytra(api_base_url, email, code)
-    id_token, refresh_token = login_elytra(api_base_url, email, app_password)
+    confirm_signup_app(api_base_url, email, code)
+    id_token, refresh_token = login_app(api_base_url, email, app_password)
     return TestUser(email, app_password, id_token, refresh_token)
 
 
@@ -189,13 +189,22 @@ def login_page_with_user(page, app_url: str, user: TestUser) -> None:
         # Stabilize auth: navigate to dashboard and wait for it so auth is fully applied
         page.goto(f"{app_url}/dashboard", wait_until="networkidle")
         try:
-            page.get_by_role("heading", name="Dashboard").wait_for(state="visible", timeout=20000)
+            page.get_by_role("heading", name="Password Vault").wait_for(state="visible", timeout=20000)
         except Exception:
             if attempt == 1:
                 raise
             time.sleep(2)  # Retry: allow auth to settle
             continue
         if "/auth/login" not in page.url:
+            # Dismiss Master Password Prompt if visible (full-screen modal blocks all interaction)
+            unlock_btn = page.get_by_role("button", name="Unlock Vault")
+            try:
+                if unlock_btn.is_visible(timeout=3000):
+                    page.get_by_placeholder("Enter secret key").fill("test-master-password")
+                    unlock_btn.click()
+                    page.wait_for_load_state("networkidle")
+            except Exception:
+                pass  # Modal not present or already dismissed
             return
         if attempt == 1:
             raise RuntimeError("Auth injection failed: still on login after 2 attempts")
@@ -208,7 +217,7 @@ def navigate_to_profile_via_ui(page, app_url: str, timeout_ms: int = 15000) -> N
     Use after login_page_with_user. Assumes page is on dashboard or another authenticated page.
     """
     page.get_by_role("navigation").get_by_role("button").first.click(timeout=timeout_ms)
-    page.get_by_role("menuitem", name="My account").click(timeout=timeout_ms)
+    page.get_by_role("menuitem", name="Profile").click(timeout=timeout_ms)
     page.wait_for_load_state("networkidle")
     page.get_by_role("heading", name="Profile").wait_for(state="visible", timeout=timeout_ms)
 
@@ -216,7 +225,7 @@ def navigate_to_profile_via_ui(page, app_url: str, timeout_ms: int = 15000) -> N
 def create_test_user_and_login(page, app_url: str, api_base_url: str) -> None:
     """
     Create test user and inject auth into the Playwright page.
-    Elytra stores idToken in sessionStorage, refreshToken in localStorage.
+    Stores idToken in sessionStorage, refreshToken in localStorage.
     """
     user = create_test_user(api_base_url)
     login_page_with_user(page, app_url, user)

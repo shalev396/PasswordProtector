@@ -1,14 +1,15 @@
 """
-Pytest configuration and fixtures for Elytra E2E tests.
+Pytest configuration and fixtures for PasswordProtector E2E tests.
 
 BASE_URL: npm run test   → http://localhost:5173 (local dev)
-          npm run test:qa → https://qa.elytra.shalev396.com (QA)
+          npm run test:qa → https://qa.password-protector.shalev396.com (QA)
 
 Requires: client (and server for auth flows) running at the target URL.
 """
 import base64
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -26,6 +27,7 @@ def ensure_translations_exported():
             cwd=Path(__file__).resolve().parent,
             check=True,
             capture_output=True,
+            shell=(sys.platform == "win32"),
         )
 
 

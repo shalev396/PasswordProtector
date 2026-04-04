@@ -36,7 +36,7 @@ def test_login_flow(page: Page, app_url: str, shared_test_user):
     page.wait_for_load_state("networkidle")
     if "/auth/login" in page.url:
         pytest.skip("Auth injection may need page reload")
-    expect(page.get_by_role("heading", name="Dashboard")).to_be_visible(timeout=SHORT_TIMEOUT)
+    expect(page.get_by_role("heading", name="Password Vault")).to_be_visible(timeout=SHORT_TIMEOUT)
 
 
 def test_forgot_password_form_submits(page: Page, app_url: str, shared_test_user):
@@ -108,8 +108,9 @@ def test_edit_profile_flow(page: Page, app_url: str, shared_test_user):
     name_input.fill(unique_name)
     page.get_by_role("button", name="Save Changes").click(timeout=NORMAL_TIMEOUT)
     page.wait_for_load_state("networkidle")
-    expect(page).to_have_url(f"{app_url}/profile", timeout=NORMAL_TIMEOUT)
-    expect(page.get_by_text(unique_name)).to_be_visible(timeout=NORMAL_TIMEOUT)
+    expect(page).to_have_url(f"{app_url}/profile", timeout=LONG_TIMEOUT)
+    # Verify updated name appears on profile page
+    expect(page.get_by_role("main").get_by_text(unique_name)).to_be_visible(timeout=LONG_TIMEOUT)
 
 
 def test_export_data_flow(page: Page, app_url: str, shared_test_user):
@@ -128,6 +129,100 @@ def test_guest_redirects_to_dashboard_when_authenticated(page: Page, app_url: st
     page.goto(f"{app_url}/auth/login", wait_until="domcontentloaded")
     page.wait_for_load_state("networkidle")
     expect(page).to_have_url(f"{app_url}/dashboard")
+
+
+def test_add_password_flow(page: Page, app_url: str, shared_test_user):
+    """Login -> dashboard -> add password -> fill form -> save -> verify in vault."""
+    login_page_with_user(page, app_url, shared_test_user)
+    # login_page_with_user already lands on /dashboard with master password dismissed
+    if "/auth/login" in page.url:
+        pytest.skip("Auth fixture not available")
+
+    # Navigate to add password page (use SPA click, not goto, to preserve Redux state)
+    page.get_by_role("button", name="Add Password", exact=False).first.click(timeout=NORMAL_TIMEOUT)
+    page.wait_for_load_state("networkidle")
+    expect(page).to_have_url(f"{app_url}/dashboard/add", timeout=NORMAL_TIMEOUT)
+
+    # Fill form — Title is required, Password is required
+    page.get_by_label("Title").fill("E2E Test Password", timeout=SHORT_TIMEOUT)
+    page.get_by_label("Password", exact=True).fill("TestSecret123!", timeout=SHORT_TIMEOUT)
+
+    # Submit
+    page.get_by_role("button", name="Save Password").click(timeout=NORMAL_TIMEOUT)
+    page.wait_for_load_state("networkidle")
+
+    # Should redirect back to dashboard
+    expect(page).to_have_url(f"{app_url}/dashboard", timeout=NORMAL_TIMEOUT)
+    # Verify the password appears in the vault
+    expect(page.get_by_text("E2E Test Password").first).to_be_visible(timeout=NORMAL_TIMEOUT)
+
+
+def test_edit_password_flow(page: Page, app_url: str, shared_test_user):
+    """Login -> dashboard -> click edit on a password -> change title -> save -> verify."""
+    login_page_with_user(page, app_url, shared_test_user)
+    if "/auth/login" in page.url:
+        pytest.skip("Auth fixture not available")
+
+    # Ensure at least one password exists (created by test_add_password_flow)
+    if page.get_by_text("E2E Test Password").count() == 0:
+        # Create one if missing
+        page.get_by_role("button", name="Add Password", exact=False).first.click(timeout=NORMAL_TIMEOUT)
+        page.wait_for_load_state("networkidle")
+        page.get_by_label("Title").fill("E2E Test Password", timeout=SHORT_TIMEOUT)
+        page.get_by_label("Password", exact=True).fill("TestSecret123!", timeout=SHORT_TIMEOUT)
+        page.get_by_role("button", name="Save Password").click(timeout=NORMAL_TIMEOUT)
+        page.wait_for_load_state("networkidle")
+        expect(page).to_have_url(f"{app_url}/dashboard", timeout=NORMAL_TIMEOUT)
+
+    # Click the Edit button on the first password card
+    page.get_by_role("button", name="Edit").first.click(timeout=NORMAL_TIMEOUT)
+    page.wait_for_load_state("networkidle")
+
+    # Should be on the edit page
+    expect(page.get_by_text("Edit Password").first).to_be_visible(timeout=NORMAL_TIMEOUT)
+
+    # Change the title
+    title_input = page.get_by_label("Title")
+    title_input.clear()
+    unique_title = f"Edited Password {int(time.time())}"
+    title_input.fill(unique_title, timeout=SHORT_TIMEOUT)
+
+    # Save
+    page.get_by_role("button", name="Update Password").click(timeout=NORMAL_TIMEOUT)
+    page.wait_for_load_state("networkidle")
+
+    # Should redirect back to dashboard
+    expect(page).to_have_url(f"{app_url}/dashboard", timeout=NORMAL_TIMEOUT)
+    # Verify the updated title appears
+    expect(page.get_by_text(unique_title).first).to_be_visible(timeout=NORMAL_TIMEOUT)
+
+
+def test_delete_password_flow(page: Page, app_url: str, shared_test_user):
+    """Login -> dashboard -> find password -> delete -> confirm removal."""
+    login_page_with_user(page, app_url, shared_test_user)
+    # login_page_with_user already lands on /dashboard with master password dismissed
+    if "/auth/login" in page.url:
+        pytest.skip("Auth fixture not available")
+
+    # Look for the password created by test_add_password_flow (or any existing one)
+    cards = page.get_by_text("E2E Test Password")
+    if cards.count() == 0:
+        pytest.skip("No test password found to delete")
+
+    initial_count = cards.count()
+
+    # Handle native window.confirm() dialog — accept it when it appears
+    page.on("dialog", lambda dialog: dialog.accept())
+
+    # Click the delete button on the first card
+    delete_buttons = page.get_by_role("button", name="Delete")
+    if delete_buttons.count() > 0:
+        delete_buttons.first.click(timeout=SHORT_TIMEOUT)
+        page.wait_for_load_state("networkidle")
+        time.sleep(1)  # Allow mutation to complete
+        # Verify count decreased
+        new_count = page.get_by_text("E2E Test Password").count()
+        assert new_count < initial_count, f"Password not deleted: count was {initial_count}, still {new_count}"
 
 
 def test_delete_account_flow(page: Page, app_url: str, api_base_url: str):

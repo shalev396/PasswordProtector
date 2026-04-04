@@ -18,7 +18,6 @@ KNOWN_NAMESPACES = (
     "legal",
     "nav",
     "notFound",
-    "pricing",
     "profile",
     "theme",
 )
@@ -52,7 +51,6 @@ class PageTranslationCheck(NamedTuple):
 # All pages to check. Path is relative to /:lng
 TRANSLATION_PAGES: list[PageTranslationCheck] = [
     PageTranslationCheck("", False),
-    PageTranslationCheck("pricing", False),
     PageTranslationCheck("auth/login", False),
     PageTranslationCheck("auth/signup", False),
     PageTranslationCheck("auth/forgot-password", False),
@@ -61,6 +59,7 @@ TRANSLATION_PAGES: list[PageTranslationCheck] = [
     PageTranslationCheck("legal/privacy", False),
     PageTranslationCheck("legal/terms", False),
     PageTranslationCheck("dashboard", True),
+    PageTranslationCheck("dashboard/add", True),
     PageTranslationCheck("profile", True),
     PageTranslationCheck("profile/edit", True),
     PageTranslationCheck("nonexistent-404-test", False),  # 404 page
