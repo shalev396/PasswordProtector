@@ -16,7 +16,8 @@
       "Bash(find:*)",
       "Bash(npm run verify)",
       "Bash(npm run test:local)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "mcp__github__get_me"
     ]
   }
 }
