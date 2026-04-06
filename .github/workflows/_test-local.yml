@@ -47,6 +47,28 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/my-github-actions-role
+      - name: Install SSM Session Manager plugin
+        run: |
+          curl -sL "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o ssm-plugin.deb
+          sudo dpkg -i ssm-plugin.deb
+      - name: Start SSH tunnel over SSM
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/ec2-key.pem
+          chmod 600 /tmp/ec2-key.pem
+          ssh -N -f \
+            -i /tmp/ec2-key.pem \
+            -L "${{ secrets.DB_TUNNEL_LOCAL_PORT }}:${{ secrets.DB_TUNNEL_REMOTE_HOST }}" \
+            -o "ProxyCommand=aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p --region ${{ vars.AWS_REGION }}" \
+            -o "StrictHostKeyChecking=no" \
+            -o "ServerAliveInterval=60" \
+            ec2-user@${{ secrets.EC2_INSTANCE_ID }}
+      - name: Wait for tunnel to be ready
+        run: |
+          for i in $(seq 1 10); do
+            nc -z 127.0.0.1 ${{ secrets.DB_TUNNEL_LOCAL_PORT }} && echo "Tunnel ready" && break
+            echo "Waiting... ($i)"
+            sleep 2
+          done
       - run: npm ci
         working-directory: server
       - name: Start serverless offline and run Postman
@@ -112,6 +134,28 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/my-github-actions-role
+      - name: Install SSM Session Manager plugin
+        run: |
+          curl -sL "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o ssm-plugin.deb
+          sudo dpkg -i ssm-plugin.deb
+      - name: Start SSH tunnel over SSM
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/ec2-key.pem
+          chmod 600 /tmp/ec2-key.pem
+          ssh -N -f \
+            -i /tmp/ec2-key.pem \
+            -L "${{ secrets.DB_TUNNEL_LOCAL_PORT }}:${{ secrets.DB_TUNNEL_REMOTE_HOST }}" \
+            -o "ProxyCommand=aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p --region ${{ vars.AWS_REGION }}" \
+            -o "StrictHostKeyChecking=no" \
+            -o "ServerAliveInterval=60" \
+            ec2-user@${{ secrets.EC2_INSTANCE_ID }}
+      - name: Wait for tunnel to be ready
+        run: |
+          for i in $(seq 1 10); do
+            nc -z 127.0.0.1 ${{ secrets.DB_TUNNEL_LOCAL_PORT }} && echo "Tunnel ready" && break
+            echo "Waiting... ($i)"
+            sleep 2
+          done
       - name: Install Playwright test dependencies
         run: npm run test:install
         working-directory: client
