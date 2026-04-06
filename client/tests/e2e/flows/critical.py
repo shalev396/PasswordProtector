@@ -215,9 +215,11 @@ def test_delete_password_flow(page: Page, app_url: str, shared_test_user):
         page.get_by_role("button", name="Save Password").click(timeout=NORMAL_TIMEOUT)
         page.wait_for_load_state("networkidle")
         expect(page).to_have_url(f"{app_url}/dashboard", timeout=NORMAL_TIMEOUT)
-        cards = page.get_by_text("E2E Test Password")
+        # Wait for the card to appear after redirect (CI can be slow)
+        expect(page.get_by_text("E2E Test Password").first).to_be_visible(timeout=NORMAL_TIMEOUT)
 
-    assert cards.count() > 0, "E2E Test Password card should exist before deletion"
+    initial_count = page.get_by_text("E2E Test Password").count()
+    assert initial_count > 0, "E2E Test Password card should exist before deletion"
 
     # Handle native window.confirm() dialog — accept it when it appears
     page.on("dialog", lambda dialog: dialog.accept())
@@ -229,8 +231,11 @@ def test_delete_password_flow(page: Page, app_url: str, shared_test_user):
     # Wait for the success toast to confirm the API call completed
     expect(page.get_by_text("Password deleted")).to_be_visible(timeout=LONG_TIMEOUT)
 
-    # Wait for the card to actually disappear from the DOM after React Query refetch
-    expect(page.get_by_text("E2E Test Password").first).not_to_be_visible(timeout=LONG_TIMEOUT)
+    # Verify count decreased — handles duplicates from parallel browser instances
+    # Use to_have_count with retry so Playwright polls until React Query refetches
+    expect(page.get_by_text("E2E Test Password")).to_have_count(
+        initial_count - 1, timeout=LONG_TIMEOUT
+    )
 
 
 def test_delete_account_flow(page: Page, app_url: str, api_base_url: str):

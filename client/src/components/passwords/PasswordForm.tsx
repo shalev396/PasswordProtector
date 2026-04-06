@@ -23,7 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverAnchor } from '@/components/ui/popover';
 import { PasswordGenerator } from '@/components/passwords/PasswordGenerator';
 import { StrengthMeter } from '@/components/passwords/StrengthMeter';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -229,7 +229,9 @@ export function PasswordForm({
             <ArrowLeft className="size-5" />
           </Link>
           <div>
-            <CardTitle className="text-xl">{pageTitle}</CardTitle>
+            <CardTitle>
+              <h1 className="text-xl">{pageTitle}</h1>
+            </CardTitle>
             <CardDescription className="mt-1">
               {mode === 'add' ? t('dashboard.subtitle') : t('dashboard.form.editTitle')}
             </CardDescription>
@@ -405,7 +407,7 @@ export function PasswordForm({
           <div className="space-y-2">
             <Label htmlFor="tags">{t('dashboard.form.tags')}</Label>
             <Popover open={tagPopoverOpen}>
-              <PopoverTrigger asChild>
+              <PopoverAnchor asChild>
                 <div className="flex gap-2">
                   <Input
                     ref={tagInputRef}
@@ -439,7 +441,7 @@ export function PasswordForm({
                     {t('dashboard.form.addTag')}
                   </Button>
                 </div>
-              </PopoverTrigger>
+              </PopoverAnchor>
               {tagSuggestions.length > 0 && (
                 <PopoverContent
                   className="w-[var(--radix-popover-trigger-width)] p-1"
