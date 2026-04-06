@@ -27,6 +27,7 @@ export const dashboard = {
     recent: 'אחרונים',
     alphabetical: 'א-ב',
     category: 'קטגוריה',
+    direction: 'שנה כיוון מיון',
   },
   addPassword: 'הוסף סיסמה',
   empty: {
@@ -68,6 +69,8 @@ export const dashboard = {
     loading: 'מפענח...',
     error: 'הפענוח נכשל.',
     errorHint: 'אנא ודא שמפתח ההצפנה שלך נכון ונסה שנית.',
+    copyUsername: 'העתק שם משתמש',
+    copyPassword: 'העתק סיסמה',
   },
   form: {
     addTitle: 'הוסף סיסמה',

@@ -27,6 +27,7 @@ export const dashboard = {
     recent: 'Recent',
     alphabetical: 'A-Z',
     category: 'Category',
+    direction: 'Toggle sort direction',
   },
   addPassword: 'Add Password',
   empty: {
@@ -69,6 +70,8 @@ export const dashboard = {
     loading: 'Decrypting...',
     error: 'Decryption failed.',
     errorHint: 'Please verify that your master password is correct and try again.',
+    copyUsername: 'Copy username',
+    copyPassword: 'Copy password',
   },
   form: {
     addTitle: 'Add Password',

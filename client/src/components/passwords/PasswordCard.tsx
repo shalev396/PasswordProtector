@@ -84,7 +84,7 @@ export function PasswordCard({ password, onShowPassword, onDelete }: PasswordCar
             <CategoryIcon className="size-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-semibold leading-tight truncate">{password.title}</h3>
+            <h2 className="text-sm font-semibold leading-tight truncate">{password.title}</h2>
             {subtitle !== null && (
               <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground truncate">
                 <ExternalLink className="size-3 shrink-0" />
@@ -134,6 +134,7 @@ export function PasswordCard({ password, onShowPassword, onDelete }: PasswordCar
               className="size-7"
               onClick={handleEdit}
               title={t('dashboard.card.edit')}
+              aria-label={t('dashboard.card.edit')}
             >
               <Pencil className="size-3.5" />
             </Button>
@@ -143,6 +144,7 @@ export function PasswordCard({ password, onShowPassword, onDelete }: PasswordCar
               className="size-7 text-destructive hover:text-destructive"
               onClick={handleDelete}
               title={t('dashboard.card.delete')}
+              aria-label={t('dashboard.card.delete')}
             >
               <Trash2 className="size-3.5" />
             </Button>

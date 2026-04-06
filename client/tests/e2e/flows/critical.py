@@ -207,22 +207,30 @@ def test_delete_password_flow(page: Page, app_url: str, shared_test_user):
     # Look for the password created by test_add_password_flow (or any existing one)
     cards = page.get_by_text("E2E Test Password")
     if cards.count() == 0:
-        pytest.skip("No test password found to delete")
+        # Create one if missing (test_edit_password_flow may have renamed it)
+        page.get_by_role("button", name="Add Password", exact=False).first.click(timeout=NORMAL_TIMEOUT)
+        page.wait_for_load_state("networkidle")
+        page.get_by_label("Title").fill("E2E Test Password", timeout=SHORT_TIMEOUT)
+        page.get_by_label("Password", exact=True).fill("DeleteMe123!", timeout=SHORT_TIMEOUT)
+        page.get_by_role("button", name="Save Password").click(timeout=NORMAL_TIMEOUT)
+        page.wait_for_load_state("networkidle")
+        expect(page).to_have_url(f"{app_url}/dashboard", timeout=NORMAL_TIMEOUT)
+        cards = page.get_by_text("E2E Test Password")
 
-    initial_count = cards.count()
+    assert cards.count() > 0, "E2E Test Password card should exist before deletion"
 
     # Handle native window.confirm() dialog — accept it when it appears
     page.on("dialog", lambda dialog: dialog.accept())
 
-    # Click the delete button on the first card
-    delete_buttons = page.get_by_role("button", name="Delete")
-    if delete_buttons.count() > 0:
-        delete_buttons.first.click(timeout=SHORT_TIMEOUT)
-        page.wait_for_load_state("networkidle")
-        time.sleep(1)  # Allow mutation to complete
-        # Verify count decreased
-        new_count = page.get_by_text("E2E Test Password").count()
-        assert new_count < initial_count, f"Password not deleted: count was {initial_count}, still {new_count}"
+    # Click the delete button on the card containing "E2E Test Password"
+    target_card = page.locator(".group", has=page.get_by_text("E2E Test Password")).first
+    target_card.get_by_role("button", name="Delete").click(timeout=SHORT_TIMEOUT)
+
+    # Wait for the success toast to confirm the API call completed
+    expect(page.get_by_text("Password deleted")).to_be_visible(timeout=LONG_TIMEOUT)
+
+    # Wait for the card to actually disappear from the DOM after React Query refetch
+    expect(page.get_by_text("E2E Test Password").first).not_to_be_visible(timeout=LONG_TIMEOUT)
 
 
 def test_delete_account_flow(page: Page, app_url: str, api_base_url: str):

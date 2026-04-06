@@ -130,6 +130,7 @@ export function DecryptPasswordDialog({
                     onClick={() => {
                       handleCopy(passwordUsername);
                     }}
+                    aria-label={t('dashboard.decrypt.copyUsername')}
                   >
                     <Copy className="size-3.5" />
                   </Button>
@@ -146,6 +147,7 @@ export function DecryptPasswordDialog({
                   onClick={() => {
                     handleCopy(decryptedValue);
                   }}
+                  aria-label={t('dashboard.decrypt.copyPassword')}
                 >
                   <Copy className="size-3.5" />
                 </Button>
