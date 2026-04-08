@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Password Protector is actively maintained on the `main` branche
+Password Protector is actively maintained on the `main` branch
 
 | Version / Branch      | Supported |
 | --------------------- | --------- |
