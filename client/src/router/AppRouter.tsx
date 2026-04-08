@@ -4,9 +4,11 @@ import { ProtectedRoute } from '@/router/ProtectedRoute';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { ROUTES } from '@/router/routes';
 
-const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
-const AddPasswordPage = lazy(() => import('@/pages/AddPasswordPage'));
-const EditPasswordPage = lazy(() => import('@/pages/EditPasswordPage'));
+const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'));
+const ProfilePage = lazy(() => import('@/pages/profile/ProfilePage'));
+const EditProfilePage = lazy(() => import('@/pages/profile/EditProfilePage'));
+const AddPasswordPage = lazy(() => import('@/pages/dashboard/AddPasswordPage'));
+const EditPasswordPage = lazy(() => import('@/pages/dashboard/EditPasswordPage'));
 
 export const appRoutes = (
   <>
@@ -19,6 +21,17 @@ export const appRoutes = (
       }
     >
       <Route index element={<DashboardPage />} />
+    </Route>
+    <Route
+      path={ROUTES.PROFILE}
+      element={
+        <ProtectedRoute>
+          <DashboardLayout />
+        </ProtectedRoute>
+      }
+    >
+      <Route index element={<ProfilePage />} />
+      <Route path={ROUTES.EDIT_PROFILE_SEGMENT} element={<EditProfilePage />} />
     </Route>
     <Route
       path={ROUTES.ADD_PASSWORD}

@@ -6,6 +6,7 @@ export const common = {
     signIn: 'Sign In',
     getStarted: 'Get Started',
     dashboard: 'Dashboard',
+    profile: 'Profile',
     features: 'Security',
     selectLanguage: 'Select language',
     homeAria: '{{appName}} - Go to home',

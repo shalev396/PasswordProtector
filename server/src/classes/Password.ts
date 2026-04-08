@@ -9,6 +9,7 @@ export class Password {
   private readonly _website: string | null;
   private readonly _notes: string | null;
   private readonly _category: string | null;
+  private readonly _tags: string[];
   private readonly _createdAt: Date;
   private readonly _updatedAt: Date;
 
@@ -21,6 +22,7 @@ export class Password {
     this._website = data.website;
     this._notes = data.notes;
     this._category = data.category;
+    this._tags = data.tags;
     this._createdAt = data.createdAt;
     this._updatedAt = data.updatedAt;
   }
@@ -57,6 +59,10 @@ export class Password {
     return this._category;
   }
 
+  get tags(): string[] {
+    return this._tags;
+  }
+
   get createdAt(): Date {
     return this._createdAt;
   }
@@ -75,6 +81,7 @@ export class Password {
       website: this._website,
       notes: this._notes,
       category: this._category,
+      tags: this._tags,
       createdAt: this._createdAt,
       updatedAt: this._updatedAt,
     };
@@ -100,6 +107,7 @@ export class Password {
     website: string | null;
     notes: string | null;
     category: string | null;
+    tags: string[];
   }): Promise<Password> {
     const repo = await getPasswordRepository();
     const record = await repo.create(data);
@@ -115,6 +123,7 @@ export class Password {
       website: string | null;
       notes: string | null;
       category: string | null;
+      tags: string[];
     }>,
   ): Promise<Password> {
     const repo = await getPasswordRepository();

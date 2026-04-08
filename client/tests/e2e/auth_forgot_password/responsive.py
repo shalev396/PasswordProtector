@@ -16,4 +16,5 @@ def test_forgot_password_responsive(page: Page, app_url: str):
         page.wait_for_load_state("networkidle")
         expect(page.get_by_text("Reset your password")).to_be_visible(timeout=NORMAL_TIMEOUT)
         expect(page.get_by_label("Email")).to_be_visible(timeout=NORMAL_TIMEOUT)
+        expect(page.get_by_role("button", name="Send Reset Link")).to_be_visible(timeout=NORMAL_TIMEOUT)
         assert_no_horizontal_overflow(page, vp["name"], vp["width"])

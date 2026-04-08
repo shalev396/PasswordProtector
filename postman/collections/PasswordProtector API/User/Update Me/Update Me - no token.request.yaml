@@ -1,0 +1,23 @@
+$kind: http-request
+url: '{{baseUrl}}/private/me'
+method: PUT
+auth:
+  type: noauth
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: '{"name":"Hacker User"}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 401', function () {
+          pm.response.to.have.status(401);
+      });
+
+      pm.test('Response indicates failure', function () {
+          const json = pm.response.json();
+          pm.expect(json.message).to.be.a('string');
+      });
+    language: text/javascript
+order: 3000

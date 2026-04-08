@@ -1,6 +1,5 @@
 import { common } from './common.js';
 import { landing } from './landing.js';
-import { pricing } from './pricing.js';
 import { dashboard } from './dashboard.js';
 import { notFound } from './notFound.js';
 import { auth } from './auth.js';
@@ -12,7 +11,6 @@ import { footer } from './footer.js';
 export const en = {
   ...common,
   landing,
-  pricing,
   dashboard,
   notFound,
   auth,

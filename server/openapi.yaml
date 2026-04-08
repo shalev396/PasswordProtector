@@ -1,0 +1,1005 @@
+openapi: 3.0.3
+
+info:
+  title: Password Protector API
+  version: 1.0.0
+  description: |
+    REST API for Password Protector — a zero-knowledge password manager with client-side AES-256-GCM encryption.
+
+    Authentication endpoints are public; password and user endpoints require a valid JWT Bearer token obtained from the login or refresh flows.
+
+    The server never sees plaintext passwords. Passwords are encrypted client-side before being sent to the API.
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://{domain}/api
+    description: Deployed environment
+    variables:
+      domain:
+        default: password-protector.shalev396.com
+
+tags:
+  - name: Auth
+    description: Public authentication endpoints (signup, login, password reset, token refresh)
+  - name: Passwords
+    description: Authenticated password CRUD endpoints (create, read, update, delete encrypted passwords)
+  - name: User
+    description: Authenticated user endpoints (profile, profile update, data export, account deletion)
+  - name: Dev
+    description: |
+      Development-only endpoints for local testing and debugging.
+      These endpoints are **disabled by default** in deployed environments.
+      To enable them, set `custom.enableDevTools: true` in `serverless.yml` before deploying.
+
+security: []
+
+paths:
+  # -- Auth -------------------------------------------------------------------
+
+  /public/auth/signup:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      description: Creates a Cognito user and sends a verification email. The user must confirm their email before logging in.
+      operationId: signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequestBody'
+            example:
+              email: user@example.com
+              password: P@ssw0rd!
+              name: Jane Doe
+      responses:
+        '200':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /public/auth/confirm:
+    post:
+      tags: [Auth]
+      summary: Confirm email verification
+      description: Verifies the user's email address with the code sent during signup.
+      operationId: confirmSignup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmSignupRequestBody'
+            example:
+              email: user@example.com
+              code: '123456'
+      responses:
+        '200':
+          description: Email confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptySuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /public/auth/resend-confirmation:
+    post:
+      tags: [Auth]
+      summary: Resend email verification code
+      description: Resends the verification code to the user's email address. Fails if the email is already confirmed.
+      operationId: resendConfirmation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendConfirmationRequestBody'
+            example:
+              email: user@example.com
+      responses:
+        '200':
+          description: Verification code resent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptySuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /public/auth/login:
+    post:
+      tags: [Auth]
+      summary: Authenticate a user
+      description: Validates credentials against Cognito. Returns user profile data and JWT tokens (id, refresh).
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequestBody'
+            example:
+              email: user@example.com
+              password: P@ssw0rd!
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /public/auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Request a password reset code
+      description: Sends a password reset verification code to the user's email. Returns success even if the email is not found (to prevent enumeration).
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequestBody'
+            example:
+              email: user@example.com
+      responses:
+        '200':
+          description: Reset code sent (or silently ignored if user not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptySuccessResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /public/auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset password with verification code
+      description: Sets a new password using the verification code from the forgot-password flow.
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequestBody'
+            example:
+              email: user@example.com
+              code: '123456'
+              password: N3wP@ssw0rd!
+      responses:
+        '200':
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptySuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /public/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh authentication tokens
+      description: Exchanges a valid refresh token for a new id token.
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequestBody'
+            example:
+              refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      responses:
+        '200':
+          description: Tokens refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # -- Passwords ---------------------------------------------------------------
+
+  /private/passwords:
+    get:
+      tags: [Passwords]
+      summary: List all passwords
+      description: Returns all password entries for the authenticated user. The `password` field is excluded from list responses for security.
+      operationId: listPasswords
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Password list (without encrypted password field)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [Passwords]
+      summary: Create a new password entry
+      description: Stores a new password entry. The `password` field should already be encrypted client-side with AES-256-GCM before being sent.
+      operationId: createPassword
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePasswordRequestBody'
+            example:
+              title: GitHub
+              username: user@example.com
+              password: 'U2FsdGVkX1...'
+              website: https://github.com
+              notes: Personal account
+              category: Development
+              tags:
+                - work
+                - code
+      responses:
+        '200':
+          description: Password created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /private/passwords/{id}:
+    get:
+      tags: [Passwords]
+      summary: Get a single password entry
+      description: Returns the full password entry including the encrypted `password` field. Ownership is verified server-side.
+      operationId: getPassword
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Password entry ID
+      responses:
+        '200':
+          description: Full password entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags: [Passwords]
+      summary: Update a password entry
+      description: Updates an existing password entry. All fields are optional. If `password` is provided, it should be re-encrypted client-side. Ownership is verified server-side.
+      operationId: updatePassword
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Password entry ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePasswordRequestBody'
+            example:
+              title: GitHub (Work)
+              password: 'U2FsdGVkX1...'
+      responses:
+        '200':
+          description: Updated password entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags: [Passwords]
+      summary: Delete a password entry
+      description: Permanently deletes a password entry. Ownership is verified server-side.
+      operationId: deletePassword
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Password entry ID
+      responses:
+        '200':
+          description: Password deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletePasswordResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # -- User --------------------------------------------------------------------
+
+  /private/me:
+    get:
+      tags: [User]
+      summary: Get current user profile
+      description: Returns the authenticated user's profile information.
+      operationId: getMe
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags: [User]
+      summary: Update current user profile
+      description: Updates the authenticated user's profile. Currently supports updating the user's name.
+      operationId: updateMe
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMeRequestBody'
+            example:
+              name: Jane Smith
+      responses:
+        '200':
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /private/me/export:
+    get:
+      tags: [User]
+      summary: Export user data
+      description: Exports all user data and password entries as a ZIP file containing a CSV. Passwords are included in their encrypted form.
+      operationId: exportMe
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ZIP file download
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: 'attachment; filename="user-export-{timestamp}.zip"'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /private/delete:
+    delete:
+      tags: [User]
+      summary: Delete user account
+      description: Permanently deletes the authenticated user's account, all associated password entries, and the Cognito user record.
+      operationId: deleteAccount
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Account deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteUserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # -- Dev ---------------------------------------------------------------------
+
+  /dev/sync-db:
+    post:
+      tags: [Dev]
+      summary: Sync database schema
+      description: Manually syncs the database schema from the code models to actual tables.
+      operationId: syncDatabase
+      responses:
+        '200':
+          description: Database synced successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncDbResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /dev/reset:
+    post:
+      tags: [Dev]
+      summary: Reset database and Cognito
+      description: |
+        Erases all data in the database and deletes all users in the Cognito user pool.
+        Only available when ENV=qa. Requires enableDevTools to be true for the deployment.
+      operationId: resetDatabase
+      responses:
+        '200':
+          description: Reset completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  # -- Security ----------------------------------------------------------------
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Cognito-issued JWT ID token
+
+  # -- Reusable Responses ------------------------------------------------------
+
+  responses:
+    BadRequest:
+      description: Invalid or missing request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            message: 'Title and password are required'
+
+    Unauthorized:
+      description: Authentication required or credentials invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            message: Login failed
+
+    NotFound:
+      description: Requested resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            message: Password not found
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            message: Too many requests. Please try again later.
+
+    InternalError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            message: An unexpected error occurred
+
+  # -- Schemas -----------------------------------------------------------------
+
+  schemas:
+    # -- Response wrappers -----------------------------------------------------
+
+    ApiErrorResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    EmptySuccessResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+
+    # -- Auth request bodies ---------------------------------------------------
+
+    SignupRequestBody:
+      type: object
+      required: [email, password, name]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+        name:
+          type: string
+
+    ConfirmSignupRequestBody:
+      type: object
+      required: [email, code]
+      properties:
+        email:
+          type: string
+          format: email
+        code:
+          type: string
+
+    ResendConfirmationRequestBody:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+
+    LoginRequestBody:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    ForgotPasswordRequestBody:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+
+    ResetPasswordRequestBody:
+      type: object
+      required: [email, code, password]
+      properties:
+        email:
+          type: string
+          format: email
+        code:
+          type: string
+        password:
+          type: string
+          format: password
+          minLength: 8
+
+    RefreshTokenRequestBody:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+
+    # -- Auth response data ----------------------------------------------------
+
+    SignupResponseData:
+      type: object
+      required: [userSub, userConfirmed]
+      properties:
+        userSub:
+          type: string
+        userConfirmed:
+          type: boolean
+
+    SignupResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/SignupResponseData'
+
+    LoginResponseData:
+      type: object
+      required: [user, tokens]
+      properties:
+        user:
+          type: object
+          required: [id, email, name]
+          properties:
+            id:
+              type: string
+            email:
+              type: string
+            name:
+              type: string
+        tokens:
+          type: object
+          required: [idToken, refreshToken, expiresIn]
+          properties:
+            idToken:
+              type: string
+            refreshToken:
+              type: string
+            expiresIn:
+              type: integer
+
+    LoginResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/LoginResponseData'
+
+    RefreshTokenResponseData:
+      type: object
+      required: [idToken, expiresIn]
+      properties:
+        idToken:
+          type: string
+        expiresIn:
+          type: integer
+
+    RefreshTokenResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/RefreshTokenResponseData'
+
+    # -- Password schemas ------------------------------------------------------
+
+    PasswordEntry:
+      type: object
+      required: [id, userId, title, password, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        username:
+          type: string
+          nullable: true
+        password:
+          type: string
+          description: Client-side encrypted ciphertext (AES-256-GCM)
+        website:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PasswordListEntry:
+      type: object
+      description: Same as PasswordEntry but without the `password` field
+      required: [id, userId, title, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        username:
+          type: string
+          nullable: true
+        website:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PasswordListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [passwords]
+          properties:
+            passwords:
+              type: array
+              items:
+                $ref: '#/components/schemas/PasswordListEntry'
+
+    PasswordResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/PasswordEntry'
+
+    CreatePasswordRequestBody:
+      type: object
+      required: [title, password]
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        username:
+          type: string
+          maxLength: 255
+          nullable: true
+        password:
+          type: string
+          description: Must be encrypted client-side before sending
+        website:
+          type: string
+          maxLength: 255
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        category:
+          type: string
+          maxLength: 100
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+
+    UpdatePasswordRequestBody:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        username:
+          type: string
+          maxLength: 255
+          nullable: true
+        password:
+          type: string
+          description: Must be re-encrypted client-side if changed
+        website:
+          type: string
+          maxLength: 255
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        category:
+          type: string
+          maxLength: 100
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+
+    DeletePasswordResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [message]
+          properties:
+            message:
+              type: string
+
+    # -- User response data ----------------------------------------------------
+
+    MeResponseData:
+      type: object
+      required: [id, cognitoSub, email, name, lastLoginAt, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        cognitoSub:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+          nullable: true
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    MeResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/MeResponseData'
+
+    UpdateMeRequestBody:
+      type: object
+      properties:
+        name:
+          type: string
+
+    DeleteUserResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [message]
+          properties:
+            message:
+              type: string
+
+    # -- Dev response data -----------------------------------------------------
+
+    SyncDbResponseData:
+      type: object
+      required: [provider, results]
+      properties:
+        provider:
+          type: string
+          description: The database provider in use (e.g., "sequelize")
+          example: sequelize
+        results:
+          type: array
+          items:
+            type: string
+          description: Log messages from the sync operation
+          example:
+            - "Table 'users' created"
+            - "Table 'passwords' created"
+
+    SyncDbResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/SyncDbResponseData'
+
+    ResetResponseData:
+      type: object
+      required: [provider, message]
+      properties:
+        provider:
+          type: string
+          description: The database provider in use
+        message:
+          type: string
+          description: Confirmation message
+
+    ResetResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ResetResponseData'
