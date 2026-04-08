@@ -14,13 +14,15 @@
       "mcp__github__search_repositories",
       "mcp__github__get_file_contents",
       "Bash(find:*)",
-      "Bash(npm run verify)",
       "Bash(npm run test:local)",
+      "Bash(npm run build)",
+      "Bash(npm run lint)",
       "Bash(curl:*)",
       "mcp__github__get_me",
       "Bash(ls:*)",
       "Bash(grep:*)",
-      "mcp__github__pull_request_read"
+      "mcp__github__pull_request_read",
+      "mcp__github__list_pull_requests"
     ]
   }
 }
