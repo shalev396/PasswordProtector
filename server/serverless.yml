@@ -201,6 +201,7 @@ custom:
       exclude:
         - '@aws-sdk/*'
         - 'aws-sdk'
+        - 'fflate'
       watch:
         pattern: 'src/**/*.ts'
     # Webpack mode: re-processes webpack output (bundle must be true or esbuild errors on exclude)

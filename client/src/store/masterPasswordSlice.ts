@@ -54,8 +54,21 @@ const masterPasswordSlice = createSlice({
 // ---------------------------------------------------------------------------
 export const { setMasterPassword, clearMasterPassword } = masterPasswordSlice.actions;
 
-export const selectMasterPassword = (state: RootState) => state.masterPassword.value;
-export const selectMasterPasswordExpiresAt = (state: RootState) => state.masterPassword.expiresAt;
-export const selectHasMasterPassword = (state: RootState) => state.masterPassword.value !== null;
+export const selectMasterPassword = (state: RootState): string | null => {
+  const { value, expiresAt } = state.masterPassword;
+  if (value === null || expiresAt === null) {
+    return null;
+  }
+  return Date.now() > expiresAt ? null : value;
+};
+export const selectMasterPasswordExpiresAt = (state: RootState): number | null =>
+  state.masterPassword.expiresAt;
+export const selectHasMasterPassword = (state: RootState): boolean => {
+  const { value, expiresAt } = state.masterPassword;
+  if (value === null || expiresAt === null) {
+    return false;
+  }
+  return Date.now() <= expiresAt;
+};
 
 export default masterPasswordSlice.reducer;
