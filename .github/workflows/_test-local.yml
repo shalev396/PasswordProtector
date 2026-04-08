@@ -67,11 +67,20 @@ jobs:
             ec2-user@${{ secrets.EC2_INSTANCE_ID }}
       - name: Wait for tunnel to be ready
         run: |
+          tunnel_ready=false
           for i in $(seq 1 10); do
-            nc -z 127.0.0.1 ${{ secrets.DB_TUNNEL_LOCAL_PORT }} && echo "Tunnel ready" && break
+            if nc -z 127.0.0.1 ${{ secrets.DB_TUNNEL_LOCAL_PORT }}; then
+              echo "Tunnel ready"
+              tunnel_ready=true
+              break
+            fi
             echo "Waiting... ($i)"
             sleep 2
           done
+          if [ "$tunnel_ready" != "true" ]; then
+            echo "Tunnel failed to become ready after 10 attempts"
+            exit 1
+          fi
       - run: npm ci
         working-directory: server
       - name: Start serverless offline and run Postman
@@ -157,11 +166,20 @@ jobs:
             ec2-user@${{ secrets.EC2_INSTANCE_ID }}
       - name: Wait for tunnel to be ready
         run: |
+          tunnel_ready=false
           for i in $(seq 1 10); do
-            nc -z 127.0.0.1 ${{ secrets.DB_TUNNEL_LOCAL_PORT }} && echo "Tunnel ready" && break
+            if nc -z 127.0.0.1 ${{ secrets.DB_TUNNEL_LOCAL_PORT }}; then
+              echo "Tunnel ready"
+              tunnel_ready=true
+              break
+            fi
             echo "Waiting... ($i)"
             sleep 2
           done
+          if [ "$tunnel_ready" != "true" ]; then
+            echo "Tunnel failed to become ready after 10 attempts"
+            exit 1
+          fi
       - name: Install Playwright test dependencies
         run: npm run test:install
         working-directory: client

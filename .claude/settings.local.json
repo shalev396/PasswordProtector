@@ -22,7 +22,8 @@
       "Bash(ls:*)",
       "Bash(grep:*)",
       "mcp__github__pull_request_read",
-      "mcp__github__list_pull_requests"
+      "mcp__github__list_pull_requests",
+      "Bash(python -m pytest --collect-only)"
     ]
   }
 }

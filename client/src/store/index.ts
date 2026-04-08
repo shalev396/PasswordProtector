@@ -17,6 +17,7 @@ export const store = configureStore({
 // which route/component is mounted. This ensures sensitive material doesn't
 // linger in memory beyond the intended TTL.
 let masterPasswordTimer: ReturnType<typeof setTimeout> | null = null;
+let scheduledExpiresAt: number | null = null;
 
 store.subscribe(() => {
   const { expiresAt, value } = store.getState().masterPassword;
@@ -25,15 +26,23 @@ store.subscribe(() => {
     const remaining = expiresAt - Date.now();
     if (remaining <= 0) {
       store.dispatch(clearMasterPassword());
-    } else {
-      masterPasswordTimer ??= setTimeout(() => {
+    } else if (expiresAt !== scheduledExpiresAt) {
+      if (masterPasswordTimer !== null) {
+        clearTimeout(masterPasswordTimer);
+      }
+      scheduledExpiresAt = expiresAt;
+      masterPasswordTimer = setTimeout(() => {
         masterPasswordTimer = null;
+        scheduledExpiresAt = null;
         store.dispatch(clearMasterPassword());
       }, remaining);
     }
-  } else if (masterPasswordTimer !== null) {
-    clearTimeout(masterPasswordTimer);
-    masterPasswordTimer = null;
+  } else {
+    if (masterPasswordTimer !== null) {
+      clearTimeout(masterPasswordTimer);
+      masterPasswordTimer = null;
+    }
+    scheduledExpiresAt = null;
   }
 });
 

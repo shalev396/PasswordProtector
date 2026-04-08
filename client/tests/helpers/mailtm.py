@@ -12,9 +12,9 @@ import requests
 
 
 MAILTM_BASE = "https://api.mail.tm"
-POLL_INITIAL_DELAY = 12
-POLL_RETRY_DELAY = 5
-POLL_MAX_RETRIES = 6
+POLL_INITIAL_DELAY = 15
+POLL_RETRY_DELAY = 8
+POLL_MAX_RETRIES = 10
 
 
 class TestUser(NamedTuple):
@@ -106,7 +106,9 @@ def poll_inbox_and_get_code(mailtm_token: str) -> str:
             )
             rr.raise_for_status()
             msg = rr.json()
-            text = msg.get("text", "") + " " + " ".join(msg.get("html", []))
+            html_field = msg.get("html", "")
+            html_str = " ".join(html_field) if isinstance(html_field, list) else str(html_field)
+            text = msg.get("text", "") + " " + html_str
             match = re.search(r"\b(\d{6})\b", text)
             if match:
                 return match.group(1)

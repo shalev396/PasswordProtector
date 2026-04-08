@@ -38,7 +38,7 @@ export function UserMenu() {
     return null;
   }
 
-  const displayName = profile?.name;
+  const displayName = profile?.name.trim() ? profile.name : undefined;
   const displayEmail = profile?.email ?? user.email;
 
   const handleLogout = () => {
