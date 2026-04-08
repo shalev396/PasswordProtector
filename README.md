@@ -1,5 +1,7 @@
 # Password Protector
 
+[![Live Site](https://img.shields.io/badge/Live%20Site-password--protector.shalev396.com-blue?style=for-the-badge)](https://password-protector.shalev396.com/)
+
 A zero-knowledge password manager where the server never sees your plaintext passwords. All encryption and decryption happens client-side using AES-256-GCM.
 
 ---
