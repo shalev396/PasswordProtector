@@ -57,10 +57,10 @@ export const landing = {
       description:
         'Access your vault from any modern browser. Your encrypted data syncs securely across devices.',
     },
-    theme: {
-      title: 'Import & Export',
+    cli: {
+      title: 'CLI Tool',
       description:
-        'Import passwords from other managers or export your encrypted vault for backup.',
+        'Access your passwords from the command line. Integrate with CI/CD pipelines and GitHub Actions for automated workflows.',
     },
   },
   tech: {

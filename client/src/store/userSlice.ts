@@ -1,14 +1,14 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import type { User } from '@/types';
+import type { User, UserProfile } from '@/types';
 import type { RootState } from './index';
+import { queryClient } from '@/lib/queryClient';
 
 // ---------------------------------------------------------------------------
 // Storage keys (tokens only -- user is always decoded from the idToken)
 // ---------------------------------------------------------------------------
 const ID_TOKEN_KEY = 'idToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
-const MASTER_PASSWORD_KEY = 'masterPassword';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -23,7 +23,6 @@ function decodeUserFromIdToken(idToken: string): User | null {
     const decoded = JSON.parse(atob(payload)) as {
       sub?: string;
       email?: string;
-      name?: string;
     };
     if (!decoded.sub) {
       return null;
@@ -31,7 +30,6 @@ function decodeUserFromIdToken(idToken: string): User | null {
     return {
       id: decoded.sub,
       email: decoded.email ?? '',
-      name: decoded.name ?? '',
     };
   } catch {
     return null;
@@ -43,11 +41,13 @@ function decodeUserFromIdToken(idToken: string): User | null {
 // ---------------------------------------------------------------------------
 interface UserState {
   user: User | null;
+  profile: UserProfile | null;
   isRestoringSession: boolean;
 }
 
 const initialState: UserState = {
   user: null,
+  profile: null,
   isRestoringSession: false,
 };
 
@@ -61,24 +61,18 @@ const userSlice = createSlice({
     /**
      * Called after a successful login.
      * Stores tokens in their respective storage and decodes user from idToken.
-     * Optionally stores the master password in sessionStorage.
      */
     setAuthData: (
       state,
       action: PayloadAction<{
         idToken: string;
         refreshToken: string;
-        masterPassword?: string;
       }>,
     ) => {
-      const { idToken, refreshToken, masterPassword } = action.payload;
+      const { idToken, refreshToken } = action.payload;
 
       sessionStorage.setItem(ID_TOKEN_KEY, idToken);
       localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-
-      if (masterPassword) {
-        sessionStorage.setItem(MASTER_PASSWORD_KEY, masterPassword);
-      }
 
       state.user = decodeUserFromIdToken(idToken);
       state.isRestoringSession = false;
@@ -100,14 +94,23 @@ const userSlice = createSlice({
     },
 
     /**
+     * Stores the full user profile fetched from GET /api/private/me.
+     * This is the single source of truth for display data (name, email, etc.).
+     */
+    setProfile: (state, action: PayloadAction<UserProfile>) => {
+      state.profile = action.payload;
+    },
+
+    /**
      * Clears all auth state and storage.
      */
     logout: (state) => {
       state.user = null;
+      state.profile = null;
       state.isRestoringSession = false;
       sessionStorage.removeItem(ID_TOKEN_KEY);
-      sessionStorage.removeItem(MASTER_PASSWORD_KEY);
       localStorage.removeItem(REFRESH_TOKEN_KEY);
+      queryClient.clear();
     },
 
     /**
@@ -141,13 +144,19 @@ const userSlice = createSlice({
 // ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
-export const { setAuthData, updateTokens, logout, loadFromStorage, setRestoringSession } =
-  userSlice.actions;
+export const {
+  setAuthData,
+  updateTokens,
+  setProfile,
+  logout,
+  loadFromStorage,
+  setRestoringSession,
+} = userSlice.actions;
 
 export const selectUser = (state: RootState) => state.user.user;
+export const selectProfile = (state: RootState) => state.user.profile;
 export const selectIsAuthenticated = (state: RootState) => state.user.user !== null;
 export const selectIsRestoringSession = (state: RootState) => state.user.isRestoringSession;
-export const selectHasMasterPassword = () => sessionStorage.getItem(MASTER_PASSWORD_KEY) !== null;
 
 // Direct storage selectors (used by the axios interceptor outside of React)
 export function selectIdToken(): string | null {
@@ -156,14 +165,6 @@ export function selectIdToken(): string | null {
 
 export function selectRefreshToken(): string | null {
   return localStorage.getItem(REFRESH_TOKEN_KEY);
-}
-
-export function selectMasterPassword(): string | null {
-  return sessionStorage.getItem(MASTER_PASSWORD_KEY);
-}
-
-export function setMasterPassword(password: string): void {
-  sessionStorage.setItem(MASTER_PASSWORD_KEY, password);
 }
 
 export default userSlice.reducer;

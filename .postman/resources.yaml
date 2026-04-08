@@ -3,8 +3,8 @@
 # Run "postman workspace prepare" and "postman workspace push" from repo root.
 
 collections:
-  - postman/collections/Elytra API
+  - postman/collections/PasswordProtector API
 
 environments:
-  - postman/environments/Elytra Local.environment.yaml
-  - postman/environments/Elytra QA.environment.yaml
+  - postman/environments/PasswordProtector Local.environment.yaml
+  - postman/environments/PasswordProtector QA.environment.yaml

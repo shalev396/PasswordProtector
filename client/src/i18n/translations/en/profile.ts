@@ -38,7 +38,7 @@ export const profile = {
     button: 'Delete Account',
     dialogTitle: 'Delete Account',
     dialogDescription:
-      'This action is permanent and irreversible. All your data, including your profile, uploaded media, and account credentials will be deleted. Are you sure you want to proceed?',
+      'This action is permanent and irreversible. All your data, including your profile, encrypted vault entries, and account credentials will be deleted. Are you sure you want to proceed?',
     confirm: 'Yes, delete my account',
     cancel: 'Cancel',
     deleting: 'Deleting...',
@@ -51,11 +51,6 @@ export const profile = {
     namePlaceholder: 'Enter your name',
     emailLabel: 'Email',
     emailReadonly: 'Email cannot be changed at this time',
-    photoLabel: 'Profile Photo',
-    photoHint: 'JPEG, PNG, WebP or GIF. Max 5MB.',
-    chooseFile: 'Choose Photo',
-    changeFile: 'Change Photo',
-    removeFile: 'Remove',
     emailNotice:
       'Submitting this form will send you a confirmation email with your updated account details.',
     submit: 'Save Changes',

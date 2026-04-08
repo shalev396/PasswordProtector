@@ -3,7 +3,11 @@ import type { IPasswordRepository } from './definitions/Password.js';
 import { environment } from '../config/environment.js';
 
 export type { UserData, IUserRepository } from './definitions/User.js';
-export type { PasswordData, IPasswordRepository } from './definitions/Password.js';
+export type {
+  PasswordData,
+  PasswordListItemData,
+  IPasswordRepository,
+} from './definitions/Password.js';
 
 let _userRepository: IUserRepository | null = null;
 let _passwordRepository: IPasswordRepository | null = null;

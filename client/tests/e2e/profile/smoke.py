@@ -16,12 +16,11 @@ def test_profile_redirects_unauthenticated(page: Page, app_url: str):
 
 
 def test_profile_elements_authenticated(page: Page, app_url: str, authenticated_page: Page):
-    """Asserts the profile page shows Profile heading, Edit Profile link, Send Test Email, Export, Delete Account when logged in."""
+    """Asserts the profile page shows Profile heading, Edit Profile link, Export, Delete Account when logged in."""
     navigate_to_profile_via_ui(page, app_url, timeout_ms=NORMAL_TIMEOUT)
     if "/auth/login" in page.url:
         pytest.skip("Authentication fixture not available")
     expect(page.get_by_role("heading", name="Profile")).to_be_visible(timeout=NORMAL_TIMEOUT)
     expect(page.get_by_role("link", name="Edit Profile")).to_be_visible(timeout=NORMAL_TIMEOUT)
-    expect(page.get_by_text("Send Test Email")).to_be_visible(timeout=NORMAL_TIMEOUT)
     expect(page.get_by_text("Export my data")).to_be_visible(timeout=NORMAL_TIMEOUT)
-    expect(page.get_by_text("Delete Account")).to_be_visible(timeout=NORMAL_TIMEOUT)
+    expect(page.get_by_role("button", name="Delete Account")).to_be_visible(timeout=NORMAL_TIMEOUT)

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { PasswordController } from '../../controllers/index.js';
-import type { PasswordData } from '../../models/index.js';
+import type { PasswordData, PasswordListItemData } from '../../models/index.js';
 
 const router = Router();
 
@@ -9,7 +9,7 @@ const router = Router();
 export type PasswordResponseData = PasswordData;
 
 export interface PasswordListResponseData {
-  passwords: PasswordData[];
+  passwords: PasswordListItemData[];
 }
 
 router.get('/', PasswordController.getAll);
@@ -27,6 +27,7 @@ export interface CreatePasswordRequestBody {
   website?: string | null;
   notes?: string | null;
   category?: string | null;
+  tags?: string[];
 }
 
 router.post('/', PasswordController.create);
@@ -40,6 +41,7 @@ export interface UpdatePasswordRequestBody {
   website?: string | null;
   notes?: string | null;
   category?: string | null;
+  tags?: string[];
 }
 
 router.put('/:id', PasswordController.update);

@@ -3,16 +3,19 @@ Signup page (auth/signup) smoke tests.
 """
 from playwright.sync_api import Page, expect
 
-from tests.config import SHORT_TIMEOUT
+from tests.config import NORMAL_TIMEOUT, SHORT_TIMEOUT
 
 
 def test_signup_loads(page: Page, app_url: str):
-    """Asserts the signup page loads with Full Name, Email fields and Create Account button visible."""
+    """Asserts the signup page loads with heading, all fields, Create Account button, and Sign in link."""
     page.goto(f"{app_url}/auth/signup", wait_until="domcontentloaded")
     page.wait_for_load_state("networkidle")
-    expect(page.get_by_label("Full Name")).to_be_visible()
-    expect(page.get_by_label("Email")).to_be_visible()
-    expect(page.get_by_role("button", name="Create Account")).to_be_visible()
+    expect(page.get_by_role("heading", name="Create your account")).to_be_visible(timeout=NORMAL_TIMEOUT)
+    expect(page.get_by_label("Full Name")).to_be_visible(timeout=NORMAL_TIMEOUT)
+    expect(page.get_by_label("Email")).to_be_visible(timeout=NORMAL_TIMEOUT)
+    expect(page.get_by_label("Confirm Password")).to_be_visible(timeout=NORMAL_TIMEOUT)
+    expect(page.get_by_role("button", name="Create Account")).to_be_visible(timeout=NORMAL_TIMEOUT)
+    expect(page.get_by_role("link", name="Sign in")).to_be_visible(timeout=NORMAL_TIMEOUT)
 
 
 def test_signup_password_mismatch_error(page: Page, app_url: str):

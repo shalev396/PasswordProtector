@@ -67,7 +67,12 @@ export function SortControls({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Button variant="ghost" size="icon" onClick={onDirectionChange}>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onDirectionChange}
+        aria-label={t('dashboard.sort.direction')}
+      >
         <DirectionIcon className="size-4" />
       </Button>
     </div>

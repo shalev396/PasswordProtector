@@ -20,4 +20,4 @@ def test_login_form_labels(page: Page, app_url: str):
     page.goto(f"{app_url}/auth/login", wait_until="domcontentloaded")
     page.wait_for_load_state("networkidle")
     expect(page.get_by_label("Email")).to_be_visible()
-    expect(page.get_by_label("Password")).to_be_visible()
+    expect(page.get_by_label("Password", exact=True)).to_be_visible()

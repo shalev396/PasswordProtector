@@ -7,9 +7,13 @@ export interface PasswordData {
   website: string | null;
   notes: string | null;
   category: string | null;
+  tags: string[];
   createdAt: Date;
   updatedAt: Date;
 }
+
+/** Password data returned in list endpoints (password field excluded). */
+export type PasswordListItemData = Omit<PasswordData, 'password'>;
 
 export interface IPasswordRepository {
   findById(id: string): Promise<PasswordData | null>;
@@ -22,6 +26,7 @@ export interface IPasswordRepository {
     website: string | null;
     notes: string | null;
     category: string | null;
+    tags: string[];
   }): Promise<PasswordData>;
   update(
     id: string,
@@ -32,6 +37,7 @@ export interface IPasswordRepository {
       website: string | null;
       notes: string | null;
       category: string | null;
+      tags: string[];
     }>,
   ): Promise<PasswordData>;
   deleteById(id: string): Promise<void>;

@@ -1,4 +1,4 @@
-# Elytra Frontend E2E Tests (Playwright + Python)
+# Password Protector Frontend E2E Tests (Playwright + Python)
 
 [← Back to main README](../../README.md)
 
@@ -42,7 +42,7 @@ Runs pytest via `.venv` with `BASE_URL=http://localhost:5173`, `API_BASE_URL=htt
 Tests use `BASE_URL` (frontend) and `API_BASE_URL` (backend). Defaults:
 
 - **Local** (`npm run test`): `BASE_URL=http://localhost:5173`, `API_BASE_URL=http://localhost:3000/api`
-- **QA** (`npm run test:qa`): Set `BASE_URL` and `API_BASE_URL` in your environment. The template documents `https://qa.elytra.shalev396.com` in [`client/conftest.py`](../conftest.py) (comment only); replace with your QA domain.
+- **QA** (`npm run test:qa`): Set `BASE_URL` and `API_BASE_URL` in your environment. The QA URL is documented in [`client/conftest.py`](../conftest.py) (comment only); replace with your QA domain.
 
 For QA runs, set `BASE_URL=https://qa.yourdomain.com` and `API_BASE_URL=https://qa.yourdomain.com/api` (or use your QA domain). In CI, the workflow sets these from `secrets.DOMAIN_NAME`.
 
@@ -54,7 +54,8 @@ For QA runs, set `BASE_URL=https://qa.yourdomain.com` and `API_BASE_URL=https://
 | --------------- | ----------------------- | ----- | ------------- | ------ | ---------- | -------- |
 | Landing         | `/`                     | ✓     | ✓             | ✓      | ✓          | ✓        |
 | Dashboard       | `/dashboard`            | ✓     | ✓             | ✓      | ✓          | ✓        |
-| Pricing         | `/pricing`              | ✓     | ✓             | ✓      | ✓          | ✓        |
+| Add Password    | `/dashboard/add`        | ✓     | ✓             | ✓      | ✓          | ✓        |
+| Edit Password   | `/dashboard/edit`       | ✓     | ✓             | ✓      | ✓          | ✓        |
 | Profile         | `/profile`              | ✓     | ✓             | ✓      | ✓          | ✓        |
 | Profile Edit    | `/profile/edit`         | ✓     | ✓             | ✓      | ✓          | ✓        |
 | Login           | `/auth/login`           | ✓     | ✓             | ✓      | ✓          | ✓        |
@@ -117,21 +118,22 @@ Aligned with [routes.ts](../src/router/routes.ts). Each route/page has its own f
 ```
 tests/
   e2e/
-    landing/           HOME (/)
-    dashboard/         /dashboard
-    pricing/           /pricing
-    profile/           /profile
-    profile_edit/      /profile/edit
-    auth_login/        /auth/login
-    auth_signup/       /auth/signup
+    landing/                HOME (/)
+    dashboard/              /dashboard
+    dashboard_add_password/ /dashboard/add
+    dashboard_edit_password/ /dashboard/edit
+    profile/                /profile
+    profile_edit/           /profile/edit
+    auth_login/             /auth/login
+    auth_signup/            /auth/signup
     auth_forgot_password/   /auth/forgot-password
     auth_reset_password/    /auth/reset-password
     auth_confirm_signup/    /auth/confirm-signup
-    legal_privacy/      /legal/privacy
-    legal_terms/        /legal/terms
-    page_404/           invalid routes
-    flows/              critical.py (cross-page: signup, login, edit-profile, delete, etc.)
-    app/                translations.py, translation_pages.py
+    legal_privacy/          /legal/privacy
+    legal_terms/            /legal/terms
+    page_404/               invalid routes
+    flows/                  critical.py (cross-page: signup, login, edit-profile, delete, etc.)
+    app/                    translations.py, translation_pages.py
   scripts/
   helpers/
   fixtures/

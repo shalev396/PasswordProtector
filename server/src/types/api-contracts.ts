@@ -13,7 +13,12 @@ export type {
   RefreshTokenResponseData,
 } from '../routes/public/auth/index.js';
 
-export type { MeResponseData, DeleteUserResponseData } from '../routes/private/account.js';
+export type {
+  MeResponseData,
+  UpdateMeRequestBody,
+  UpdateMeResponseData,
+  DeleteUserResponseData,
+} from '../routes/private/account.js';
 
 export type {
   PasswordResponseData,
@@ -22,3 +27,5 @@ export type {
   UpdatePasswordRequestBody,
   DeletePasswordResponseData,
 } from '../routes/private/passwords.js';
+
+export type { PasswordListItemData } from '../models/index.js';
