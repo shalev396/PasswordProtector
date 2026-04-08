@@ -8,7 +8,6 @@ import type {
 } from '../routes/private/account.js';
 import { userAndPasswordsToCsv } from '../utils/csvUtil.js';
 import { createUserExportZip } from '../utils/exportZipUtil.js';
-import { serverDecrypt, generateUserSeed } from '../utils/encryption.js';
 
 const getMe: RequestHandler = async (req, res): Promise<void> => {
   try {
@@ -107,18 +106,7 @@ const exportMyData: RequestHandler = async (req, res): Promise<void> => {
     }
 
     const passwordInstances = await Password.findAllByUserId(userId);
-
-    // Decrypt server encryption layer before export so data is portable
-    let seed = user.encryptionSeed;
-    if (seed === null || seed === '') {
-      seed = generateUserSeed();
-      await User.updateProfile(userId, { encryptionSeed: seed });
-    }
-    const passwords = passwordInstances.map((p) => {
-      const data = p.toJSON();
-      return { ...data, password: serverDecrypt(data.password, seed) };
-    });
-
+    const passwords = passwordInstances.map((p) => p.toJSON());
     const csv = userAndPasswordsToCsv(user.toJSON(), passwords);
     const zipBuffer = createUserExportZip(csv);
 
@@ -128,6 +116,9 @@ const exportMyData: RequestHandler = async (req, res): Promise<void> => {
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('X-Response-Type', 'application/zip');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.send(zipBuffer);
   } catch (error) {
     console.error('Error exporting user data:', error);

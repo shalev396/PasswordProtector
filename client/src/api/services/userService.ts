@@ -68,7 +68,9 @@ export async function exportMyData(config?: ApiRequestConfig): Promise<void> {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 1000);
 }
 
 export async function deleteAccount(

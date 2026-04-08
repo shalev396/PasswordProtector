@@ -66,22 +66,9 @@ PasswordModel.init(
       defaultValue: null,
     },
     tags: {
-      type: DataTypes.TEXT,
+      type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: false,
-      defaultValue: '[]',
-      get(): string[] {
-        const raw = this.getDataValue('tags') as string;
-        try {
-          const parsed: unknown = JSON.parse(raw);
-          if (!Array.isArray(parsed)) return [];
-          return parsed.filter((item): item is string => typeof item === 'string');
-        } catch {
-          return [];
-        }
-      },
-      set(value: string[] | undefined | null) {
-        this.setDataValue('tags', JSON.stringify(value ?? []));
-      },
+      defaultValue: [],
     },
   },
   {

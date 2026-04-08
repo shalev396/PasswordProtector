@@ -55,11 +55,14 @@ jobs:
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/ec2-key.pem
           chmod 600 /tmp/ec2-key.pem
+          touch /tmp/ssh_known_hosts
+          chmod 600 /tmp/ssh_known_hosts
           ssh -N -f \
             -i /tmp/ec2-key.pem \
             -L "${{ secrets.DB_TUNNEL_LOCAL_PORT }}:${{ secrets.DB_TUNNEL_REMOTE_HOST }}" \
             -o "ProxyCommand=aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p --region ${{ vars.AWS_REGION }}" \
-            -o "StrictHostKeyChecking=no" \
+            -o "StrictHostKeyChecking=accept-new" \
+            -o "UserKnownHostsFile=/tmp/ssh_known_hosts" \
             -o "ServerAliveInterval=60" \
             ec2-user@${{ secrets.EC2_INSTANCE_ID }}
       - name: Wait for tunnel to be ready
@@ -142,11 +145,14 @@ jobs:
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/ec2-key.pem
           chmod 600 /tmp/ec2-key.pem
+          touch /tmp/ssh_known_hosts
+          chmod 600 /tmp/ssh_known_hosts
           ssh -N -f \
             -i /tmp/ec2-key.pem \
             -L "${{ secrets.DB_TUNNEL_LOCAL_PORT }}:${{ secrets.DB_TUNNEL_REMOTE_HOST }}" \
             -o "ProxyCommand=aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p --region ${{ vars.AWS_REGION }}" \
-            -o "StrictHostKeyChecking=no" \
+            -o "StrictHostKeyChecking=accept-new" \
+            -o "UserKnownHostsFile=/tmp/ssh_known_hosts" \
             -o "ServerAliveInterval=60" \
             ec2-user@${{ secrets.EC2_INSTANCE_ID }}
       - name: Wait for tunnel to be ready

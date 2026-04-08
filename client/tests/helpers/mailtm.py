@@ -199,10 +199,10 @@ def login_page_with_user(page, app_url: str, user: TestUser) -> None:
             # Dismiss Master Password Prompt if visible (full-screen modal blocks all interaction)
             unlock_btn = page.get_by_role("button", name="Unlock Vault")
             try:
-                if unlock_btn.is_visible(timeout=3000):
-                    page.get_by_placeholder("Enter secret key").fill("test-master-password")
-                    unlock_btn.click()
-                    page.wait_for_load_state("networkidle")
+                unlock_btn.wait_for(state="visible", timeout=3000)
+                page.get_by_placeholder("Enter secret key").fill("test-master-password")
+                unlock_btn.click()
+                page.wait_for_load_state("networkidle")
             except Exception:
                 pass  # Modal not present or already dismissed
             return

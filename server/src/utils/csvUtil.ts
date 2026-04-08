@@ -59,6 +59,7 @@ export function userAndPasswordsToCsv(user: UserData, passwords: PasswordData[])
       'website',
       'notes',
       'category',
+      'tags',
       'createdAt',
       'updatedAt',
     ].join(',');
@@ -74,6 +75,7 @@ export function userAndPasswordsToCsv(user: UserData, passwords: PasswordData[])
         escapeCsvValue(p.website),
         escapeCsvValue(p.notes),
         escapeCsvValue(p.category),
+        escapeCsvValue(JSON.stringify(p.tags)),
         escapeCsvValue(formatDate(p.createdAt)),
         escapeCsvValue(formatDate(p.updatedAt)),
       ].join(',');

@@ -24,8 +24,10 @@ export default function EditProfilePage() {
   const profile = useSelector(selectProfile);
   const updateMe = useUpdateMe();
 
-  const [name, setName] = useState(profile?.name ?? '');
+  const [dirty, setDirty] = useState(false);
+  const [localName, setLocalName] = useState('');
 
+  const name = dirty ? localName : (profile?.name ?? '');
   const hasChanges = name !== '' && name !== (profile?.name ?? '');
 
   async function handleSubmit(e: FormEvent) {
@@ -82,7 +84,8 @@ export default function EditProfilePage() {
                     id="name"
                     value={name}
                     onChange={(e) => {
-                      setName(e.target.value);
+                      setDirty(true);
+                      setLocalName(e.target.value);
                     }}
                     placeholder={t('profile.edit.namePlaceholder')}
                   />
