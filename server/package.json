@@ -5,17 +5,17 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "serverless offline --stage dev --param use-esbuild=true",
-    "dev:qa": "serverless offline --stage qa --param use-esbuild=true",
-    "dev:prod": "serverless offline --stage prod --param use-esbuild=true",
-    "build": "tsc --noEmit && webpack",
+    "dev": "serverless offline --stage dev --param local=true",
+    "dev:qa": "serverless offline --stage qa --param local=true",
+    "dev:prod": "serverless offline --stage prod --param local=true",
+    "build": "tsc --noEmit",
     "lint": "eslint .",
-    "start": "npm run build && serverless offline --stage dev",
-    "start:qa": "npm run build && serverless offline --stage qa",
-    "start:prod": "npm run build && serverless offline --stage prod",
-    "deploy:dev": "npm run build && serverless deploy --stage dev",
-    "deploy:qa": "npm run build && serverless deploy --stage qa",
-    "deploy:prod": "npm run build && serverless deploy --stage prod",
+    "start": "tsc --noEmit && serverless offline --stage dev --param local=true",
+    "start:qa": "tsc --noEmit && serverless offline --stage qa --param local=true",
+    "start:prod": "tsc --noEmit && serverless offline --stage prod --param local=true",
+    "deploy:dev": "tsc --noEmit && serverless deploy --stage dev",
+    "deploy:qa": "tsc --noEmit && serverless deploy --stage qa",
+    "deploy:prod": "tsc --noEmit && serverless deploy --stage prod",
     "test:local": "postman collection run \"../postman/collections/PasswordProtector API\" --environment \"../postman/environments/PasswordProtector Local.environment.yaml\" ",
     "test:qa": "postman collection run \"../postman/collections/PasswordProtector API\" --environment \"../postman/environments/PasswordProtector QA.environment.yaml\" "
   },
@@ -66,10 +66,7 @@
     "serverless-offline": "^14.4.0",
     "serverless-offline-watcher": "^1.1.0",
     "serverless-prune-plugin": "^2.1.0",
-    "ts-loader": "^9.2.1",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.39.1",
-    "webpack": "^5.98.0",
-    "webpack-cli": "^4.10.0"
+    "typescript-eslint": "^8.39.1"
   }
 }

@@ -28,7 +28,7 @@ npm run format           # prettier write
 ```bash
 npm install
 npm run dev              # serverless offline + esbuild hot-reload (port 3000)
-npm run build            # tsc --noEmit && webpack
+npm run build            # tsc --noEmit (type-check only; esbuild bundles on deploy)
 npm run lint             # eslint (strict, zero warnings)
 npm run deploy:dev       # build + serverless deploy --stage dev
 npm run deploy:prod      # build + serverless deploy --stage prod
