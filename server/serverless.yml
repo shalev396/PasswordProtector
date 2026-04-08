@@ -267,6 +267,12 @@ functions:
     memorySize: 256
     events: ${self:custom.devApiEvents.${self:custom.enableDevTools}}
 
+  # SCRIPTS: Database schema sync (no HTTP event — invoked by CI/CD after deploy)
+  syncDb:
+    handler: src/handlers/scripts/sync-db.handler
+    timeout: 60
+    memorySize: 256
+
 # AWS Resources Configuration
 resources:
   Description: ${self:custom.appDisplayName} full-stack application — Lambda API, S3-hosted client, CloudFront CDN, Route 53 DNS, and Cognito authentication (${self:provider.stage})

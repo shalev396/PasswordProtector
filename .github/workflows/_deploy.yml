@@ -59,10 +59,48 @@ jobs:
         run: npm run deploy:${{ inputs.stage }}
         working-directory: server
 
+  sync-database:
+    name: Sync Database Schema (${{ inputs.stage }})
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    environment:
+      name: ${{ inputs.stage }}
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      APP_NAME: ${{ vars.APP_NAME }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/my-github-actions-role
+      - name: Invoke sync-db Lambda
+        run: |
+          FUNCTION_NAME="${{ vars.APP_NAME }}-${{ inputs.stage }}-syncDb"
+          echo "Invoking $FUNCTION_NAME..."
+          RESPONSE=$(aws lambda invoke \
+            --function-name "$FUNCTION_NAME" \
+            --log-type Tail \
+            --query 'LogResult' \
+            --output text \
+            /tmp/sync-db-response.json)
+          cat /tmp/sync-db-response.json
+          echo ""
+          # Fail if the Lambda returned an error
+          STATUS=$(cat /tmp/sync-db-response.json | python3 -c "import sys,json; print(json.load(sys.stdin).get('statusCode',500))")
+          if [ "$STATUS" != "200" ]; then
+            echo "sync-db Lambda returned status $STATUS"
+            echo "Logs:"
+            echo "$RESPONSE" | base64 -d
+            exit 1
+          fi
+          echo "Database schema synced successfully"
+
   deploy-frontend:
     name: Deploy Frontend (${{ inputs.stage }})
     runs-on: ubuntu-latest
-    needs: deploy-backend
+    needs: [deploy-backend, sync-database]
     environment:
       name: ${{ inputs.stage }}
     env:
