@@ -109,6 +109,13 @@ const create: RequestHandler = async (req, res): Promise<void> => {
       return;
     }
 
+    const tags = body.tags ?? [];
+    if (!Array.isArray(tags) || !tags.every((t) => typeof t === 'string')) {
+      res.error('Tags must be an array of strings', 400);
+      return;
+    }
+    const normalizedTags = [...new Set(tags.map((t) => t.trim()).filter((t) => t.length > 0))];
+
     const seed = await getUserSeed(userId);
     const encryptedPassword = serverEncrypt(body.password, seed);
 
@@ -120,7 +127,7 @@ const create: RequestHandler = async (req, res): Promise<void> => {
       website: body.website ?? null,
       notes: body.notes ?? null,
       category: body.category ?? null,
-      tags: body.tags ?? [],
+      tags: normalizedTags,
     });
 
     // Return with server layer decrypted (client still needs to decrypt layer 1)
@@ -174,7 +181,13 @@ const update: RequestHandler = async (req, res): Promise<void> => {
     if (body.website !== undefined) updateData.website = body.website;
     if (body.notes !== undefined) updateData.notes = body.notes;
     if (body.category !== undefined) updateData.category = body.category;
-    if (body.tags !== undefined) updateData.tags = body.tags;
+    if (body.tags !== undefined) {
+      if (!Array.isArray(body.tags) || !body.tags.every((t) => typeof t === 'string')) {
+        res.error('Tags must be an array of strings', 400);
+        return;
+      }
+      updateData.tags = [...new Set(body.tags.map((t) => t.trim()).filter((t) => t.length > 0))];
+    }
 
     // Re-encrypt password with server layer if it changed
     const seed = await getUserSeed(userId);

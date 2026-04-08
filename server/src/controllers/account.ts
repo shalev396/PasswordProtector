@@ -8,6 +8,7 @@ import type {
 } from '../routes/private/account.js';
 import { userAndPasswordsToCsv } from '../utils/csvUtil.js';
 import { createUserExportZip } from '../utils/exportZipUtil.js';
+import { serverDecrypt, generateUserSeed } from '../utils/encryption.js';
 
 const getMe: RequestHandler = async (req, res): Promise<void> => {
   try {
@@ -50,14 +51,31 @@ const updateMe: RequestHandler = async (req, res): Promise<void> => {
       return;
     }
 
-    const { name } = req.body as { name?: string };
+    const { name } = req.body as { name?: unknown };
 
-    if (name === undefined || name === user.name) {
+    if (name === undefined) {
       res.error('No changes provided', 400);
       return;
     }
 
-    const updatedUser = await User.updateProfile(userId, { name });
+    if (typeof name !== 'string' || name.trim().length === 0) {
+      res.error('Name must be a non-empty string', 400);
+      return;
+    }
+
+    if (name.trim().length > 100) {
+      res.error('Name must be 100 characters or fewer', 400);
+      return;
+    }
+
+    const trimmedName = name.trim();
+
+    if (trimmedName === user.name) {
+      res.error('No changes provided', 400);
+      return;
+    }
+
+    const updatedUser = await User.updateProfile(userId, { name: trimmedName });
 
     const data: UpdateMeResponseData = {
       id: updatedUser.id,
@@ -89,7 +107,18 @@ const exportMyData: RequestHandler = async (req, res): Promise<void> => {
     }
 
     const passwordInstances = await Password.findAllByUserId(userId);
-    const passwords = passwordInstances.map((p) => p.toJSON());
+
+    // Decrypt server encryption layer before export so data is portable
+    let seed = user.encryptionSeed;
+    if (seed === null || seed === '') {
+      seed = generateUserSeed();
+      await User.updateProfile(userId, { encryptionSeed: seed });
+    }
+    const passwords = passwordInstances.map((p) => {
+      const data = p.toJSON();
+      return { ...data, password: serverDecrypt(data.password, seed) };
+    });
+
     const csv = userAndPasswordsToCsv(user.toJSON(), passwords);
     const zipBuffer = createUserExportZip(csv);
 

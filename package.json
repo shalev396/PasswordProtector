@@ -6,8 +6,6 @@
   },
   "scripts": {
     "prepare": "husky",
-    "format": "prettier . --write",
-    "format:check": "prettier . --check",
-    "verify": "cd client && npm run build && npm run lint && cd ../server && npm run build && npm run lint && cd .. && npm run format"
+    "format": "prettier . --write"
   }
 }

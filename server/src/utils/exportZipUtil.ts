@@ -1,4 +1,4 @@
-import { strToU8, zipSync } from 'fflate/browser';
+import { strToU8, zipSync } from 'fflate';
 
 /**
  * Creates a ZIP buffer containing user-data.csv.

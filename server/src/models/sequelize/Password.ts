@@ -72,13 +72,15 @@ PasswordModel.init(
       get(): string[] {
         const raw = this.getDataValue('tags') as string;
         try {
-          return JSON.parse(raw) as string[];
+          const parsed: unknown = JSON.parse(raw);
+          if (!Array.isArray(parsed)) return [];
+          return parsed.filter((item): item is string => typeof item === 'string');
         } catch {
           return [];
         }
       },
-      set(value: string[]) {
-        this.setDataValue('tags', JSON.stringify(value));
+      set(value: string[] | undefined | null) {
+        this.setDataValue('tags', JSON.stringify(value ?? []));
       },
     },
   },

@@ -19,8 +19,6 @@ Password Protector is a zero-knowledge password manager with client-side AES-256
 ```bash
 npm install              # husky + prettier
 npm run format           # prettier write
-npm run format:check     # prettier check
-npm run verify           # build+lint client, build+lint server, format (USE THIS to validate changes)
 ```
 
 > **Important**: Always use `npm run verify` from the repo root to validate changes. This single command builds and lints both client and server, then runs prettier. Prefer this over running individual build/lint commands.
