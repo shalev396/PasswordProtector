@@ -8,6 +8,10 @@
  *   npx tsx tests/scripts/run-tests.ts run       - Run pytest (local)
  *   npx tsx tests/scripts/run-tests.ts run --headed - Run with visible browser (non-headless)
  *   npx tsx tests/scripts/run-tests.ts run --qa  - Run pytest against QA URLs
+ *
+ * QA mode loads server/.env.qa (without overriding variables already set, so CI wins),
+ * derives BASE_URL / API_BASE_URL from DOMAIN_NAME when missing, and requires
+ * BASIC_AUTH_PASSWORD for the WAF nonprod-gate (username = DOMAIN_NAME, /api/ not gated).
  */
 import { execSync, spawnSync } from 'child_process';
 import * as fs from 'fs';
@@ -20,6 +24,11 @@ const isWin = process.platform === 'win32';
 const VENV_BIN = path.join(ROOT, '.venv', isWin ? 'Scripts' : 'bin');
 const PYTHON = path.join(VENV_BIN, isWin ? 'python.exe' : 'python');
 const PIP = path.join(VENV_BIN, isWin ? 'pip.exe' : 'pip');
+const QA_ENV_FILE = path.resolve(ROOT, '..', 'server', '.env.qa');
+
+function envValue(name: string): string {
+  return process.env[name]?.trim() ?? '';
+}
 
 function run(cmd: string, args: string[], opts?: { cwd?: string; env?: NodeJS.ProcessEnv }) {
   const cwd = opts?.cwd ?? ROOT;
@@ -65,15 +74,35 @@ function cmdRun(): void {
 
   let baseUrl: string;
   let apiBaseUrl: string;
+  const gateEnv: NodeJS.ProcessEnv = {};
 
   if (qa) {
-    baseUrl = process.env['BASE_URL'] ?? '';
-    apiBaseUrl = process.env['API_BASE_URL'] ?? '';
-    if (!baseUrl || !apiBaseUrl) {
-      console.error('QA mode requires BASE_URL and API_BASE_URL environment variables.');
-      console.error('These are set automatically in CI from the qa environment secrets.');
+    if (fs.existsSync(QA_ENV_FILE)) {
+      process.loadEnvFile(QA_ENV_FILE);
+    }
+    const domainName = envValue('DOMAIN_NAME');
+    baseUrl = envValue('BASE_URL');
+    apiBaseUrl = envValue('API_BASE_URL');
+    if (baseUrl === '' && domainName !== '') {
+      baseUrl = `https://${domainName}`;
+    }
+    if (apiBaseUrl === '' && domainName !== '') {
+      apiBaseUrl = `https://${domainName}/api`;
+    }
+    if (baseUrl === '' || apiBaseUrl === '') {
+      console.error('QA mode requires BASE_URL and API_BASE_URL (or DOMAIN_NAME to derive them).');
+      console.error('Set them in server/.env.qa locally; CI sets them from the qa environment.');
       process.exit(1);
     }
+    const basicAuthPassword = envValue('BASIC_AUTH_PASSWORD');
+    if (basicAuthPassword === '') {
+      console.error(
+        'QA mode requires BASIC_AUTH_PASSWORD (WAF nonprod-gate, username = DOMAIN_NAME).',
+      );
+      console.error('Set it in server/.env.qa locally; CI reads the qa environment secret.');
+      process.exit(1);
+    }
+    gateEnv['BASIC_AUTH_PASSWORD'] = basicAuthPassword;
   } else {
     baseUrl = 'http://localhost:5173';
     apiBaseUrl = 'http://localhost:3000/api';
@@ -112,6 +141,7 @@ function cmdRun(): void {
       ...process.env,
       BASE_URL: baseUrl,
       API_BASE_URL: apiBaseUrl,
+      ...gateEnv,
     },
   });
 }

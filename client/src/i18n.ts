@@ -11,6 +11,7 @@ void i18n
   .init({
     fallbackLng: 'en',
     supportedLngs: ['en', 'he'],
+    showSupportNotice: false,
     detection: {
       order: ['path', 'localStorage', 'navigator'],
       lookupFromPathIndex: 0,

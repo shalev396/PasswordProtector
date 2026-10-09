@@ -5,14 +5,45 @@ BASE_URL: npm run test   → http://localhost:5173 (local dev)
           npm run test:qa → https://qa.password-protector.shalev396.com (QA)
 
 Requires: client (and server for auth flows) running at the target URL.
+
+Deployed dev/qa hosts sit behind the shared WAF nonprod-gate: pages need basic auth
+(username = hostname, password = BASIC_AUTH_PASSWORD). /api/ is not gated.
 """
 import base64
 import os
 import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
+
+
+def gate_http_credentials() -> dict[str, str] | None:
+    """Basic-auth credentials for the WAF nonprod-gate, or None for localhost / no password."""
+    password = os.getenv("BASIC_AUTH_PASSWORD", "").strip()
+    base = os.getenv("BASE_URL", "").strip()
+    if not password or not base:
+        return None
+    parsed = urlparse(base)
+    host = parsed.hostname
+    if not host or host in {"localhost", "127.0.0.1"}:
+        return None
+    return {
+        "username": host,
+        "password": password,
+        "origin": f"{parsed.scheme}://{parsed.netloc}",
+        "send": "unauthorized",
+    }
+
+
+@pytest.fixture(scope="session")
+def browser_context_args(browser_context_args):
+    """Answer the WAF 401 challenge on gated hosts. `send: unauthorized` keeps Bearer auth intact."""
+    credentials = gate_http_credentials()
+    if credentials is None:
+        return browser_context_args
+    return {**browser_context_args, "http_credentials": credentials}
 
 
 @pytest.fixture(scope="session", autouse=True)
