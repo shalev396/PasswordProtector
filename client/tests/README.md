@@ -46,6 +46,20 @@ Tests use `BASE_URL` (frontend) and `API_BASE_URL` (backend). Defaults:
 
 For QA runs, set `BASE_URL=https://qa.yourdomain.com` and `API_BASE_URL=https://qa.yourdomain.com/api` (or use your QA domain). In CI, the workflow sets these from `secrets.DOMAIN_NAME`.
 
+`npm run test:qa` loads `server/.env.qa` without overriding variables already set (CI wins). If `BASE_URL` / `API_BASE_URL` are missing it derives them from `DOMAIN_NAME` (`https://<DOMAIN_NAME>` and `https://<DOMAIN_NAME>/api`).
+
+#### WAF basic auth (deployed dev/qa)
+
+The deployed dev and qa hosts sit behind the shared WAF `nonprod-gate` (see [Non-prod WAF gate](../../README.md#non-prod-waf-gate)). Pages need basic auth; `/api/` does not.
+
+| Variable              | Value                                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------------- |
+| `BASIC_AUTH_PASSWORD` | Gate password for the host. Required in QA mode; the runner exits with an error without it. |
+| `DOMAIN_NAME`         | The host, used as the basic-auth username. No separate username variable.                   |
+| `WAF_WEB_ACL_ARN`     | Deploy-only (attaches the shared ACL to CloudFront). Not read by the tests.                 |
+
+`conftest.py` adds Playwright `http_credentials` (username = `BASE_URL` hostname, `send: "unauthorized"`, `origin` scoped to that host) only when `BASIC_AUTH_PASSWORD` is set and `BASE_URL` is not localhost. Local runs (`npm run test`) do not need the password. In CI, the `qa` environment secret `BASIC_AUTH_PASSWORD` is passed to the Playwright-vs-QA job only; API (Postman) jobs do not send it.
+
 ---
 
 ## Page × Test Category Matrix

@@ -25,6 +25,11 @@
 #    - Separate Route 53 records
 #    - Separate Cognito User Pools
 # 5. After deployment, upload your React build files to the stage-specific client bucket
+# 6. Deploying from your machine reads server/.env.<stage> (see server/.env.example). Besides
+#    the usual keys, set WAF_WEB_ACL_ARN to the shared web ACL (shalev396-shared-acl, CloudFront
+#    scope, us-east-1) on every stage; empty means no WAF. BASIC_AUTH_PASSWORD lives in
+#    .env.dev / .env.qa only (username is DOMAIN_NAME, /api/ is not gated); it is read by the
+#    QA browser tests, not by this deploy.
 #
 # DEVELOPMENT:
 #   npm run dev          - Hot-reload dev server (esbuild watches and recompiles on save)
@@ -202,6 +207,10 @@ custom:
       issuer:
         Fn::Sub: 'https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}'
 
+  # Shared WAF web ACL (shalev396-shared-acl, CloudFront scope, us-east-1). Same ARN on every stage.
+  # Its nonprod-gate rule asks dev/qa hosts for basic auth (except /api/). Empty = no WAF.
+  wafWebAclArn: ${env:WAF_WEB_ACL_ARN, ''}
+
   viewerCertificate:
     AcmCertificateArn: ${env:CERTIFICATE_ARN}
     SslSupportMethod: sni-only
@@ -276,6 +285,13 @@ functions:
 # AWS Resources Configuration
 resources:
   Description: ${self:custom.appDisplayName} full-stack application — Lambda API, S3-hosted client, CloudFront CDN, Route 53 DNS, and Cognito authentication (${self:provider.stage})
+  Conditions:
+    # Attach the shared WAF web ACL only when WAF_WEB_ACL_ARN is set
+    HasWafWebAcl:
+      Fn::Not:
+        - Fn::Equals:
+            - '${self:custom.wafWebAclArn}'
+            - ''
   Resources:
     # ================================
     # S3 BUCKETS CONFIGURATION
@@ -347,6 +363,12 @@ resources:
             - ${env:DOMAIN_NAME}
 
           ViewerCertificate: ${self:custom.viewerCertificate}
+
+          WebACLId:
+            Fn::If:
+              - HasWafWebAcl
+              - ${self:custom.wafWebAclArn}
+              - Ref: AWS::NoValue
 
           # Map GET / to /index.html at the origin (deep links use S3 website ErrorDocument).
           DefaultRootObject: index.html

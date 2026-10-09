@@ -60,6 +60,20 @@ npm run dev
 
 Copy `server/.env.example` to `server/.env.dev` and fill in the required values. See the example file for all variables.
 
+#### Non-prod WAF gate
+
+CloudFront sits behind the shared AWS WAF web ACL `shalev396-shared-acl` (CloudFront scope, `us-east-1`). Its `nonprod-gate` rule asks the `dev.` and `qa.` hosts for basic auth on pages and assets; anything under `/api/` is not gated, so Postman and other API clients need no extra header. Prod is not asked for a password, but the ACL is still attached.
+
+| Where                                 | Name                  | Value                                                                                                                                                 |
+| ------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repository secret                     | `WAF_WEB_ACL_ARN`     | `arn:aws:wafv2:us-east-1:034362036555:global/webacl/shalev396-shared-acl/cf44ad28-bf3a-4e09-a424-0e5376defc18`. Same for every stage. Empty = no WAF. |
+| Environment secret (`dev`, `qa` only) | `BASIC_AUTH_PASSWORD` | Password for that host. Username is that stage's `DOMAIN_NAME`. Browser tests on the deployed site send it. `/api/` is not gated.                     |
+| Environment secret (already exists)   | `DOMAIN_NAME`         | The host. This is the basic-auth username. There is no separate username variable.                                                                    |
+
+Locally, set `WAF_WEB_ACL_ARN` in `server/.env.dev`, `.env.qa` and `.env.prod`, and `BASIC_AUTH_PASSWORD` in `server/.env.dev` and `.env.qa` only. Those files are gitignored; never commit the password.
+
+Chrome fetches `/manifest.webmanifest` without the basic-auth header, so a 401 for that one file in the console after signing in is expected.
+
 ---
 
 ## Project Structure

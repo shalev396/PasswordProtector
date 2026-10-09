@@ -27,6 +27,7 @@ jobs:
       SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
       HOSTED_ZONE_ID: ${{ secrets.HOSTED_ZONE_ID }}
       CERTIFICATE_ARN: ${{ secrets.CERTIFICATE_ARN }}
+      WAF_WEB_ACL_ARN: ${{ secrets.WAF_WEB_ACL_ARN }} # shared ACL shalev396-shared-acl; empty = no WAF
       # Environment secrets (accessed via environment: name)
       DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
