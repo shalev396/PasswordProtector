@@ -79,7 +79,7 @@ AWS infrastructure in `server/serverless.yml`: S3 (client hosting), CloudFront (
 
 ## Environment Variables
 
-See `server/.env.example`. Key additions beyond Elytra template: `LAMBDA_SECURITY_GROUP_ID`, `LAMBDA_SUBNET_ID` (VPC connectivity).
+See `server/.env.example`. Key additions beyond Elytra template: `LAMBDA_SECURITY_GROUP_ID`, `LAMBDA_SUBNET_ID` (VPC connectivity), `WAF_WEB_ACL_ARN` (shared WAF ACL attached to CloudFront, every stage), `BASIC_AUTH_PASSWORD` (dev/qa only; WAF basic-auth password for pages, username = `DOMAIN_NAME`, `/api/` not gated; read by QA browser tests). See README "Non-prod WAF gate".
 
 ## ESLint Rules (Strict)
 

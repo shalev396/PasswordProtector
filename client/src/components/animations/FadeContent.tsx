@@ -41,12 +41,16 @@ export function FadeContent({ children, className = '', delay = 0 }: FadeContent
     };
   }, [delay]);
 
+  // Opacity stays at 1 under prefers-reduced-motion so contrast checks (and users who
+  // asked for less motion) never see the in-between fade colors.
+  const motionClass = isVisible
+    ? 'translate-y-0 opacity-100'
+    : 'motion-safe:translate-y-10 motion-safe:opacity-0';
+
   return (
     <div
       ref={ref}
-      className={`transition-[transform,opacity] duration-1000 ${
-        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
-      } ${className}`}
+      className={`motion-safe:transition-[transform,opacity] motion-safe:duration-1000 ${motionClass} ${className}`}
     >
       {children}
     </div>
