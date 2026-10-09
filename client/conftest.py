@@ -39,11 +39,16 @@ def gate_http_credentials() -> dict[str, str] | None:
 
 @pytest.fixture(scope="session")
 def browser_context_args(browser_context_args):
-    """Answer the WAF 401 challenge on gated hosts. `send: unauthorized` keeps Bearer auth intact."""
+    """Emulate reduced motion and, on gated hosts, answer the WAF basic-auth challenge.
+
+    Reduced motion skips the FadeContent opacity fade so axe measures final colors.
+    `send: unauthorized` keeps Bearer auth intact on /api/.
+    """
+    args = {**browser_context_args, "reduced_motion": "reduce"}
     credentials = gate_http_credentials()
     if credentials is None:
-        return browser_context_args
-    return {**browser_context_args, "http_credentials": credentials}
+        return args
+    return {**args, "http_credentials": credentials}
 
 
 @pytest.fixture(scope="session", autouse=True)
